@@ -13,7 +13,7 @@ public class Neo4jDBClientImpl implements DBClient {
 	
 	private static Neo4jDBClientImpl instance = null;
 	
-	private Neo4jDBClientImpl(){
+	private Neo4jDBClientImpl() {
 	}
 	
 	public static Neo4jDBClientImpl getInstance() {

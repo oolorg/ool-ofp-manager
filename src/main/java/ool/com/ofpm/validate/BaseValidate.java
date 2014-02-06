@@ -21,7 +21,7 @@ public abstract class BaseValidate {
      * @return not null true, null false 
      */
     protected static boolean checkNull(Object value) {
-	return value == null;
+    	return value == null;
     }
 	
     /**
@@ -31,10 +31,10 @@ public abstract class BaseValidate {
      * @return not over true/over false;
      */
     protected static boolean checkOverLength(String value, int length) {
-	if (value.length() > length) {
-	    return true;
-	}
-	return false;
+    	if (value.length() > length) {
+    		return true;
+    	}
+    	return false;
     }
     
     /**
@@ -43,9 +43,9 @@ public abstract class BaseValidate {
     * @return すべて半角数字 true/それ以外 false
     */
     protected static boolean checkHalfNum(String value) {
-	if (value == null || !value.matches("^[0-9]+$")) {
-	    return false;
-	}
-	return true;
+    	if (value == null || !value.matches("^[0-9]+$")) {
+    		return false;
+    	}
+    	return true;
     }
 }
