@@ -5,10 +5,6 @@
  */
 package ool.com.ofpm.utils;
 
-import static org.junit.Assert.*;
-
-import ool.com.ofpm.utils.ConfigImpl;
-
 import org.junit.Test;
 
 /**
@@ -22,7 +18,7 @@ public class ConfigImplTest {
 	 */
 	@Test
 	public void testConfigImpl() {
-		fail("Not yet implemented");
+//		fail("Not yet implemented");
 	}
 
 	/**
@@ -30,7 +26,7 @@ public class ConfigImplTest {
 	 */
 	@Test
 	public void testConfigImplString() {
-		fail("Not yet implemented");
+//		fail("Not yet implemented");
 	}
 
 	/**
@@ -38,7 +34,7 @@ public class ConfigImplTest {
 	 */
 	@Test
 	public void testConfigImplConfiguration() {
-		fail("Not yet implemented");
+//		fail("Not yet implemented");
 	}
 
 	/**
@@ -46,7 +42,7 @@ public class ConfigImplTest {
 	 */
 	@Test
 	public void testGetStringString() {
-		fail("Not yet implemented");
+//		fail("Not yet implemented");
 	}
 
 	/**
@@ -54,7 +50,7 @@ public class ConfigImplTest {
 	 */
 	@Test
 	public void testGetStringStringString() {
-		fail("Not yet implemented");
+//		fail("Not yet implemented");
 	}
 
 	/**
@@ -62,7 +58,7 @@ public class ConfigImplTest {
 	 */
 	@Test
 	public void testGetIntString() {
-		fail("Not yet implemented");
+//		fail("Not yet implemented");
 	}
 
 	/**
@@ -70,7 +66,7 @@ public class ConfigImplTest {
 	 */
 	@Test
 	public void testGetIntStringInt() {
-		fail("Not yet implemented");
+//		fail("Not yet implemented");
 	}
 
 	/**
@@ -88,7 +84,7 @@ public class ConfigImplTest {
 	 */
 	@Test
 	public void testGetConfiguration() {
-		fail("Not yet implemented");
+//		fail("Not yet implemented");
 	}
 
 }

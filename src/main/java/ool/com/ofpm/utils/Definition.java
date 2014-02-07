@@ -11,5 +11,7 @@ package ool.com.ofpm.utils;
  */
 public class Definition {
 	public static final String DEFAULT_PROPERTIY_FILE = "ofm.properties";
+	public static final String OLD_TEST_APP_ADDR = "http://192.168.1.127:8080/ctrl";
+	public static final int CONNECTION_SUCCESS = 200;
 
 }

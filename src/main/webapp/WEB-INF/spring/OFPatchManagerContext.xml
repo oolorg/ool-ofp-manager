@@ -9,15 +9,25 @@
     http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
 
 	<import resource="classpath:META-INF/cxf/cxf.xml" />
-    
-	<context:component-scan base-package="jp.sample.jaxrs" />
-  
+
+	<context:component-scan base-package="jp.PyshicalService.jaxrs" />
+
+	<jaxrs:server id="PhysicalTopology" address="/">
+    	<jaxrs:serviceBeans>
+        	<ref bean="phys_topo" />
+    	</jaxrs:serviceBeans>
+	</jaxrs:server>
+
+	<bean id="phys_topo" class="ool.com.ofpm.service.PhysicalServiceImpl" />
+
+<!-- 	<context:component-scan base-package="jp.sample.jaxrs" />
+
 	<jaxrs:server id="sample" address="/">
     	<jaxrs:serviceBeans>
         	<ref bean="HelloWorldService" />
     	</jaxrs:serviceBeans>
 	</jaxrs:server>
-	
-	<bean id="HelloWorldService" class="ool.com.ofpm.service.HelloWorldServiceImpl" /> 
+
+	<bean id="HelloWorldService" class="ool.com.ofpm.service.HelloWorldServiceImpl" />  -->
 
 </beans>
