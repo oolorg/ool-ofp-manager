@@ -7,7 +7,7 @@ package ool.com.ofpm.business;
 
 import javax.servlet.http.HttpServletRequest;
 
-import ool.com.ofpm.client.DBClient;
+import ool.com.ofpm.client.GraphDBClient;
 import ool.com.ofpm.client.Neo4jDBClientImpl;
 import ool.com.ofpm.json.HelloWorldJsonPostIn;
 import ool.com.ofpm.json.HelloWorldJsonPostOut;
@@ -38,7 +38,7 @@ public class HelloWorldBusinessImpl implements HelloWorldBusiness {
     	HelloWorldJsonPostOut ret = new HelloWorldJsonPostOut();
     	try {
 			validator.postValidation();
-			DBClient dbClient = Neo4jDBClientImpl.getInstance();
+			GraphDBClient dbClient = Neo4jDBClientImpl.getInstance();
 			dbClient.exec();
 			ret.setEnabled("OK");
 		} catch (ValidateException e) {

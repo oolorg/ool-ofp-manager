@@ -2,13 +2,16 @@ package ool.com.ofpm.service;
 
 import java.lang.reflect.Type;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import ool.com.ofpm.business.PhysicalBusiness;
+import ool.com.ofpm.business.PhysicalBusiness.Order;
+import ool.com.ofpm.business.PhysicalBusiness.RequestType;
+import ool.com.ofpm.business.PhysicalBusinessImpl;
 import ool.com.ofpm.business.PhysicalServiceBypusBusiness;
+import ool.com.ofpm.json.PhysicalRequestIn;
 import ool.com.ofpm.json.ResultOut;
 import ool.com.ofpm.service.utils.ResponseGenerator;
 import ool.com.ofpm.utils.Definition;
@@ -25,7 +28,48 @@ public class PhysicalServiceImpl implements PhysicalService {
 
 	private Gson gson = new Gson();
 
-	public Response doGet() {
+	private Response execBusiness(String body, RequestType req_type, Order order) {
+		PhysicalRequestIn req_body = this.gson.fromJson(body, PhysicalRequestIn.TYPE);
+
+		// GUIとAgent、どちらの通知か判別し、処理クラスをインスタンス化します。
+		PhysicalBusiness device_manage = new PhysicalBusinessImpl();
+
+		ResultOut obj_result = device_manage.execAPI(req_body, req_type, order);
+
+		String        str_result = this.gson.toJson(obj_result, ResultOut.TYPE);
+		Response        res_body = ResponseGenerator.generate(str_result,  Status.OK);
+		return res_body;
+	}
+
+	public Response createDevice(@RequestBody String body) {
+		Response res_body = this.execBusiness(body, RequestType.DEVICE, Order.APPEND);
+		return res_body;
+	}
+
+	public Response deleteDevice(@RequestBody String body) {
+		Response res_body = this.execBusiness(body, RequestType.DEVICE, Order.DELETE);
+		return res_body;
+	}
+	public Response updateDevice(@RequestBody String body) {
+		Response res_body = this.execBusiness(body, RequestType.DEVICE, Order.UPDATE);
+		return res_body;
+	}
+
+	public Response createPort(@RequestBody String body) {
+		Response res_body = this.execBusiness(body, RequestType.PORT, Order.APPEND);
+		return res_body;
+	}
+
+	public Response deletePort(@RequestBody String body) {
+		Response res_body = this.execBusiness(body, RequestType.PORT, Order.DELETE);
+		return res_body;
+	}
+	public Response updatePort(@RequestBody String body) {
+		Response res_body = this.execBusiness(body, RequestType.PORT, Order.UPDATE);
+		return res_body;
+	}
+
+	public Response get() {
 		PhysicalServiceBypusBusiness bypus = new PhysicalServiceBypusBusiness(Definition.OLD_TEST_APP_ADDR);
 		ResultOut result_out = bypus.get();
 		Type collectionType = new TypeToken<ResultOut>(){}.getType();
@@ -33,21 +77,8 @@ public class PhysicalServiceImpl implements PhysicalService {
 		return ResponseGenerator.generate(res_str, Status.OK);
 	}
 
-	public Response doGet(String switchId){
-		// TODO ↑のswitchIdは一時的なもの
-		return null;
-	}
-
-	@PUT
-	@Path("/")
-	public Response doPut(@RequestBody String body) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@DELETE
-	@Path("/")
-	public Response doDelete(@RequestBody String body) {
+	public Response get(
+			@PathParam("switchId") String switchId) {
 		// TODO Auto-generated method stub
 		return null;
 	}

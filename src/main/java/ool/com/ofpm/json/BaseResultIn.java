@@ -1,9 +1,14 @@
 package ool.com.ofpm.json;
 
+import java.lang.reflect.Type;
 import java.util.List;
+
+import com.google.gson.reflect.TypeToken;
 
 
 public class BaseResultIn {
+	public static Type TYPE_TOKEN = new TypeToken<BaseResultIn>(){}.getType();
+
 	private List<Node> nodes;
 	private List<Link> links;
 	private StatusIn Result;

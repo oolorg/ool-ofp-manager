@@ -44,4 +44,17 @@ public class Link {
 	public void setLinkKind(final String linkKind) {
 		this.linkKind = linkKind;
 	}
+
+	public enum LinkKind {
+		PHYSICAL("physical"),
+		LOGICAL("logical");
+
+		private String name;
+		public String getName() {
+			return this.name;
+		}
+		private LinkKind(String name) {
+			this.name = name;
+		}
+	}
 }

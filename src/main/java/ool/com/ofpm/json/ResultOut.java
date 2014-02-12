@@ -1,9 +1,14 @@
 package ool.com.ofpm.json;
 
+import java.lang.reflect.Type;
 import java.util.List;
+
+import com.google.gson.reflect.TypeToken;
 
 
 public class ResultOut extends BaseResultOut {
+	public static Type TYPE = new TypeToken<ResultOut>(){}.getType();
+
 	private Data result;
 
 	public Data getResult() {

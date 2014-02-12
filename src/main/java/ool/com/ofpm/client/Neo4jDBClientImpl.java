@@ -9,7 +9,7 @@ package ool.com.ofpm.client;
  * @author 1131080355959
  *
  */
-public class Neo4jDBClientImpl implements DBClient {
+public class Neo4jDBClientImpl implements GraphDBClient {
 	
 	private static Neo4jDBClientImpl instance = null;
 	
