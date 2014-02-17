@@ -4,6 +4,8 @@ import java.lang.reflect.Type;
 
 import javax.ws.rs.core.MediaType;
 
+import ool.com.ofpm.json.AgentFlowJsonOut;
+import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.BaseResultIn;
 import ool.com.ofpm.utils.Definition;
 
@@ -14,21 +16,16 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.WebResource.Builder;
 
-public final class AgentClientImpl implements AgentClient {
-	private static AgentClientImpl instance;
-	private static WebResource resource;
-	private static Gson gson;
+public class AgentClientImpl implements AgentClient {
+	private WebResource resource;
+	private Gson gson = new Gson();
+	private String agentIp;
 
-	private AgentClientImpl() {}
-	public static synchronized AgentClientImpl getInstance(String url) {
-		if(instance == null) {
-			instance = new AgentClientImpl();
-			resource = Client.create().resource(url);
-			gson = new Gson();
-		}
-		return instance;
+	public AgentClientImpl(String ip) {
+		this.agentIp = ip;
+		this.resource = Client.create().resource(ip);
 	}
-	public BaseResultIn getTopology() throws Exception {
+	public BaseResultIn getTopology() throws AgentClientException {
 		ClientResponse response;
 		Builder res_builder;
 		res_builder = resource.accept(MediaType.APPLICATION_JSON);
@@ -36,16 +33,45 @@ public final class AgentClientImpl implements AgentClient {
 		response    = res_builder.get(ClientResponse.class);
 		if(response.getStatus() != Definition.CONNECTION_SUCCESS) {
 			// TODO 例外を決め、正確に受け渡す。
-			throw new Exception("Errorが発生しました");
+			throw new AgentClientException("Errorが発生しました");
 		}
 		Type collectionType = new TypeToken<BaseResultIn>(){}.getType();
 		String res_str = response.getEntity(String.class);
 		return gson.fromJson(res_str, collectionType);
 	}
-	public BaseResultIn addFlows() {
-		return null;
+
+	public BaseResponse updateFlows(AgentFlowJsonOut flows) throws AgentClientException {
+		BaseResponse res = new BaseResponse();
+
+		Type type;
+		String reqData = "";
+		ClientResponse resAgent;
+		try {
+			type = new TypeToken<AgentFlowJsonOut>(){}.getType();
+			reqData = gson.toJson(flows, type);
+		} catch (Exception e) {
+			throw new AgentClientException("入力されたフローオブジェクトは不正です");
+		}
+
+		try {
+			Builder resBuilder = this.resource.entity(reqData);
+			resBuilder = resBuilder.accept(MediaType.APPLICATION_JSON);
+			resBuilder = resBuilder.type(MediaType.APPLICATION_JSON);
+			resAgent = resBuilder.put(ClientResponse.class);
+			if(resAgent.getStatus() != 201) throw new Exception();
+		} catch (Exception e) {
+			throw new AgentClientException("Agentとの接続でエラーが発生しました");
+		}
+
+		try {
+			type = new TypeToken<BaseResponse>(){}.getType();
+			res = gson.fromJson(resAgent.getEntity(String.class), type);
+		} catch (Exception e) {
+			throw new AgentClientException("Agent(" + this.agentIp + ")が規定外の戻り値を返しました。");
+		}
+		return res;
 	}
-	public BaseResultIn delFlows() {
-		return null;
+	public String getIp() {
+		return this.agentIp;
 	}
 }

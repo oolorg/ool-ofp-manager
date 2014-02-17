@@ -12,11 +12,14 @@ import ool.com.ofpm.json.HelloWorldJsonPostOut;
 
 /**
  * @author 1131080355959
- *
+ * 
  */
 public interface HelloWorldBusiness {
 
-	public String sayHello(String message, HttpServletRequest req);
-	
-	public HelloWorldJsonPostOut createHello(HelloWorldJsonPostIn params);
+	public String sayHello(
+			String message,
+			HttpServletRequest req);
+
+	public HelloWorldJsonPostOut createHello(
+			HelloWorldJsonPostIn params);
 }

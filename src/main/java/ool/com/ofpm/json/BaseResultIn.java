@@ -9,20 +9,20 @@ import com.google.gson.reflect.TypeToken;
 public class BaseResultIn {
 	public static Type TYPE_TOKEN = new TypeToken<BaseResultIn>(){}.getType();
 
-	private List<Node> nodes;
-	private List<Link> links;
+	private List<BaseNode> nodes;
+	private List<LogicalTopology> links;
 	private StatusIn Result;
 
-	public List<Node> getNodes() {
+	public List<BaseNode> getNodes() {
 		return nodes;
 	}
-	public void setNodes(final List<Node> nodes) {
+	public void setNodes(final List<BaseNode> nodes) {
 		this.nodes = nodes;
 	}
-	public List<Link> getLinks() {
+	public List<LogicalTopology> getLinks() {
 		return links;
 	}
-	public void setLinks(final List<Link> links) {
+	public void setLinks(final List<LogicalTopology> links) {
 		this.links = links;
 	}
 	public StatusIn getResult() {

@@ -16,29 +16,42 @@ import ool.com.ofpm.validate.ValidateException;
 
 /**
  * @author 1131080355959
- *
+ * 
  */
-public class HelloWorldBusinessImpl implements HelloWorldBusiness {
+public class HelloWorldBusinessImpl
+		implements HelloWorldBusiness {
 
-	/* (non-Javadoc)
-	 * @see ool.com.ofpm.business.HelloWorldBusiness#getHello()
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * ool.com.ofpm.business.HelloWorldBusiness#getHello()
 	 */
 	@Override
-	public String sayHello(String message, HttpServletRequest req) {
+	public String sayHello(
+			String message,
+			HttpServletRequest req) {
 		// TODO Auto-generated method stub
-		return message + ":" + req.getLocalAddr();
+		return message + ":"
+				+ req.getLocalAddr();
 	}
 
-	/* (non-Javadoc)
-	 * @see ool.com.ofpm.business.HelloWorldBusiness#createHello(ool.com.ofpm.json.HelloWorldJsonPostIn)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * ool.com.ofpm.business.HelloWorldBusiness#createHello
+	 * (ool.com.ofpm.json.HelloWorldJsonPostIn)
 	 */
 	@Override
-	public HelloWorldJsonPostOut createHello(HelloWorldJsonPostIn params) {
-    	HelloWorldValidate validator = new HelloWorldValidate();
-    	HelloWorldJsonPostOut ret = new HelloWorldJsonPostOut();
-    	try {
+	public HelloWorldJsonPostOut createHello(
+			HelloWorldJsonPostIn params) {
+		HelloWorldValidate validator = new HelloWorldValidate();
+		HelloWorldJsonPostOut ret = new HelloWorldJsonPostOut();
+		try {
 			validator.postValidation();
-			GraphDBClient dbClient = Neo4jDBClientImpl.getInstance();
+			GraphDBClient dbClient = Neo4jDBClientImpl
+					.getInstance();
 			dbClient.exec();
 			ret.setEnabled("OK");
 		} catch (ValidateException e) {

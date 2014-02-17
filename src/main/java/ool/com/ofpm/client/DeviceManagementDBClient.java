@@ -29,8 +29,8 @@ public interface DeviceManagementDBClient {
 	/*
 	 * 装置管理DBよりSwitchやPort、Node、NICの情報を取得します。
 	 */
-	public SwitchData getSwitchInfo(String deviceName);
-	public PortData getPortInfo(String deviceName, int portNumber);
-	public NodeData getNodeInfo(String deviceName);
-	public NICData getNodeInfo(String deviceName);
+//	public SwitchData getSwitchInfo(String deviceName);
+//	public PortData getPortInfo(String deviceName, int portNumber);
+//	public NodeData getNodeInfo(String deviceName);
+//	public NICData getNodeInfo(String deviceName);
 }

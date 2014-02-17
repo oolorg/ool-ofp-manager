@@ -11,11 +11,11 @@ package ool.com.ofpm.utils;
  */
 public class Definition {
 	public static final String DEFAULT_PROPERTIY_FILE = "ofm.properties";
-	public static final String OLD_TEST_APP_ADDR = "http://192.168.1.127:8080/ctrl";
+	public static final String OLD_TEST_APP_ADDR = "http://192.168.1.219:8080";
 	public static final int CONNECTION_SUCCESS = 200;
 
 	// Graph DBに関する設定
-	public static final String GRAPH_DB_ADDRESS       = "http://192.168.1.127:8080/ctrl";
+	public static final String GRAPH_DB_LOGICAL       = "http://192.168.1.219:8080/orientdbService/topology/logicalTopology";
 	public static final String GRAPH_DB_ADD_DEVICE    = "/AddDevicePort/";
 	public static final String GRAPH_DB_DEL_DEVICE    = "/DeleteDevicePort/";
 	public static final String GRAPH_DB_UPDATE_DEVICE = "/UpdateDevicePort/";

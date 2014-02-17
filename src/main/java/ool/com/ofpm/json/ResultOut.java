@@ -6,7 +6,7 @@ import java.util.List;
 import com.google.gson.reflect.TypeToken;
 
 
-public class ResultOut extends BaseResultOut {
+public class ResultOut extends BaseResponse {
 	public static Type TYPE = new TypeToken<ResultOut>(){}.getType();
 
 	private Data result;
@@ -20,18 +20,18 @@ public class ResultOut extends BaseResultOut {
 	}
 
 	public class Data {
-		private List<Node> nodes;
-		private List<Link> links;
-		public List<Node> getNodes() {
+		private List<BaseNode> nodes;
+		private List<LogicalTopology> links;
+		public List<BaseNode> getNodes() {
 			return nodes;
 		}
-		public void setNodes(List<Node> nodes) {
+		public void setNodes(List<BaseNode> nodes) {
 			this.nodes = nodes;
 		}
-		public List<Link> getLinks() {
+		public List<LogicalTopology> getLinks() {
 			return links;
 		}
-		public void setLinks(List<Link> links) {
+		public void setLinks(List<LogicalTopology> links) {
 			this.links = links;
 		}
 	}
