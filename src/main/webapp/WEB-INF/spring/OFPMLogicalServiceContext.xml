@@ -20,14 +20,4 @@
 
 	<bean id="logi_topo" class="ool.com.ofpm.service.LogicalServiceImpl" />
 
-<!-- 	<context:component-scan base-package="jp.sample.jaxrs" />
-
-	<jaxrs:server id="sample" address="/">
-    	<jaxrs:serviceBeans>
-        	<ref bean="HelloWorldService" />
-    	</jaxrs:serviceBeans>
-	</jaxrs:server>
-
-	<bean id="HelloWorldService" class="ool.com.ofpm.service.HelloWorldServiceImpl" />  -->
-
 </beans>

@@ -55,7 +55,7 @@ public class OrientDBClientImpl implements GraphDBClient {
 
 		ClientResponse gdbResponse;
 		Builder resBuilder;
-		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_LOGICAL_GET);
+		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_ADDRESS + Definition.GRAPH_DB_LINK_GET);
 		resource    = resource.queryParam("deviceNames", deviceNames);
 		resBuilder  = resource.accept(MediaType.APPLICATION_JSON);
 		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
@@ -75,7 +75,7 @@ public class OrientDBClientImpl implements GraphDBClient {
 
 		ClientResponse gdbResponse;
 		Builder resBuilder;
-		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_LINK_CREATE);
+		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_ADDRESS + Definition.GRAPH_DB_LINK_CREATE_PATH);
 		resBuilder  = resource.entity(reqBody);
 		resBuilder  = resBuilder.accept(MediaType.APPLICATION_JSON);
 		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
@@ -98,7 +98,7 @@ public class OrientDBClientImpl implements GraphDBClient {
 
 		ClientResponse gdbResponse;
 		Builder resBuilder;
-		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_LINK_DELETE);
+		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_ADDRESS + Definition.GRAPH_DB_LINK_DELETE_PATH);
 		resBuilder  = resource.entity(reqBody);
 		resBuilder  = resBuilder.accept(MediaType.APPLICATION_JSON);
 		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);

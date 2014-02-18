@@ -1,5 +1,9 @@
 package ool.com.ofpm.business;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,9 +16,17 @@ public class AgentManageBusinessImpl implements AgentManageBusiness {
 	private Map<String, AgentClient> ipTable = new HashMap<String, AgentClient>();
 	private Map<String, String> nameToIp = new HashMap<String, String>();
 	private Map<String, String> switchToOfc = new HashMap<String, String>();
+	Connection sqlite;
 
 	private AgentManageBusinessImpl() {
 		this.setAgentClient("sentec", "192.168.1.225:8080", "192.168.1.225:8080", "http://192.168.1.225:3366/ofc/ryu/ctrl");
+		try {
+			sqlite = DriverManager.getConnection("jdbc:sqlite:AgentManage.db");
+			Statement state = sqlite.createStatement();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.getMessage();
+		}
 	}
 	public static AgentManageBusiness getInstance() {
 		if(instance == null) {

@@ -20,9 +20,10 @@ public class Definition {
     public static final int STATUS_INTERNAL_ERROR = 500;
 
 	// Graph DBに関する設定
-	public static final String GRAPH_DB_LOGICAL_GET  = "http://192.168.1.120:8080/orientdbService/topology/logicalTopology";
-	public static final String GRAPH_DB_LINK_CREATE  = "http://192.168.1.120:8080/orientdbService/ofpatch/connect";
-	public static final String GRAPH_DB_LINK_DELETE  = "http://192.168.1.120:8080/orientdbService/ofpatch/disconnect";
+	public static String GRAPH_DB_ADDRESS           = "http://192.168.1.120:8080";
+	public static String GRAPH_DB_LINK_GET          = "/orientdbservice/topology/logicalTopology";
+	public static String GRAPH_DB_LINK_CREATE_PATH  = "/orientdbservice/ofpatch/connect";
+	public static String GRAPH_DB_LINK_DELETE_PATH  = "/orientdbservice/ofpatch/disconnect";
 
 	public static final String AGENT_PATH = "/ofpa/ctrl";
 
