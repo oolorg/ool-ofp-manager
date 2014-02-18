@@ -19,7 +19,7 @@ public class AgentManageBusinessImpl implements AgentManageBusiness {
 	Connection sqlite;
 
 	private AgentManageBusinessImpl() {
-		this.setAgentClient("Server1", "192.168.1.225:8080", "192.168.1.225:8080", "http://192.168.1.225:8888/ofc/ryu/ctrl");
+		this.setAgentClient("Switch1", "192.168.1.10", "192.168.1.225:8080", "http://192.168.1.225:8888/ofc/ryu/ctrl");
 		try {
 			sqlite = DriverManager.getConnection("jdbc:sqlite:AgentManage.db");
 			Statement state = sqlite.createStatement();
