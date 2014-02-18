@@ -10,13 +10,13 @@
 
 	<import resource="classpath:META-INF/cxf/cxf.xml" />
 
-	<context:component-scan base-package="jp.ConfigService.jaxrs" />
+	<context:component-scan base-package="jp.AgentManageService.jaxrs" />
 
-	<jaxrs:server id="config" address="/">
+	<jaxrs:server id="agent_manage" address="/">
     	<jaxrs:serviceBeans>
         	<ref bean="am" />
     	</jaxrs:serviceBeans>
 	</jaxrs:server>
 
-	<bean id="am" class="ool.com.ofpm.service.ConfigServiceImpl" />
+	<bean id="am" class="ool.com.ofpm.service.AgentManageServiceImpl" />
 </beans>
