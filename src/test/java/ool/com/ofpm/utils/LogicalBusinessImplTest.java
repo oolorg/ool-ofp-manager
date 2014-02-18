@@ -12,6 +12,7 @@ import ool.com.ofpm.business.LogicalBusinessImpl;
 import ool.com.ofpm.client.GraphDBClientException;
 import ool.com.ofpm.client.OrientDBClientImpl;
 import ool.com.ofpm.json.BaseNode;
+import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.LogicalTopology;
 import ool.com.ofpm.json.LogicalTopologyJsonInOut;
 import ool.com.ofpm.validate.LogicalTopologyValidate;
@@ -126,6 +127,30 @@ public class LogicalBusinessImplTest {
 	 */
 	@Test
 	public void testDoPUT() {
+		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
+		new NonStrictExpectations(gdbClient) {
+			LogicalTopologyValidate validator;
+			{
+				try {
+					new LogicalTopologyValidate();
+					validator.checkValidation((LogicalTopology) withNotNull());
 
+					gdbClient.getLogicalTopology((Set<BaseNode>) withNotNull());
+					result = testLogicalTopologyOver;
+
+					validator.checkValidation((LogicalTopology) withNotNull());
+					result = new ValidateException("");
+
+				} catch (Exception e) {
+					fail("予期しないエラーです");
+				}
+			}
+		};
+
+		LogicalBusiness logiBiz = new LogicalBusinessImpl();
+		BaseResponse bizOut = logiBiz.doPUT(testLogicalTopology);
+		if(bizOut.getStatus() != Definition.STATUS_CREATED) {
+			//fail("応答Statusが正常値でありません");
+		}
 	}
 }

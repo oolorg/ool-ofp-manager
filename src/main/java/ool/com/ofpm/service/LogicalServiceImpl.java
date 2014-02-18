@@ -27,7 +27,6 @@ public class LogicalServiceImpl implements LogicalService {
 	public Response doGET(HttpServletRequest req) {
 		String params = req.getParameter("deviceNames");
 		params = params.replaceAll("^[,\\s]*", "");
-		if(params.charAt(0) == ',') params = params.substring(1);
 		String[] inPara = params.split("[\\s]*,[,\\s]*");
 
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
@@ -35,7 +34,7 @@ public class LogicalServiceImpl implements LogicalService {
 
 		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
 		String res = this.gson.toJson(outPara, type);
-		System.out.println("HTTP[GET]:" + params + " , res:");
+		System.out.println("HTTP[GET]:" + params + " , res:" + res);
 		return ResponseGenerator.generate(res,  Status.OK);
 	}
 
@@ -50,6 +49,7 @@ public class LogicalServiceImpl implements LogicalService {
 
 		type = new TypeToken<BaseResponse>(){}.getType();
 		String res = this.gson.toJson(outPara, type);
+		System.out.println("HTTP[PUT]:" + params + " , res:" + res);
 		return ResponseGenerator.generate(res,  Status.OK);
 	}
 

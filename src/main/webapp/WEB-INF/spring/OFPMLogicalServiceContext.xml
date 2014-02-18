@@ -10,13 +10,24 @@
 
 	<import resource="classpath:META-INF/cxf/cxf.xml" />
 
-	<context:component-scan base-package="jp.AgentManage.jaxrs" />
+	<context:component-scan base-package="jp.LogicalService.jaxrs" />
 
-	<jaxrs:server id="agent_manage" address="/">
+	<jaxrs:server id="logical_topology" address="/">
     	<jaxrs:serviceBeans>
-        	<ref bean="am" />
+        	<ref bean="logi_topo" />
     	</jaxrs:serviceBeans>
 	</jaxrs:server>
 
-	<bean id="am" class="ool.com.ofpm.service.AgentManageServiceImpl" />
+	<bean id="logi_topo" class="ool.com.ofpm.service.LogicalServiceImpl" />
+
+<!-- 	<context:component-scan base-package="jp.sample.jaxrs" />
+
+	<jaxrs:server id="sample" address="/">
+    	<jaxrs:serviceBeans>
+        	<ref bean="HelloWorldService" />
+    	</jaxrs:serviceBeans>
+	</jaxrs:server>
+
+	<bean id="HelloWorldService" class="ool.com.ofpm.service.HelloWorldServiceImpl" />  -->
+
 </beans>

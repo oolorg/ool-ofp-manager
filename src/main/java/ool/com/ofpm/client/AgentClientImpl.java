@@ -23,7 +23,7 @@ public class AgentClientImpl implements AgentClient {
 
 	public AgentClientImpl(String ip) {
 		this.agentIp = ip;
-		this.resource = Client.create().resource(ip);
+		this.resource = Client.create().resource("http://" + ip + Definition.AGENT_PATH);
 	}
 	public BaseResultIn getTopology() throws AgentClientException {
 		ClientResponse response;
@@ -31,9 +31,8 @@ public class AgentClientImpl implements AgentClient {
 		res_builder = resource.accept(MediaType.APPLICATION_JSON);
 		res_builder = res_builder.type(MediaType.APPLICATION_JSON);
 		response    = res_builder.get(ClientResponse.class);
-		if(response.getStatus() != Definition.CONNECTION_SUCCESS) {
-			// TODO 例外を決め、正確に受け渡す。
-			throw new AgentClientException("Errorが発生しました");
+		if(response.getStatus() != Definition.STATUS_SUCCESS) {
+			throw new AgentClientException("Connection faild");
 		}
 		Type collectionType = new TypeToken<BaseResultIn>(){}.getType();
 		String res_str = response.getEntity(String.class);
@@ -50,7 +49,7 @@ public class AgentClientImpl implements AgentClient {
 			type = new TypeToken<AgentFlowJsonOut>(){}.getType();
 			reqData = gson.toJson(flows, type);
 		} catch (Exception e) {
-			throw new AgentClientException("入力されたフローオブジェクトは不正です");
+			throw new AgentClientException("Invalid FlowObject");
 		}
 
 		try {
@@ -58,16 +57,16 @@ public class AgentClientImpl implements AgentClient {
 			resBuilder = resBuilder.accept(MediaType.APPLICATION_JSON);
 			resBuilder = resBuilder.type(MediaType.APPLICATION_JSON);
 			resAgent = resBuilder.put(ClientResponse.class);
-			if(resAgent.getStatus() != 201) throw new Exception();
+			if(resAgent.getStatus() != Definition.STATUS_SUCCESS) throw new Exception();
 		} catch (Exception e) {
-			throw new AgentClientException("Agentとの接続でエラーが発生しました");
+			throw new AgentClientException("Connection faild bitween AgentClient");
 		}
 
 		try {
 			type = new TypeToken<BaseResponse>(){}.getType();
 			res = gson.fromJson(resAgent.getEntity(String.class), type);
 		} catch (Exception e) {
-			throw new AgentClientException("Agent(" + this.agentIp + ")が規定外の戻り値を返しました。");
+			throw new AgentClientException("Bad response from Agent(" + this.agentIp + ")");
 		}
 		return res;
 	}

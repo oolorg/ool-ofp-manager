@@ -19,6 +19,7 @@ public interface LogicalService {
 	public Response doGET(@Context HttpServletRequest req);
 
 	@PUT
+	@Path("/")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
 	public Response doPUT(@RequestBody String params);

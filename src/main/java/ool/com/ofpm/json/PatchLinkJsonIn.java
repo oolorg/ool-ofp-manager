@@ -1,13 +1,14 @@
 package ool.com.ofpm.json;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class PatchLinkJsonIn extends BaseResponse {
-	private Set<PatchLink> result;
+	private Set<PatchLink> result = new HashSet<PatchLink>();
 
 	public class PatchLink {
 		private String deviceName;
-		private Set<Integer> portName;
+		private Set<String> portName = new HashSet<String>();
 
 		public String getDeviceName() {
 			return deviceName;
@@ -15,12 +16,14 @@ public class PatchLinkJsonIn extends BaseResponse {
 		public void setDeviceName(String deviceName) {
 			this.deviceName = deviceName;
 		}
-		public Set<Integer> getPortName() {
+		public Set<String> getPortName() {
 			return portName;
 		}
-		public void setPortName(Set<Integer> portName) {
+		public void setPortName(
+				Set<String> portName) {
 			this.portName = portName;
 		}
+
 	}
 
 	public Set<PatchLink> getResult() {

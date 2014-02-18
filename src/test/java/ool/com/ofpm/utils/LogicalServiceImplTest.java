@@ -57,6 +57,7 @@ public class LogicalServiceImplTest {
 				new LogicalBusinessImpl();
 				logiBiz.doGET((String[]) withNotNull());
 				result = new Delegate() {
+					@SuppressWarnings("unused")
 					LogicalTopologyJsonInOut doGET(String[] params) {
 						for(String param : params) {
 							if(param == null) fail();
@@ -86,7 +87,13 @@ public class LogicalServiceImplTest {
 			{
 				new LogicalBusinessImpl();
 				logiBiz.doPUT((LogicalTopology) withNotNull());
-				result = testBaseResponse;
+				result = new Delegate() {
+					@SuppressWarnings("unused")
+					BaseResponse doPUT(LogicalTopology topology) {
+						if(!topology.equals(testLogicalTopology)) fail();
+						return testBaseResponse;
+					}
+				};
 			}
 		};
 

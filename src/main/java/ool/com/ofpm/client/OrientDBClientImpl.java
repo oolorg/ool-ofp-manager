@@ -55,13 +55,13 @@ public class OrientDBClientImpl implements GraphDBClient {
 
 		ClientResponse gdbResponse;
 		Builder resBuilder;
-		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_LOGICAL);
+		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_LOGICAL_GET);
 		resource    = resource.queryParam("deviceNames", deviceNames);
 		resBuilder  = resource.accept(MediaType.APPLICATION_JSON);
 		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
 		gdbResponse = resBuilder.get(ClientResponse.class);
-		if(Definition.CONNECTION_SUCCESS != gdbResponse.getStatus()) {
-			throw new GraphDBClientException("DBへの接続に失敗しました", gdbResponse.getStatus());
+		if(Definition.STATUS_SUCCESS != gdbResponse.getStatus()) {
+			throw new GraphDBClientException("Connection faild with OrientDB", gdbResponse.getStatus());
 		}
 
 		String resBody = gdbResponse.getEntity(String.class);
@@ -75,13 +75,13 @@ public class OrientDBClientImpl implements GraphDBClient {
 
 		ClientResponse gdbResponse;
 		Builder resBuilder;
-		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_LOGICAL);
+		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_LINK_CREATE);
 		resBuilder  = resource.entity(reqBody);
 		resBuilder  = resBuilder.accept(MediaType.APPLICATION_JSON);
 		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
-		gdbResponse = resBuilder.get(ClientResponse.class);
-		if(Definition.CONNECTION_SUCCESS != gdbResponse.getStatus()) {
-			throw new GraphDBClientException("DBへの接続に失敗しました", gdbResponse.getStatus());
+		gdbResponse = resBuilder.post(ClientResponse.class);
+		if(Definition.STATUS_SUCCESS != gdbResponse.getStatus()) {
+			throw new GraphDBClientException("Connection faild with OrientDB", gdbResponse.getStatus());
 		}
 
 		String resBody = gdbResponse.getEntity(String.class);
@@ -90,23 +90,25 @@ public class OrientDBClientImpl implements GraphDBClient {
 		return res;
 	}
 	public PatchLinkJsonIn delLogicalLink(LogicalLink link) throws GraphDBClientException {
-		Iterator<String> si = link.getDeviceName().iterator();
-		String deviceNames = si.next();
-		deviceNames += ',' + si.next();
+//		Iterator<String> si = link.getDeviceName().iterator();
+//		String deviceNames = si.next();
+//		deviceNames += ',' + si.next();
+		Type type = new TypeToken<LogicalLink>(){}.getType();
+		String reqBody = gson.toJson(link, type);
 
 		ClientResponse gdbResponse;
 		Builder resBuilder;
-		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_LOGICAL);
-		resource    = resource.queryParam("deviceNames", deviceNames);
-		resBuilder  = resource.accept(MediaType.APPLICATION_JSON);
+		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_LINK_DELETE);
+		resBuilder  = resource.entity(reqBody);
+		resBuilder  = resBuilder.accept(MediaType.APPLICATION_JSON);
 		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
-		gdbResponse = resBuilder.delete(ClientResponse.class);
-		if(Definition.CONNECTION_SUCCESS != gdbResponse.getStatus()) {
-			throw new GraphDBClientException("DBへの接続に失敗しました", gdbResponse.getStatus());
+		gdbResponse = resBuilder.post(ClientResponse.class);
+		if(Definition.STATUS_SUCCESS != gdbResponse.getStatus()) {
+			throw new GraphDBClientException("Connection faild with OrientDB", gdbResponse.getStatus());
 		}
 
 		String resBody = gdbResponse.getEntity(String.class);
-		Type type = new TypeToken<PatchLinkJsonIn>(){}.getType();
+		type = new TypeToken<PatchLinkJsonIn>(){}.getType();
 		PatchLinkJsonIn res = gson.fromJson(resBody, type);
 		return res;
 	}

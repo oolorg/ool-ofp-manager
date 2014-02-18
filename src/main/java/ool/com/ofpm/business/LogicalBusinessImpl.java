@@ -7,8 +7,6 @@ import java.util.Set;
 
 import ool.com.ofpm.client.AgentClient;
 import ool.com.ofpm.client.AgentClientException;
-import ool.com.ofpm.client.AgentClientManager;
-import ool.com.ofpm.client.AgentClientManagerImpl;
 import ool.com.ofpm.client.GraphDBClient;
 import ool.com.ofpm.client.GraphDBClientException;
 import ool.com.ofpm.client.OrientDBClientImpl;
@@ -21,6 +19,7 @@ import ool.com.ofpm.json.LogicalTopology.LogicalLink;
 import ool.com.ofpm.json.LogicalTopologyJsonInOut;
 import ool.com.ofpm.json.PatchLinkJsonIn;
 import ool.com.ofpm.json.PatchLinkJsonIn.PatchLink;
+import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.validate.LogicalTopologyJsonInOutValidate;
 import ool.com.ofpm.validate.LogicalTopologyValidate;
 import ool.com.ofpm.validate.ValidateException;
@@ -97,13 +96,14 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	public BaseResponse doPUT(LogicalTopology params) {
 		BaseResponse res = new BaseResponse();
-		AgentClientManager acm = AgentClientManagerImpl.getInstance();
+		AgentManageBusiness acm = AgentManageBusinessImpl.getInstance();
 		try {
 			validator.checkValidation(params);
 			Set<BaseNode> nodes = params.getNodes();
 			this.filterTopology(nodes, params);
 
 			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
+			//GraphDBClient gdbClient = StubDBClientImpl.getInstance();
 			LogicalTopologyJsonInOut resGdb = gdbClient.getLogicalTopology(nodes);
 			LogicalTopology topology = resGdb.getResult();
 			this.filterTopology(nodes, topology);
@@ -115,13 +115,21 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			Set<PatchLink> deletedLinks = new HashSet<PatchLink>();
 			for(LogicalLink link : delTopo.getLinks()) {
 				PatchLinkJsonIn deletedPatches = gdbClient.delLogicalLink(link);
-				// エラー処理実装してOKなら
+				if(deletedPatches.getStatus() != Definition.STATUS_SUCCESS) {
+					res.setStatus(deletedPatches.getStatus());
+					res.setMessage(deletedPatches.getMessage());
+					return res;
+				}
 				deletedLinks.addAll(deletedPatches.getResult());
 			}
 			Set<PatchLink> addedLinks = new HashSet<PatchLink>();
 			for(LogicalLink link : addTopo.getLinks()) {
 				PatchLinkJsonIn addedPatches = gdbClient.addLogicalLink(link);
-				// エラー処理実装してOKなら
+				if(addedPatches.getStatus() != Definition.STATUS_CREATED) {
+					res.setStatus(addedPatches.getStatus());
+					res.setMessage(addedPatches.getMessage());
+					return res;
+				}
 				addedLinks.addAll(addedPatches.getResult());
 			}
 
@@ -130,12 +138,16 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			Map<AgentClient, Set<AgentFlow>> agentFlows = new HashMap<AgentClient, Set<AgentFlow>>();
 			for(PatchLink link : addedLinks) {
 				String switchIp = acm.getSwitchIp(link.getDeviceName());
+				String ofcIp = acm.getOfcIp(switchIp);
 				AgentClient agentClient = acm.getAgentClient(switchIp);
 				AgentFlow newFlow = agentFlowJson.new AgentFlow();
 				newFlow.setIp(switchIp);
 				newFlow.setType("create");
-				newFlow.setOfcUrl("");
-				newFlow.setPort(link.getPortName());
+				newFlow.setOfcUrl(ofcIp);
+				Set<Integer> ports = newFlow.getPort();
+				for(String port : link.getPortName()) {
+					ports.add(Integer.parseInt(port));
+				}
 				if(!agentFlows.containsKey(agentClient)) {
 					agentFlows.put(agentClient, new HashSet<AgentFlow>());
 				}
@@ -144,12 +156,16 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 			for(PatchLink link : deletedLinks) {
 				String switchIp = acm.getSwitchIp(link.getDeviceName());
+				String ofcIp = acm.getOfcIp(switchIp);
 				AgentClient agentClient = acm.getAgentClient(switchIp);
 				AgentFlow newFlow = agentFlowJson.new AgentFlow();
 				newFlow.setIp(switchIp);
-				newFlow.setType("create");
-				newFlow.setOfcUrl("");
-				newFlow.setPort(link.getPortName());
+				newFlow.setType("delete");
+				newFlow.setOfcUrl(ofcIp);
+				Set<Integer> ports = newFlow.getPort();
+				for(String port : link.getPortName()) {
+					ports.add(Integer.parseInt(port));
+				}
 				if(!agentFlows.containsKey(agentClient)) {
 					agentFlows.put(agentClient, new HashSet<AgentFlow>());
 				}
@@ -160,21 +176,21 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			for(AgentClient agentClient : agentFlows.keySet()) {
 				agentFlowJson.setList(agentFlows.get(agentClient));
 				BaseResponse resAgent = agentClient.updateFlows(agentFlowJson);
-				if(resAgent.getStatus() != 201) {
+				if(resAgent.getStatus() != Definition.STATUS_CREATED) {
 					return resAgent;
 				}
 			}
 
 			res.setStatus(201);
 		} catch (ValidateException ve) {
-			res.setStatus(400);
+			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 		} catch (AgentClientException ae) {
-			// TODO Auto-generated catch block
-			ae.getMessage();
+			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setMessage(ae.getMessage());
 		} catch (GraphDBClientException gdbe) {
-			// TODO Auto-generated catch block
-			gdbe.getMessage();
+			res.setStatus(gdbe.getStatus());
+			res.setMessage(gdbe.getMessage());
 		}
 		return res;
 	}
