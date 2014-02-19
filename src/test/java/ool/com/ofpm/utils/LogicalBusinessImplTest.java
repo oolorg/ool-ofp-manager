@@ -126,7 +126,7 @@ public class LogicalBusinessImplTest {
 	/*
 	 *
 	 */
-	@Test
+	//@Test
 	public void testDoPUT() {
 		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
 		new NonStrictExpectations(gdbClient) {

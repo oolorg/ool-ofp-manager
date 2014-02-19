@@ -9,9 +9,7 @@ public class CommonValidate {
 	//テナントのチェックを実装する必要がある
 	public void checkDeviceNameArray(String[] params) throws ValidateException {
 		String fname = "checkDeviceNameArray";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s([\"%s\"]) - start", fname, StringUtils.join(params, ",")));
-		}
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(params=[\"%s\"]) - start", fname, StringUtils.join(params, ",")));
 
 		if(params == null) throw new ValidateException("Parameter is null");
 		for(String deviceName : params) {
@@ -20,8 +18,6 @@ public class CommonValidate {
 			}
 		}
 
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s - end", fname));
-		}
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s() - end", fname));
 	}
 }

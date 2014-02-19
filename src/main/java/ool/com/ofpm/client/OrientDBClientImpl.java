@@ -15,7 +15,6 @@ import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.Definition;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -31,21 +30,10 @@ public class OrientDBClientImpl implements GraphDBClient {
 	private final Client gdb_client;
 	private final Gson gson;
 	Config conf = new ConfigImpl();
-	
-	private static final Logger logger = Logger.getLogger(OrientDBClientImpl.class);
 
 	public static synchronized OrientDBClientImpl getInstance() {
-		if(logger.isDebugEnabled()) {
-			logger.debug("getInstance() - start");
-		}
 		if(instance == null) {
 			instance = new OrientDBClientImpl();
-			if(logger.isDebugEnabled()) {
-				logger.debug("new Instance.");
-			}
-		}
-		if(logger.isDebugEnabled()) {
-			logger.debug("getInstance() - end");
 		}
 		return instance;
 	}
@@ -55,10 +43,6 @@ public class OrientDBClientImpl implements GraphDBClient {
 	}
 
 	public LogicalTopologyJsonInOut getLogicalTopology(List<BaseNode> nodes) throws GraphDBClientException {
-		final String func = "getLogicalTopology";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(%s) - start", func, nodes));
-		}
 		LogicalTopologyJsonInOut res;
 		Iterator<BaseNode> ni = nodes.iterator();
 		String deviceNames = StringUtils.join(ni, ",");
@@ -78,19 +62,11 @@ public class OrientDBClientImpl implements GraphDBClient {
 			res = gson.fromJson(resBody, type);
 		} catch (UniformInterfaceException uie) {
 			//HTTPレスポンスが300以上の場合つうちされます.
-			logger.error(uie.getMessage());
 			throw new GraphDBClientException("Connection faild with OrientDB", Definition.STATUS_INTERNAL_ERROR);
-		}
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(res=%s) - end", func, res));
 		}
 		return res;
 	}
 	public PatchLinkJsonIn addLogicalLink(LogicalLink link) throws GraphDBClientException {
-		final String func = "addLogicalLink";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(%s) - start", func, link));
-		}
 		Type type = new TypeToken<LogicalLink>(){}.getType();
 		String reqBody = gson.toJson(link, type);
 
@@ -103,23 +79,15 @@ public class OrientDBClientImpl implements GraphDBClient {
 		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
 		gdbResponse = resBuilder.post(ClientResponse.class);
 		if(Definition.STATUS_SUCCESS != gdbResponse.getStatus()) {
-			logger.error("Connection faild with OrientDB :" + gdbResponse.getStatus());
 			throw new GraphDBClientException("Connection faild with OrientDB", gdbResponse.getStatus());
 		}
 
 		String resBody = gdbResponse.getEntity(String.class);
 		type = new TypeToken<PatchLinkJsonIn>(){}.getType();
 		PatchLinkJsonIn res = gson.fromJson(resBody, type);
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(res=%s) - end", func, res));
-		}
 		return res;
 	}
 	public PatchLinkJsonIn delLogicalLink(LogicalLink link) throws GraphDBClientException {
-		final String func = "delLogicalLink";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(%s) - start", func, link));
-		}
 		Type type = new TypeToken<LogicalLink>(){}.getType();
 		String reqBody = gson.toJson(link, type);
 
@@ -132,16 +100,12 @@ public class OrientDBClientImpl implements GraphDBClient {
 		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
 		gdbResponse = resBuilder.post(ClientResponse.class);
 		if(Definition.STATUS_SUCCESS != gdbResponse.getStatus()) {
-			logger.error("Connection faild with OrientDB :" + gdbResponse.getStatus());
 			throw new GraphDBClientException("Connection faild with OrientDB", gdbResponse.getStatus());
 		}
 
 		String resBody = gdbResponse.getEntity(String.class);
 		type = new TypeToken<PatchLinkJsonIn>(){}.getType();
 		PatchLinkJsonIn res = gson.fromJson(resBody, type);
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(res=%s) - end", func, res));
-		}
 		return res;
 	}
 }

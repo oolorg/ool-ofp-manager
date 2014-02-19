@@ -6,6 +6,7 @@
 package ool.com.ofpm.utils;
 
 import java.io.StringWriter;
+import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -114,5 +115,11 @@ public class ConfigImpl implements Config {
     @Override
     public Configuration getConfiguration() {
         return this.config;
+    }
+
+    @Override
+    public List<Object> getList(String key) {
+           List<Object> values = getConfiguration().getList(key);
+           return values;
     }
 }

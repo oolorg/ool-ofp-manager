@@ -11,6 +11,7 @@ import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.DeviceJsonIn;
 import ool.com.ofpm.service.utils.ResponseGenerator;
 
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
@@ -18,10 +19,14 @@ import com.google.gson.reflect.TypeToken;
 
 @Component
 public class DeviceServiceImpl implements DeviceService {
+	private static final Logger logger = Logger.getLogger(ConfigServiceImpl.class);
 	Gson gson = new Gson();
 
 	@Override
 	public Response createDevice(String params) {
+		String fname = "createDevice";
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, params));
+
 		Type type = new TypeToken<DeviceJsonIn>(){}.getType();
 		DeviceJsonIn inPara = this.gson.fromJson(params, type);
 
@@ -29,12 +34,18 @@ public class DeviceServiceImpl implements DeviceService {
 		BaseResponse outPara = device_business.createDevice(inPara);
 
 		type = new TypeToken<BaseResponse>(){}.getType();
-		String res = this.gson.toJson(outPara, type);
-		return ResponseGenerator.generate(res,  Status.OK);
+		String resPara = this.gson.toJson(outPara, type);
+
+		Response res = ResponseGenerator.generate(resPara, Status.OK);
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
+		return res;
 	}
 
 	@Override
 	public Response deleteDevice(String params) {
+		String fname = "deleteDevice";
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, params));
+
 		Type type = new TypeToken<DeviceJsonIn>(){}.getType();
 		DeviceJsonIn inPara = this.gson.fromJson(params, type);
 
@@ -42,12 +53,18 @@ public class DeviceServiceImpl implements DeviceService {
 		BaseResponse outPara = device_business.deleteDevice(inPara);
 
 		type = new TypeToken<BaseResponse>(){}.getType();
-		String res = this.gson.toJson(outPara, type);
-		return ResponseGenerator.generate(res,  Status.OK);
+		String resPara = this.gson.toJson(outPara, type);
+
+		Response res = ResponseGenerator.generate(resPara, Status.OK);
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
+		return res;
 	}
 
 	@Override
 	public Response updateDevice(String params) {
+		String fname = "updateDevice";
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, params));
+
 		Type type = new TypeToken<DeviceJsonIn>(){}.getType();
 		DeviceJsonIn inPara = this.gson.fromJson(params, type);
 
@@ -55,8 +72,11 @@ public class DeviceServiceImpl implements DeviceService {
 		BaseResponse outPara = device_business.updateDevice(inPara);
 
 		type = new TypeToken<BaseResponse>(){}.getType();
-		String res = this.gson.toJson(outPara, type);
-		return ResponseGenerator.generate(res,  Status.OK);
+		String resPara = this.gson.toJson(outPara, type);
+
+		Response res = ResponseGenerator.generate(resPara, Status.OK);
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
+		return res;
 	}
 
 }

@@ -31,28 +31,26 @@ public class LogicalServiceImpl implements LogicalService {
 
 	@Override
 	public Response getLogicalTopology(String deviceNames) {
-		String debugMsg = null;
-		if(logger.isDebugEnabled()) {
-			debugMsg = String.format("getLogicalTopology(\"%s\")", deviceNames);
-			logger.debug(debugMsg + " - start");
-		}
+		String fname = "getLogicalTopology";
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(deviceNames=%s) - start", fname, deviceNames));
 
 		String[] splitedDeviceNames = deviceNames.split(",");
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
 		LogicalTopologyJsonInOut outPara = logiBiz.getLogicalTopology(splitedDeviceNames);
 
 		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
-		String res = this.gson.toJson(outPara, type);
+		String resPara = this.gson.toJson(outPara, type);
 
-		if(logger.isDebugEnabled()) {
-			logger.debug(debugMsg + " - end");
-		}
-
-		return ResponseGenerator.generate(res,  Status.OK);
+		Response res = ResponseGenerator.generate(resPara, Status.OK);
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
+		return res;
 	}
 
 	@Override
 	public Response updateLogicalTopology(String params) {
+		String fname = "updateLogicalTopology";
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(params=%s) - start", fname, params));
+
 		Type type = new TypeToken<LogicalTopology>(){}.getType();
 		LogicalTopology inPara = this.gson.fromJson(params, type);
 
@@ -60,9 +58,11 @@ public class LogicalServiceImpl implements LogicalService {
 		BaseResponse outPara = logiBiz.updateLogicalTopology(inPara);
 
 		type = new TypeToken<BaseResponse>(){}.getType();
-		String res = this.gson.toJson(outPara, type);
-		System.out.println("HTTP[PUT]:" + params + " , res:" + res);
-		return ResponseGenerator.generate(res,  Status.OK);
+		String resPara = this.gson.toJson(outPara, type);
+
+		Response res = ResponseGenerator.generate(resPara, Status.OK);
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
+		return res;
 	}
 
 }
