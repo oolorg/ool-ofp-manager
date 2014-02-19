@@ -1,10 +1,10 @@
 package ool.com.ofpm.client;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import ool.com.ofpm.json.BaseNode;
 import ool.com.ofpm.json.LogicalTopology;
@@ -37,11 +37,11 @@ public class StubDBClientImpl implements GraphDBClient {
 		// TODO Auto-generated method stub
 
 	}
-	public LogicalTopologyJsonInOut getLogicalTopology(Set<BaseNode> nodes) throws GraphDBClientException {
+	public LogicalTopologyJsonInOut getLogicalTopology(List<BaseNode> nodes) throws GraphDBClientException {
 		LogicalTopologyJsonInOut res = new LogicalTopologyJsonInOut();
 		LogicalTopology topology = res.getResult();
-		Set<BaseNode> resNode = topology.getNodes();
-		Set<LogicalLink> resLink = topology.getLinks();
+		List<BaseNode> resNode = topology.getNodes();
+		List<LogicalLink> resLink = topology.getLinks();
 
 		for(BaseNode node : nodes) {
 			String deviceName = node.getDeviceName();
@@ -51,13 +51,13 @@ public class StubDBClientImpl implements GraphDBClient {
 			for(Map.Entry<String, String> entry : logicalLink.entrySet())  {
 				if(entry.getKey() == deviceName) {
 					LogicalLink link = topology.new LogicalLink();
-					Set<String> deviceNames = link.getDeviceName();
+					List<String> deviceNames = link.getDeviceName();
 					deviceNames.add(entry.getKey());
 					deviceNames.add(entry.getValue());
 					resLink.add(link);
 				} else if(entry.getValue() == deviceName) {
 					LogicalLink link = topology.new LogicalLink();
-					Set<String> deviceNames = link.getDeviceName();
+					List<String> deviceNames = link.getDeviceName();
 					deviceNames.add(entry.getKey());
 					deviceNames.add(entry.getValue());
 					resLink.add(link);
@@ -93,7 +93,7 @@ public class StubDBClientImpl implements GraphDBClient {
 
 		logicalLink.put(src, dst);
 
-		Set<Integer> ports = new HashSet<Integer>();
+		List<Integer> ports = new ArrayList<Integer>();
 		ports.add(nameToPort.get(src));
 		ports.add(nameToPort.get(dst));
 		PatchLink patchLink = res.new PatchLink();
@@ -131,7 +131,7 @@ public class StubDBClientImpl implements GraphDBClient {
 			logicalLink.remove(dst);
 		}
 
-		Set<Integer> ports = new HashSet<Integer>();
+		List<Integer> ports = new ArrayList<Integer>();
 		ports.add(nameToPort.get(src));
 		ports.add(nameToPort.get(dst));
 		PatchLink patchLink = res.new PatchLink();

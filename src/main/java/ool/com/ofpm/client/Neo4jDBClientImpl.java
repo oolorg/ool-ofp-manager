@@ -5,7 +5,7 @@
  */
 package ool.com.ofpm.client;
 
-import java.util.Set;
+import java.util.List;
 
 import ool.com.ofpm.json.BaseNode;
 import ool.com.ofpm.json.GraphDBResult;
@@ -86,7 +86,7 @@ public class Neo4jDBClientImpl implements GraphDBClient {
 	}
 
 	public LogicalTopologyJsonInOut getLogicalTopology(
-			Set<BaseNode> nodes)
+			List<BaseNode> nodes)
 			throws GraphDBClientException {
 		// TODO Auto-generated method stub
 		return null;

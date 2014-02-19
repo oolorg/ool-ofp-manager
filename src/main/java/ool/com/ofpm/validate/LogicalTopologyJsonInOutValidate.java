@@ -10,6 +10,5 @@ public class LogicalTopologyJsonInOutValidate extends BaseValidate {
 		if(params.getResult() == null) {
 			throw new ValidateException("Resultがnullです");
 		}
-		new LogicalTopologyValidate().checkValidation(params.getResult());
 	}
 }

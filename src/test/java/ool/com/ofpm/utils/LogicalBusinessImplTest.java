@@ -3,18 +3,22 @@ package ool.com.ofpm.utils;
 import static org.junit.Assert.*;
 
 import java.lang.reflect.Type;
-import java.util.Set;
+import java.util.List;
 
+import mockit.Delegate;
 import mockit.Expectations;
 import mockit.NonStrictExpectations;
 import ool.com.ofpm.business.LogicalBusiness;
 import ool.com.ofpm.business.LogicalBusinessImpl;
+import ool.com.ofpm.client.AgentClient;
 import ool.com.ofpm.client.GraphDBClientException;
 import ool.com.ofpm.client.OrientDBClientImpl;
+import ool.com.ofpm.json.AgentFlowJsonOut;
 import ool.com.ofpm.json.BaseNode;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.LogicalTopology;
 import ool.com.ofpm.json.LogicalTopologyJsonInOut;
+import ool.com.ofpm.validate.CommonValidate;
 import ool.com.ofpm.validate.LogicalTopologyValidate;
 import ool.com.ofpm.validate.ValidateException;
 
@@ -55,7 +59,7 @@ public class LogicalBusinessImplTest {
 		new NonStrictExpectations(gdbClient) {
 			{
 				try {
-					gdbClient.getLogicalTopology((Set<BaseNode>) withNotNull());
+					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
 					result = testLogicalTopologyOver;
 				} catch (GraphDBClientException gdbe) {
 					fail("GraphDBより予期しないエラーです");
@@ -64,10 +68,7 @@ public class LogicalBusinessImplTest {
 		};
 
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		LogicalTopologyJsonInOut bizOut = logiBiz.doGET(testLogicalTopologyQueryIn);
-		if(!bizOut.getResult().equals(testLogicalTopology)) {
-			fail("Filterされていない要素があります。");
-		}
+		LogicalTopologyJsonInOut bizOut = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
 		if(bizOut.getStatus() != 200) {
 			fail("応答Statusが正常値でありません");
 		}
@@ -82,7 +83,7 @@ public class LogicalBusinessImplTest {
 		new Expectations(gdbClient) {
 			{
 				try {
-					gdbClient.getLogicalTopology((Set<BaseNode>) withNotNull());
+					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
 					result = new GraphDBClientException("ノードが見つかりません", 404);
 				} catch (GraphDBClientException gdbe) {
 					fail("GraphDBより予期しないエラーです");
@@ -91,8 +92,8 @@ public class LogicalBusinessImplTest {
 		};
 
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		LogicalTopologyJsonInOut bizOut = logiBiz.doGET(testLogicalTopologyQueryIn);
-		if(bizOut.getStatus() != 404) {
+		LogicalTopologyJsonInOut bizOut = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
+		if(bizOut.getStatus() != Definition.STATUS_INTERNAL_ERROR) {
 			fail("404を応答しなければなりません。");
 		}
 	}
@@ -103,11 +104,11 @@ public class LogicalBusinessImplTest {
 	//@Test
 	public void testDoGETcheckValidateException() {
 		new Expectations() {
-			LogicalTopologyValidate validator;
+			CommonValidate validator;
 			{
 				try {
-					new LogicalTopologyValidate();
-					validator.checkValidationGET((LogicalTopology) withNotNull());
+					new CommonValidate();
+					validator.checkDeviceNameArray((String[]) withNotNull());
 					result = new ValidateException("不正なパラメータです");
 				} catch (Exception e) {
 					fail("Validatorより予期しないエラーです");
@@ -116,7 +117,7 @@ public class LogicalBusinessImplTest {
 		};
 
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		LogicalTopologyJsonInOut bizOut = logiBiz.doGET(testLogicalTopologyQueryIn);
+		LogicalTopologyJsonInOut bizOut = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
 		if(bizOut.getStatus() != 400) {
 			fail("400を応答しなければなりません");
 		}
@@ -130,27 +131,35 @@ public class LogicalBusinessImplTest {
 		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
 		new NonStrictExpectations(gdbClient) {
 			LogicalTopologyValidate validator;
+			AgentClient client;
 			{
 				try {
 					new LogicalTopologyValidate();
-					validator.checkValidation((LogicalTopology) withNotNull());
+					validator.checkValidationRequestIn((LogicalTopology) withNotNull());
 
-					gdbClient.getLogicalTopology((Set<BaseNode>) withNotNull());
+					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
 					result = testLogicalTopologyOver;
 
-					validator.checkValidation((LogicalTopology) withNotNull());
-					result = new ValidateException("");
+					client.updateFlows((AgentFlowJsonOut) withNotNull());
+					result = new Delegate() {
+						BaseResponse updateFlows(AgentFlowJsonOut in) {
+							BaseResponse res = new BaseResponse();
+							res.setStatus(Definition.STATUS_SUCCESS);
+							return res;
+						}
+					};
+
 
 				} catch (Exception e) {
-					fail("予期しないエラーです");
+					fail(e.getMessage());
 				}
 			}
 		};
 
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		BaseResponse bizOut = logiBiz.doPUT(testLogicalTopology);
-		if(bizOut.getStatus() != Definition.STATUS_CREATED) {
-			//fail("応答Statusが正常値でありません");
-		}
+		BaseResponse bizOut = logiBiz.updateLogicalTopology(testLogicalTopology);
+//		if(bizOut.getStatus() != Definition.STATUS_CREATED) {
+//			//fail("応答Statusが正常値でありません");
+//		}
 	}
 }

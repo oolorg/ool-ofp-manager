@@ -25,7 +25,7 @@ public class BaseNode {
 		if(obj == null) return false;
 		if(this.getClass() != obj.getClass()) return false;
 		BaseNode other = (BaseNode)obj;
-		return (this.deviceName != other.deviceName);
+		return this.deviceName.equals(other.deviceName);
 	}
 	@Override
 	public int hashCode() {
