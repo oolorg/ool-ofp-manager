@@ -16,14 +16,14 @@ import ool.com.ofpm.validate.ValidateException;
 
 /**
  * @author 1131080355959
- *
+ * 
  */
 public class HelloWorldBusinessImpl
 		implements HelloWorldBusiness {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see
 	 * ool.com.ofpm.business.HelloWorldBusiness#getHello()
 	 */
@@ -38,7 +38,7 @@ public class HelloWorldBusinessImpl
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see
 	 * ool.com.ofpm.business.HelloWorldBusiness#createHello
 	 * (ool.com.ofpm.json.HelloWorldJsonPostIn)
@@ -52,7 +52,7 @@ public class HelloWorldBusinessImpl
 			validator.postValidation();
 			GraphDBClient dbClient = Neo4jDBClientImpl
 					.getInstance();
-			//dbClient.exec();
+			dbClient.exec();
 			ret.setEnabled("OK");
 		} catch (ValidateException e) {
 			// TODO Auto-generated catch block

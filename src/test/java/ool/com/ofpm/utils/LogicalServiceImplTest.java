@@ -4,8 +4,11 @@ import static org.junit.Assert.*;
 
 import java.lang.reflect.Type;
 
+import javax.servlet.http.HttpServletRequest;
+
 import mockit.Delegate;
 import mockit.Expectations;
+import mockit.Mocked;
 import ool.com.ofpm.business.LogicalBusinessImpl;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.LogicalTopology;
@@ -42,13 +45,17 @@ public class LogicalServiceImplTest {
 
 
 
+	@Mocked HttpServletRequest req;
 	@Test
 	public void testDoGET() {
 		new Expectations() {
 			LogicalBusinessImpl logiBiz;
 			{
+				req.getParameter("deviceNames");
+				result = " ,  novaNode01 ,  , novaNode02, nova Node03, ,, ,";
+
 				new LogicalBusinessImpl();
-				logiBiz.getLogicalTopology((String[]) withNotNull());
+				logiBiz.doGET((String[]) withNotNull());
 				result = new Delegate() {
 					@SuppressWarnings("unused")
 					LogicalTopologyJsonInOut doGET(String[] params) {
@@ -67,7 +74,7 @@ public class LogicalServiceImplTest {
 		};
 
 		LogicalService ls = new LogicalServiceImpl();
-		ls.getLogicalTopology("novaNode01,novaNode02");
+		ls.doGET(req);
 	}
 
 	/*
@@ -79,7 +86,7 @@ public class LogicalServiceImplTest {
 			LogicalBusinessImpl logiBiz;
 			{
 				new LogicalBusinessImpl();
-				logiBiz.updateLogicalTopology((LogicalTopology) withNotNull());
+				logiBiz.doPUT((LogicalTopology) withNotNull());
 				result = new Delegate() {
 					@SuppressWarnings("unused")
 					BaseResponse doPUT(LogicalTopology topology) {
@@ -91,6 +98,6 @@ public class LogicalServiceImplTest {
 		};
 
 		LogicalService ls = new LogicalServiceImpl();
-		ls.updateLogicalTopology(testLogicalTopologyJson);
+		ls.doPUT(testLogicalTopologyJson);
 	}
 }

@@ -1,17 +1,16 @@
 package ool.com.ofpm.json;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import java.util.HashSet;
+import java.util.Set;
 
 public class AgentFlowJsonOut {
-	private List<AgentFlow> list;
+	private Set<AgentFlow> list;
 
-	public List<AgentFlow> getList() {
+	public Set<AgentFlow> getList() {
 		return list;
 	}
 
-	public void setList(List<AgentFlow> list) {
+	public void setList(Set<AgentFlow> list) {
 		this.list = list;
 	}
 
@@ -19,7 +18,7 @@ public class AgentFlowJsonOut {
 		private String ofcUrl;
 		private String type;
 		private String ip;
-		private List<Integer> port = new ArrayList<Integer>();
+		private Set<Integer> port = new HashSet<Integer>();
 
 		public String getOfcUrl() {
 			return ofcUrl;
@@ -39,11 +38,11 @@ public class AgentFlowJsonOut {
 		public void setIp(String ip) {
 			this.ip = ip;
 		}
-		public List<Integer> getPort() {
+		public Set<Integer> getPort() {
 			return port;
 		}
 		public void setPort(
-				List<Integer> port) {
+				Set<Integer> port) {
 			this.port = port;
 		}
 

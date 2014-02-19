@@ -13,7 +13,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.WebResource.Builder;
 
@@ -26,8 +25,6 @@ public class AgentClientImpl implements AgentClient {
 		this.agentIp = ip;
 		this.resource = Client.create().resource("http://" + ip + Definition.AGENT_PATH);
 	}
-
-	// 現在使用されません
 	public BaseResultIn getTopology() throws AgentClientException {
 		ClientResponse response;
 		Builder res_builder;
@@ -51,23 +48,25 @@ public class AgentClientImpl implements AgentClient {
 		try {
 			type = new TypeToken<AgentFlowJsonOut>(){}.getType();
 			reqData = gson.toJson(flows, type);
+		} catch (Exception e) {
+			throw new AgentClientException("Invalid FlowObject");
+		}
 
+		try {
 			Builder resBuilder = this.resource.entity(reqData);
 			resBuilder = resBuilder.accept(MediaType.APPLICATION_JSON);
 			resBuilder = resBuilder.type(MediaType.APPLICATION_JSON);
 			resAgent = resBuilder.put(ClientResponse.class);
+			if(resAgent.getStatus() != Definition.STATUS_SUCCESS) throw new Exception();
+		} catch (Exception e) {
+			throw new AgentClientException("Connection faild bitween AgentClient");
+		}
 
+		try {
 			type = new TypeToken<BaseResponse>(){}.getType();
 			res = gson.fromJson(resAgent.getEntity(String.class), type);
-		} catch (UniformInterfaceException uie) {
-			ClientResponse cr = uie.getResponse();
-			// TODO: Agentとの通信エラーは上に通知する
-			throw new AgentClientException("Connection faild bitween AgentClient");
-
 		} catch (Exception e) {
-			// Logはき 上には通知しない。
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage("Sorry. I have BUG.");
+			throw new AgentClientException("Bad response from Agent(" + this.agentIp + ")");
 		}
 		return res;
 	}

@@ -1,18 +1,18 @@
 package ool.com.ofpm.json;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 public 	class LogicalTopology {
-	private List<BaseNode> nodes;
-	private List<LogicalLink> links;
+	private Set<BaseNode> nodes;
+	private Set<LogicalLink> links;
 
 	public LogicalTopology() {
-		nodes = new ArrayList<BaseNode>();
-		links = new ArrayList<LogicalLink>();
+		nodes = new HashSet<BaseNode>();
+		links = new HashSet<LogicalLink>();
 	}
 	public LogicalTopology clone() {
 		LogicalTopology newTopo = new LogicalTopology();
@@ -40,33 +40,33 @@ public 	class LogicalTopology {
 		return HashCodeBuilder.reflectionHashCode(this);
 	}
 
-	public List<BaseNode> getNodes() {
+	public Set<BaseNode> getNodes() {
 		return nodes;
 	}
 	public void setNodes(
-			List<BaseNode> nodes) {
+			Set<BaseNode> nodes) {
 		this.nodes = nodes;
 	}
 
-	public List<LogicalLink> getLinks() {
+	public Set<LogicalLink> getLinks() {
 		return links;
 	}
-	public void setLinks(List<LogicalLink> links) {
+	public void setLinks(Set<LogicalLink> links) {
 		this.links = links;
 	}
 
 	public class LogicalLink {
-		private List<String> deviceName;
+		private Set<String> deviceName;
 
 		public LogicalLink() {
-			deviceName = new ArrayList<String>();
+			deviceName = new HashSet<String>();
 		}
 
-		public List<String> getDeviceName() {
+		public Set<String> getDeviceName() {
 			return deviceName;
 		}
 
-		public void setDeviceName(List<String> deviceName) {
+		public void setDeviceName(Set<String> deviceName) {
 			this.deviceName = deviceName;
 		}
 

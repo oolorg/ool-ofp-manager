@@ -5,8 +5,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 
-import ool.com.ofpm.business.AgentManager;
-import ool.com.ofpm.business.AgentManager;
+import ool.com.ofpm.business.AgentManageBusiness;
+import ool.com.ofpm.business.AgentManageBusinessImpl;
 import ool.com.ofpm.utils.Definition;
 
 import org.springframework.stereotype.Component;
@@ -21,8 +21,8 @@ public class ConfigServiceImpl {
 		String linkGetPath    = req.getParameter("linkGetPath");
 		String linkCreatePath = req.getParameter("linkCreatePath");
 		String linkDeletePath = req.getParameter("linkDeletePath");
-		//if(ip != "") Definition.GRAPH_DB_ADDRESS           = "http://" + ip;
-		if(ip != "") Definition.GRAPH_DB_LINK_GET_PATH          = linkGetPath;
+		if(ip != "") Definition.GRAPH_DB_ADDRESS           = "http://" + ip;
+		if(ip != "") Definition.GRAPH_DB_LINK_GET          = linkGetPath;
 		if(ip != "") Definition.GRAPH_DB_LINK_CREATE_PATH  = linkCreatePath;
 		if(ip != "") Definition.GRAPH_DB_LINK_DELETE_PATH  = linkDeletePath;
 		return "Success";
@@ -35,7 +35,7 @@ public class ConfigServiceImpl {
 		String switchIp   = req.getParameter("switchIp").trim();
 		String agentIp    = req.getParameter("agentIp").trim();
 		String ofcUrl     = req.getParameter("ofcUrl").trim();
-		AgentManager amb = AgentManager.getInstance();
+		AgentManageBusiness amb = AgentManageBusinessImpl.getInstance();
 		amb.setAgentClient(deviceName, switchIp, agentIp, ofcUrl);
 		return "Setting";
 	}

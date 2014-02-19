@@ -5,7 +5,7 @@ import ool.com.ofpm.json.LogicalTopology;
 import ool.com.ofpm.json.LogicalTopologyJsonInOut;
 
 public interface LogicalBusiness {
-	public LogicalTopologyJsonInOut getLogicalTopology(String[] deviceNames);
+	public LogicalTopologyJsonInOut doGET(String[] params);
 
-	public BaseResponse updateLogicalTopology(LogicalTopology requestedTopology);
+	public BaseResponse doPUT(LogicalTopology params);
 }
