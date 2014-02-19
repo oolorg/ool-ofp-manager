@@ -9,10 +9,7 @@ import ool.com.ofpm.client.AgentClientImpl;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
 
-import org.apache.log4j.Logger;
-
 public class AgentManager {
-	private static final Logger logger = Logger.getLogger(AgentManager.class);
 	private static AgentManager instance = null;
 
 	private Map<String, AgentClient> ipTable = new HashMap<String, AgentClient>();
@@ -31,11 +28,6 @@ public class AgentManager {
 	}
 
 	public static AgentManager getInstance() {
-		String fname = "AgentManager";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s() - start", fname));
-		}
-
 		if(instance == null) {
 			instance = new AgentManager();
 		}
@@ -43,19 +35,10 @@ public class AgentManager {
 		//String[] rec = config.getString(Definition.AGENT_RECODE).split(",");
 		String[] rec = {"hoge","hoge","hoge","hoge"};
 		instance.setAgentClient(rec[0], rec[1], rec[2], rec[3]);
-
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, instance));
-		}
 		return instance;
 	}
 
 	public void setAgentClient(String deviceName, String switchIp, String agentIp, String ofcIp) {
-		String fname = "setAgentClient";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(deviceName=%s, switchIp=%s, agentIp=%s, ofcIp=%s) - start", fname, deviceName, switchIp, agentIp, ofcIp));
-		}
-
 		AgentClient agentClient = null;
 		for(AgentClient client : ipTable.values()) {
 			if(client.getIp() == agentIp) {
@@ -69,36 +52,17 @@ public class AgentManager {
 		ipTable.put(switchIp, agentClient);
 		nameToIp.put(deviceName, switchIp);
 		switchToOfc.put(switchIp, ofcIp);
-
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s() - end", fname));
-		}
 	}
 
 	public AgentClient getAgentClient(String ip) {
-		String fname = "getAgentClient";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ip=%s) - start", fname, ip));
-			logger.debug(String.format("%s(ret=%s) -end", fname, ipTable.get(ip)));
-		}
 		return ipTable.get(ip);
 	}
 
 	public String getSwitchIp(String deviceName) {
-		String fname = "getSwitchIp";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
-			logger.debug(String.format("%s(ret=%s) -end", fname, nameToIp.get(deviceName)));
-		}
 		return nameToIp.get(deviceName);
 	}
 
 	public String getOfcIp(String switchIp) {
-		String fname = "getOfcIp";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ip=%s) - start", fname, switchIp));
-			logger.debug(String.format("%s(ret=%s) -end", fname, switchToOfc.get(switchIp)));
-		}
 		return switchToOfc.get(switchIp);
 	}
 }

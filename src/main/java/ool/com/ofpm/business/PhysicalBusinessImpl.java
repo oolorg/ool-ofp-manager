@@ -5,10 +5,8 @@ import ool.com.ofpm.client.OrientDBClientImpl;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.ResultOut;
 
-import org.apache.log4j.Logger;
-
-public class PhysicalBusinessImpl implements PhysicalBusiness {
-	private static final Logger logger = Logger.getLogger(PhysicalBusinessImpl.class);
+public class PhysicalBusinessImpl
+		implements PhysicalBusiness {
 
 	private GraphDBClient gdb_client = OrientDBClientImpl.getInstance();
 
@@ -52,22 +50,12 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 //	}
 
 	public ResultOut getPhysicalTopology() {
-		String fname = "getPhysicalTopology";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(params=%s) - start", fname));
-
-		ResultOut res = null;
 		// TODO Auto-generated method stub
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
-		return res;
+		return null;
 	}
 
 	public BaseResponse updatePhysicalTopology() {
-		String fname = "updatePhysicalTopology";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(params=%s) - start", fname));
-
-		BaseResponse res = null;
 		// TODO Auto-generated method stub
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
-		return res;
+		return null;
 	}
 }

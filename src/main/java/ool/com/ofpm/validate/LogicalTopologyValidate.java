@@ -15,7 +15,9 @@ public class LogicalTopologyValidate extends BaseValidate {
 	// TODO: テナントのチェックが必要です
 	public void checkValidationRequestIn(LogicalTopology params) throws ValidateException {
 		String fname = "checkValidation";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(params=%s) - start", fname, params));
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(%s) - start", fname, params));
+		}
 
 		if(params == null) {
 			throw new ValidateException("Parameter is null");
@@ -43,6 +45,8 @@ public class LogicalTopologyValidate extends BaseValidate {
 			}
 		}
 
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s() - end", fname));
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s() - end", fname));
+		}
 	}
 }

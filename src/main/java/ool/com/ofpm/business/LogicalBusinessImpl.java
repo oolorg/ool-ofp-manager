@@ -1,5 +1,6 @@
 package ool.com.ofpm.business;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,9 @@ import ool.com.ofpm.validate.ValidateException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 public class LogicalBusinessImpl implements LogicalBusiness {
 	private static final Logger logger = Logger.getLogger(LogicalBusinessImpl.class);
 
@@ -35,7 +39,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	private void filterTopology(List<BaseNode> nodes, LogicalTopology topology) {
 		String fname = "filterTopology";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(nodes=%s, topology=%s) - start", fname, nodes, topology));
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(%s, %s) - start", fname, nodes, topology));
+		}
 
 		List<BaseNode> topoNodes = topology.getNodes();
 		List<LogicalLink> topoLinks = topology.getLinks();
@@ -60,12 +66,16 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 		topoLinks.removeAll(removalLinks);
 
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s() - end", fname));
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s() - end", fname));
+		}
 	}
 
 	public LogicalTopologyJsonInOut getLogicalTopology(String[] deviceNames) {
 		String fname = "getLogicalTopology";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(deviceNames=[\"%s\"]) - start", fname, StringUtils.join(deviceNames, "\",\"")));
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s([\"%s\"]) - start", fname, StringUtils.join(deviceNames, "\",\"")));
+		}
 
 		LogicalTopologyJsonInOut res = new LogicalTopologyJsonInOut();
 		try {
@@ -82,13 +92,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			GraphDBClient graphDBClient = OrientDBClientImpl.getInstance();
 
 			if(logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", nodes));
+				logger.info(String.format("graphDBClient.getLogicalTopology(%s) - called", nodes));
 			}
 
 			res = graphDBClient.getLogicalTopology(nodes);
 
 			if(logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", res));
+				logger.info(String.format("graphDBClient.getLogicalTopology(%s) - returned", res));
 			}
 
 		} catch (ValidateException ve) {
@@ -107,13 +117,21 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			res.setMessage("Eroor :-( ");
 		}
 
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
+		if(logger.isDebugEnabled()) {
+			Gson gson = new Gson();
+			Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
+			String returnValue = gson.toJson(res, type);
+			logger.debug(String.format("%s(%s) - end", fname, returnValue));
+		}
+
 		return res;
 	}
 
 	public BaseResponse updateLogicalTopology(LogicalTopology requestedTopology) {
 		String fname = "updateLogicalTopology";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(requestedTopology=%s) - start", fname, requestedTopology));
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(%s) - start", fname, requestedTopology));
+		}
 
 		LogicalTopologyValidate validator = new LogicalTopologyValidate();
 		acm = AgentManager.getInstance();
@@ -124,13 +142,21 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			List<BaseNode> requestedNodes = requestedTopology.getNodes();
 			final GraphDBClient graphDBClient = OrientDBClientImpl.getInstance(); // これprivate 変数に変更
 
-			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", requestedNodes));
+			if(logger.isInfoEnabled()) {
+				logger.info(String.format("graphDBClient.getLogicalTopology(%s) - called", requestedNodes));
+			}
+
 			LogicalTopologyJsonInOut responseGraphDB = graphDBClient.getLogicalTopology(requestedNodes);
-			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", responseGraphDB));
+
+
+			if(logger.isInfoEnabled()) {
+				logger.info(String.format("graphDBClient.getLogicalTopology(%s) - returned", responseGraphDB));
+			}
 
 			LogicalTopology currentTopology = responseGraphDB.getResult();
 			this.filterTopology(requestedNodes, currentTopology);
 
+			// inTopo と outTopo の差分を作成し、加算リスト、減算リスト
 			LogicalTopology incTopology = requestedTopology.sub(currentTopology);
 			LogicalTopology decTopology = currentTopology.sub(requestedTopology);
 
@@ -147,9 +173,15 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 //				}
 //			});
 			for(LogicalLink link : decTopology.getLinks()) {
-				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(link=%s) - called", link));
+				if(logger.isInfoEnabled()) {
+					logger.info(String.format("graphDBClient.delLogicalTopology(%s) - called", link));
+				}
+
 				PatchLinkJsonIn reducedPatches = graphDBClient.delLogicalLink(link);
-				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(ret=%s) - returned", reducedPatches));
+
+				if(logger.isInfoEnabled()) {
+					logger.info(String.format("graphDBClient.delLogicalTopology(%s) - returned", reducedPatches));
+				}
 
 				if(reducedPatches.getStatus() != Definition.STATUS_SUCCESS) {
 					res.setStatus( reducedPatches.getStatus());
@@ -160,9 +192,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 
 			for(LogicalLink link : incTopology.getLinks()) {
-				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.addLogicalTopology(nodes=%s) - called", link));
+				if(logger.isInfoEnabled()) {
+					logger.info(String.format("graphDBClient.addLogicalTopology(%s) - called", link));
+				}
 				PatchLinkJsonIn augmentedPatches = graphDBClient.addLogicalLink(link);
-				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.addLogicalTopology(req=%s) - returned", augmentedPatches));
+				if(logger.isInfoEnabled()) {
+					logger.info(String.format("graphDBClient.addLogicalTopology(%s) - returned", augmentedPatches));
+				}
 
 				if(augmentedPatches.getStatus() != Definition.STATUS_CREATED) {
 					res.setStatus( augmentedPatches.getStatus());
@@ -180,12 +216,15 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			for(AgentClient agentClient : agentUpdateFlowReq.keySet()) {
 				agentFlowJson.setList(agentUpdateFlowReq.get(agentClient));
 
-				if(logger.isInfoEnabled()) logger.info(String.format("agentClient.updateFlows(flows=%s) - called", agentFlowJson));
+				if(logger.isInfoEnabled()) {
+					logger.info(String.format("agentClient.updateFlows(%s) - called", agentFlowJson));
+				}
 				BaseResponse resAgent = agentClient.updateFlows(agentFlowJson);
-				if(logger.isInfoEnabled()) logger.info(String.format("agentClinet.updateFlows(ret=%s) - returned", agentFlowJson));
+				if(logger.isInfoEnabled()) {
+					logger.info(String.format("agentClinet.updateFlows(ret=%s) - returned", agentFlowJson));
+				}
 
 				if(resAgent.getStatus() != Definition.STATUS_SUCCESS) {
-					// TODO: ここでトランザクション入れないとだめだよ
 					return resAgent;
 				}
 			}
@@ -209,7 +248,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		}
 
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, res));
+		}
+
 		return res;
 	}
 
@@ -241,9 +283,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	}
 
 	private void registUpdateFlowRequest(Map<AgentClient, List<AgentFlow>> agentFlows, List<PatchLink> updatedLinks, String type) {
-		String fname = "registUpdateFlowRequest";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(agentFlows=%s, updatedLinks=%s, type=%s) - start", fname, agentFlows, updatedLinks, type));
-
 		for(PatchLink link : updatedLinks) {
 			String switchIp = acm.getSwitchIp(link.getDeviceName());
 			String ofcUrl   = acm.getOfcIp(switchIp);
@@ -261,7 +300,5 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			List<AgentFlow> flows = agentFlows.get(agentClient);
 			flows.add(newFlow);
 		}
-
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s() - end", fname));
 	}
 }

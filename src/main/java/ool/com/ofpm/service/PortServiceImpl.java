@@ -11,7 +11,6 @@ import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.PortJsonIn;
 import ool.com.ofpm.service.utils.ResponseGenerator;
 
-import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
 import com.google.gson.Gson;
@@ -19,64 +18,45 @@ import com.google.gson.reflect.TypeToken;
 
 @Component
 public class PortServiceImpl implements PortService {
-	private static final Logger logger = Logger.getLogger(ConfigServiceImpl.class);
 	Gson gson = new Gson();
 
 	@Override
 	public Response createPort(String params) {
-		String fname = "createPort";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, params));
-
 		Type type = new TypeToken<PortJsonIn>(){}.getType();
 		PortJsonIn inPara = this.gson.fromJson(params, type);
 
-		PortBusiness device_business = new PortBusinessImpl();
-		BaseResponse outPara = device_business.createPort(inPara);
+		PortBusiness portBiz = new PortBusinessImpl();
+		BaseResponse outPara = portBiz.createPort(inPara);
 
 		type = new TypeToken<BaseResponse>(){}.getType();
-		String resPara = this.gson.toJson(outPara, type);
-
-		Response res = ResponseGenerator.generate(resPara, Status.OK);
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
-		return res;
+		String res = this.gson.toJson(outPara, type);
+		return ResponseGenerator.generate(res,  Status.OK);
 	}
 
 	@Override
 	public Response deletePort(String params) {
-		String fname = "deletePort";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, params));
-
 		Type type = new TypeToken<PortJsonIn>(){}.getType();
 		PortJsonIn inPara = this.gson.fromJson(params, type);
 
-		PortBusiness device_business = new PortBusinessImpl();
-		BaseResponse outPara = device_business.deletePort(inPara);
+		PortBusiness portBiz = new PortBusinessImpl();
+		BaseResponse outPara = portBiz.deletePort(inPara);
 
 		type = new TypeToken<BaseResponse>(){}.getType();
-		String resPara = this.gson.toJson(outPara, type);
-
-		Response res = ResponseGenerator.generate(resPara, Status.OK);
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
-		return res;
+		String res = this.gson.toJson(outPara, type);
+		return ResponseGenerator.generate(res,  Status.OK);
 	}
 
 	@Override
 	public Response updatePort(String params) {
-		String fname = "updatePort";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, params));
-
 		Type type = new TypeToken<PortJsonIn>(){}.getType();
 		PortJsonIn inPara = this.gson.fromJson(params, type);
 
-		PortBusiness device_business = new PortBusinessImpl();
-		BaseResponse outPara = device_business.updatePort(inPara);
+		PortBusiness portBiz = new PortBusinessImpl();
+		BaseResponse outPara = portBiz.updatePort(inPara);
 
 		type = new TypeToken<BaseResponse>(){}.getType();
-		String resPara = this.gson.toJson(outPara, type);
-
-		Response res = ResponseGenerator.generate(resPara, Status.OK);
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
-		return res;
+		String res = this.gson.toJson(outPara, type);
+		return ResponseGenerator.generate(res,  Status.OK);
 	}
 
 }
