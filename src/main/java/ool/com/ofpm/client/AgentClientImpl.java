@@ -4,8 +4,6 @@ import java.lang.reflect.Type;
 
 import javax.ws.rs.core.MediaType;
 
-import org.apache.log4j.Logger;
-
 import ool.com.ofpm.json.AgentFlowJsonOut;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.BaseResultIn;
@@ -24,17 +22,9 @@ public class AgentClientImpl implements AgentClient {
 	private Gson gson = new Gson();
 	private String agentIp;
 
-	private static final Logger logger = Logger.getLogger(AgentClientImpl.class);
-
 	public AgentClientImpl(String ip) {
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("AgentClientImpl(%s) - start", ip));
-		}
 		this.agentIp = ip;
 		this.resource = Client.create().resource("http://" + ip + Definition.AGENT_PATH);
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("AgentClientImpl() - end"));
-		}
 	}
 
 	// 現在使用されません
@@ -53,10 +43,6 @@ public class AgentClientImpl implements AgentClient {
 	}
 
 	public BaseResponse updateFlows(AgentFlowJsonOut flows) throws AgentClientException {
-		final String func = "updateFlows";
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(%s) - start", func, flows));
-		}
 		BaseResponse res = new BaseResponse();
 
 		Type type;
@@ -75,18 +61,13 @@ public class AgentClientImpl implements AgentClient {
 			res = gson.fromJson(resAgent.getEntity(String.class), type);
 		} catch (UniformInterfaceException uie) {
 			ClientResponse cr = uie.getResponse();
-			logger.error(uie.getMessage());
 			// TODO: Agentとの通信エラーは上に通知する
-			throw new AgentClientException("Connection faild bitween AgentClient:" + this.agentIp);
+			throw new AgentClientException("Connection faild bitween AgentClient");
 
 		} catch (Exception e) {
 			// Logはき 上には通知しない。
-			logger.error(e.getMessage());
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage("Sorry. I have BUG.");
-		}
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s (ret=%s) - end", func, res));
 		}
 		return res;
 	}
