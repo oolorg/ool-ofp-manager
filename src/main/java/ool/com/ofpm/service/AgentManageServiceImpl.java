@@ -1,6 +1,5 @@
 package ool.com.ofpm.service;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.PUT;
 import javax.ws.rs.core.Response;
 
@@ -15,14 +14,10 @@ public class AgentManageServiceImpl implements AgentManageService {
 	private static final Logger logger = Logger.getLogger(AgentManageServiceImpl.class);
 
 	@Override
-	public String doGET(HttpServletRequest req) {
+	public String doGET(String deviceName, String switchIp, String agentIp, String ofcIp) {
 		String fname = "doGET";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, req));
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(deviceName=%s, switchIp=%s, agentIp=%s, ofcIp=%s) - start", fname, deviceName, switchIp, agentIp, ofcIp));
 
-		String deviceName = req.getParameter("deviceName").trim();
-		String switchIp   = req.getParameter("switchIp").trim();
-		String agentIp    = req.getParameter("agentIp").trim();
-		String ofcIp      = req.getParameter("ofcIp").trim();
 		AgentManager amb = AgentManager.getInstance();
 		amb.setAgentClient(deviceName, switchIp, agentIp, ofcIp);
 

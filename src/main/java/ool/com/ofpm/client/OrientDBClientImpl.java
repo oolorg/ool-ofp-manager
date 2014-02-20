@@ -14,7 +14,6 @@ import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.Definition;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
@@ -57,15 +56,20 @@ public class OrientDBClientImpl implements GraphDBClient {
 		}
 
 		LogicalTopologyJsonInOut res;
+		StringBuilder deviceNames = new StringBuilder();
 		Iterator<BaseNode> ni = nodes.iterator();
-		String deviceNames = StringUtils.join(ni, ",");
+		deviceNames.append(ni.next().getDeviceName());
+		while(ni.hasNext()) {
+			deviceNames.append(",");
+			deviceNames.append(ni.next().getDeviceName());
+		}
 
 		try {
 			ClientResponse gdbResponse;
 			Builder resBuilder;
 			String url = conf.getString(Definition.GRAPH_DB_URL) + Definition.GRAPH_DB_LINK_GET_PATH;
 			WebResource resource = this.gdb_client.resource(url);
-			resource    = resource.queryParam("deviceNames", deviceNames);
+			resource    = resource.queryParam("deviceNames", deviceNames.toString());
 			resBuilder  = resource.accept(MediaType.APPLICATION_JSON);
 			resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
 			gdbResponse = resBuilder.get(ClientResponse.class);
