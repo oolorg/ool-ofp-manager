@@ -1,5 +1,7 @@
 package ool.com.ofpm.business;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +34,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	private AgentManager acm;
 	private AgentFlowJsonOut agentFlowJson = new AgentFlowJsonOut();
+	private final GraphDBClient graphDBClient = OrientDBClientImpl.getInstance();
 
 	private void filterTopology(List<BaseNode> nodes, LogicalTopology topology) {
 		String fname = "filterTopology";
@@ -54,7 +57,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 		List<LogicalLink> removalLinks = new ArrayList<LogicalLink>();
 		for(LogicalLink topoLink : topoLinks) {
-			if(!deviceNames.containsAll(topoLink.getDeviceName())) {
+			if(! deviceNames.containsAll(topoLink.getDeviceName())) {
 				removalLinks.add(topoLink);
 			}
 		}
@@ -81,15 +84,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 			GraphDBClient graphDBClient = OrientDBClientImpl.getInstance();
 
-			if(logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", nodes));
-			}
-
+			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", nodes));
 			res = graphDBClient.getLogicalTopology(nodes);
-
-			if(logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", res));
-			}
+			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", res));
 
 		} catch (ValidateException ve) {
 			logger.error(ve.getMessage());
@@ -122,7 +119,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			validator.checkValidationRequestIn(requestedTopology);
 
 			List<BaseNode> requestedNodes = requestedTopology.getNodes();
-			final GraphDBClient graphDBClient = OrientDBClientImpl.getInstance(); // これprivate 変数に変更
 
 			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", requestedNodes));
 			LogicalTopologyJsonInOut responseGraphDB = graphDBClient.getLogicalTopology(requestedNodes);
@@ -135,51 +131,42 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			LogicalTopology incTopology = requestedTopology.sub(currentTopology);
 			LogicalTopology decTopology = currentTopology.sub(requestedTopology);
 
-			List<PatchLink> reducedLinks = new ArrayList<PatchLink>();
-			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
-//			this.updateLinks(decTopology, reducedLinks, new DelegateGraphDBUpdateLink() {
-//				public PatchLinkJsonIn update(LogicalLink link) throws GraphDBClientException {
-//					return graphDBClient.delLogicalLink(link);
+//			List<PatchLink> reducedLinks   = new ArrayList<PatchLink>();
+//			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
+			List<PatchLink> reducedLinks   = this.gdbUpdateLinkReqs(decTopology, graphDBClient.getClass().getMethod("delLogicalTopology", LogicalLink.class));
+			List<PatchLink> augmentedLinks = this.gdbUpdateLinkReqs(incTopology, graphDBClient.getClass().getMethod("addLogicalTopology", LogicalLink.class));
+//			for(LogicalLink link : decTopology.getLinks()) {
+//				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(link=%s) - called", link));
+//				PatchLinkJsonIn reducedPatches = graphDBClient.delLogicalLink(link);
+//				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(ret=%s) - returned", reducedPatches));
+//
+//				if(reducedPatches.getStatus() != Definition.STATUS_SUCCESS) {
+//					res.setStatus( reducedPatches.getStatus());
+//					res.setMessage(reducedPatches.getMessage());
+//					return res;
 //				}
-//			});
-//			this.updateLinks(incTopology, augmentedLinks, new DelegateGraphDBUpdateLink() {
-//				public PatchLinkJsonIn update(LogicalLink link) throws GraphDBClientException {
-//					return graphDBClient.addLogicalLink(link);
+//				reducedLinks.addAll(reducedPatches.getResult());
+//			}
+//
+//			for(LogicalLink link : incTopology.getLinks()) {
+//				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.addLogicalTopology(nodes=%s) - called", link));
+//				PatchLinkJsonIn augmentedPatches = graphDBClient.addLogicalLink(link);
+//				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.addLogicalTopology(req=%s) - returned", augmentedPatches));
+//
+//				if(augmentedPatches.getStatus() != Definition.STATUS_CREATED) {
+//					res.setStatus( augmentedPatches.getStatus());
+//					res.setMessage(augmentedPatches.getMessage());
+//					return res;
 //				}
-//			});
-			for(LogicalLink link : decTopology.getLinks()) {
-				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(link=%s) - called", link));
-				PatchLinkJsonIn reducedPatches = graphDBClient.delLogicalLink(link);
-				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(ret=%s) - returned", reducedPatches));
+//				augmentedLinks.addAll(augmentedPatches.getResult());
+//			}
 
-				if(reducedPatches.getStatus() != Definition.STATUS_SUCCESS) {
-					res.setStatus( reducedPatches.getStatus());
-					res.setMessage(reducedPatches.getMessage());
-					return res;
-				}
-				reducedLinks.addAll(reducedPatches.getResult());
-			}
+			Map<AgentClient, List<AgentFlow>> agentFlowUpdateReqList = new HashMap<AgentClient, List<AgentFlow>>();
+			this.registAgentUpdateFlowRequest(agentFlowUpdateReqList, reducedLinks,   "delete");
+			this.registAgentUpdateFlowRequest(agentFlowUpdateReqList, augmentedLinks, "create");
 
-			for(LogicalLink link : incTopology.getLinks()) {
-				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.addLogicalTopology(nodes=%s) - called", link));
-				PatchLinkJsonIn augmentedPatches = graphDBClient.addLogicalLink(link);
-				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.addLogicalTopology(req=%s) - returned", augmentedPatches));
-
-				if(augmentedPatches.getStatus() != Definition.STATUS_CREATED) {
-					res.setStatus( augmentedPatches.getStatus());
-					res.setMessage(augmentedPatches.getMessage());
-					return res;
-				}
-				augmentedLinks.addAll(augmentedPatches.getResult());
-			}
-
-			// Agent へ通知するリンク更新情報を作製する
-			Map<AgentClient, List<AgentFlow>> agentUpdateFlowReq = new HashMap<AgentClient, List<AgentFlow>>();
-			this.registUpdateFlowRequest(agentUpdateFlowReq, reducedLinks, "delete");
-			this.registUpdateFlowRequest(agentUpdateFlowReq, augmentedLinks, "create");
-
-			for(AgentClient agentClient : agentUpdateFlowReq.keySet()) {
-				agentFlowJson.setList(agentUpdateFlowReq.get(agentClient));
+			for(AgentClient agentClient : agentFlowUpdateReqList.keySet()) {
+				agentFlowJson.setList(agentFlowUpdateReqList.get(agentClient));
 
 				if(logger.isInfoEnabled()) logger.info(String.format("agentClient.updateFlows(flows=%s) - called", agentFlowJson));
 				BaseResponse resAgent = agentClient.updateFlows(agentFlowJson);
@@ -192,6 +179,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 
 			res.setStatus(Definition.STATUS_SUCCESS);
+			res.setMessage("");
 
 		} catch (ValidateException ve) {
 			logger.error(ve.getMessage());
@@ -208,6 +196,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage(gdbe.getMessage());
 
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
 		}
 
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
@@ -215,22 +207,19 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	}
 
 	// 現在の実装では使用しません
-	class DelegateGraphDBUpdateLink {
-		public PatchLinkJsonIn update(LogicalLink link) throws GraphDBClientException {
-			return null;
-		}
-	}
-
-	// 現在の実装では使用しません
-	private void updateLinks(LogicalTopology topology, List<PatchLink> updatedLinks, DelegateGraphDBUpdateLink ext) throws GraphDBClientException {
+	private List<PatchLink> gdbUpdateLinkReqs(LogicalTopology topology, Method method) throws GraphDBClientException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		List<PatchLink> updatedLinks = new ArrayList<PatchLink>();
 		for(LogicalLink link : topology.getLinks()) {
-			PatchLinkJsonIn updatedPatches = ext.update(link);
+			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(link=%s) - calling", link));
+			PatchLinkJsonIn updatedPatches = (PatchLinkJsonIn)method.invoke(this.graphDBClient, link);
+			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(link=%s) - returned", link));
 
 			if(updatedPatches.getStatus() != Definition.STATUS_SUCCESS) {
 				this.cancelUpdate(updatedPatches.getStatus(), updatedPatches.getMessage());
 			}
 			updatedLinks.addAll(updatedPatches.getResult());
 		}
+		return updatedLinks;
 	}
 
 	// 現在の実装では使用しません
@@ -241,7 +230,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		return res;
 	}
 
-	private void registUpdateFlowRequest(Map<AgentClient, List<AgentFlow>> agentFlows, List<PatchLink> updatedLinks, String type) {
+	private void registAgentUpdateFlowRequest(Map<AgentClient, List<AgentFlow>> agentFlows, List<PatchLink> updatedLinks, String type) {
 		String fname = "registUpdateFlowRequest";
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(agentFlows=%s, updatedLinks=%s, type=%s) - start", fname, agentFlows, updatedLinks, type));
 

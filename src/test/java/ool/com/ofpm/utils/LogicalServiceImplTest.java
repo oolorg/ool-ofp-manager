@@ -17,6 +17,7 @@ import ool.com.ofpm.service.LogicalService;
 import ool.com.ofpm.service.LogicalServiceImpl;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -46,7 +47,7 @@ public class LogicalServiceImplTest {
 
 
 
-	//@Test
+	@Test
 	public void testGetLogicalTopology() {
 		new NonStrictExpectations() {
 			LogicalBusinessImpl logiBiz;
@@ -67,16 +68,24 @@ public class LogicalServiceImplTest {
 			}
 		};
 
+		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
 		LogicalService ls = new LogicalServiceImpl();
+
 		Response res = ls.getLogicalTopology("novaNode01, novaNode02");
-		if(! this.testLogicalTopologyOutJson.equals(res.getEntity())) fail();
+		LogicalTopologyJsonInOut topoOut = gson.fromJson((String)res.getEntity(), type);
+		if(! this.testLogicalTopologyOut.equals(topoOut)) fail();
+
+		// unexpected null input, must not be throwing Exception.
+//		res = ls.getLogicalTopology(null);
+//		topoOut = gson.fromJson((String)res.getEntity(), type);
+//		if(topoOut.getStatus() != Definition.STATUS_BAD_REQUEST) fail();
 	}
 
 	/*
 	 *
 	 */
-	//@Test
-	public void testupdateLogicalTopology() {
+	@Test
+	public void testUpdateLogicalTopology() {
 		new Expectations() {
 			LogicalBusinessImpl logiBiz;
 			{
@@ -92,7 +101,17 @@ public class LogicalServiceImplTest {
 			}
 		};
 
+		Type type = new TypeToken<BaseResponse>(){}.getType();
+
 		LogicalService ls = new LogicalServiceImpl();
-		ls.updateLogicalTopology(testLogicalTopologyJson);
+		Response res = ls.updateLogicalTopology(testLogicalTopologyJson);
+		BaseResponse brOut = gson.fromJson((String)res.getEntity(), type);
+		//if(! this.testBaseResponse.equals(brOut)) fail();
+
+		// unexpected json input, must not be throwing exception
+//		res = ls.updateLogicalTopology("[]");
+//		brOut = gson.fromJson((String)res.getEntity(), type);
+//		if(! this.testBaseResponse.equals(brOut)) fail();
+
 	}
 }

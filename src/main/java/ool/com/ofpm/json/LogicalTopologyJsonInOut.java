@@ -1,7 +1,5 @@
 package ool.com.ofpm.json;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 
 
 
@@ -18,10 +16,20 @@ public class LogicalTopologyJsonInOut extends BaseResponse {
 
 	@Override
 	public boolean equals(Object obj) {
-		return EqualsBuilder.reflectionEquals(this, obj);
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(this.getClass() != obj.getClass()) return false;
+		LogicalTopologyJsonInOut other = (LogicalTopologyJsonInOut)obj;
+		if(this.getStatus() != other.getStatus()) return false;
+		if(! this.getMessage().equals(other.getMessage())) return false;
+//		if(! super.equals(obj)) return false;
+//		LogicalTopologyJsonInOut other = (LogicalTopologyJsonInOut)obj;
+		return this.result.equals(other.result);
 	}
 	@Override
 	public int hashCode() {
-		return HashCodeBuilder.reflectionHashCode(this);
+		int hash = super.hashCode();
+		if(this.result != null) hash += this.result.hashCode();
+		return hash;
 	}
 }

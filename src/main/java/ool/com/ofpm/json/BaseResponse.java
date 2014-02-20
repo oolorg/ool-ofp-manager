@@ -18,13 +18,18 @@ public class BaseResponse {
 		this.status = status;
 	}
 
-	public boolean equals(BaseResponse other) {
-		if(status != other.status) {
-			return false;
-		}
-		if(message != other.message) {
-			return false;
-		}
-		return true;
+	@Override
+	public boolean equals(Object obj) {
+		if(this == obj) return true;
+		if(obj == null) return false;
+		if(this.getClass() != obj.getClass()) return false;
+		BaseResponse other = (BaseResponse)obj;
+		if(this.status != other.status) return false;
+		return (this.message == other.message);
+	}
+	@Override
+	public int hashCode() {
+		if(this.message == null) return 0;
+		return this.message.hashCode();
 	}
 }

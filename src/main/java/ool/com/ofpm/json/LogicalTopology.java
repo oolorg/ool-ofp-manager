@@ -27,7 +27,7 @@ public 	class LogicalTopology {
 	@Override
 	public boolean equals(Object obj) {
 		if(this == obj) return true;
-		if(obj != null) return false;
+		if(obj == null) return false;
 		if(this.getClass() != obj.getClass()) return false;
 		LogicalTopology other = (LogicalTopology)obj;
 		if(this.nodes.size() != other.nodes.size()) return false;
@@ -43,11 +43,15 @@ public 	class LogicalTopology {
 	@Override
 	public int hashCode() {
 		int hash = 0;
-		for(BaseNode node : this.nodes) {
-			hash += node.hashCode();
+		if(this.nodes != null) {
+			for(BaseNode node : this.nodes) {
+				if(node != null) hash += node.hashCode();
+			}
 		}
-		for(LogicalLink link : this.links) {
-			hash += link.hashCode();
+		if(this.links != null) {
+			for(LogicalLink link : this.links) {
+				if(link != null) hash += link.hashCode();
+			}
 		}
 		return hash;
 	}
@@ -55,8 +59,7 @@ public 	class LogicalTopology {
 	public List<BaseNode> getNodes() {
 		return nodes;
 	}
-	public void setNodes(
-			List<BaseNode> nodes) {
+	public void setNodes(List<BaseNode> nodes) {
 		this.nodes = nodes;
 	}
 

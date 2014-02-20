@@ -36,12 +36,12 @@ public class LogicalServiceImpl implements LogicalService {
 
 		String[] splitedDeviceNames = deviceNames.split(",");
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		LogicalTopologyJsonInOut outPara = logiBiz.getLogicalTopology(splitedDeviceNames);
+		LogicalTopologyJsonInOut resLogiBiz = logiBiz.getLogicalTopology(splitedDeviceNames);
 
 		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
-		String resPara = this.gson.toJson(outPara, type);
+		String resBody = this.gson.toJson(resLogiBiz, type);
 
-		Response res = ResponseGenerator.generate(resPara, Status.OK);
+		Response res = ResponseGenerator.generate(resBody, Status.OK);
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
 		return res;
 	}
@@ -52,15 +52,15 @@ public class LogicalServiceImpl implements LogicalService {
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(params=%s) - start", fname, params));
 
 		Type type = new TypeToken<LogicalTopology>(){}.getType();
-		LogicalTopology inPara = this.gson.fromJson(params, type);
+		LogicalTopology requestedTopology = this.gson.fromJson(params, type);
 
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		BaseResponse outPara = logiBiz.updateLogicalTopology(inPara);
+		BaseResponse resLogiBiz = logiBiz.updateLogicalTopology(requestedTopology);
 
 		type = new TypeToken<BaseResponse>(){}.getType();
-		String resPara = this.gson.toJson(outPara, type);
+		String resBody = this.gson.toJson(resLogiBiz, type);
 
-		Response res = ResponseGenerator.generate(resPara, Status.OK);
+		Response res = ResponseGenerator.generate(resBody, Status.OK);
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
 		return res;
 	}

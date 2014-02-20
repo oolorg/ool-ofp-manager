@@ -37,8 +37,7 @@ public class BaseNode {
 		return deviceType;
 	}
 
-	public void setDeviceType(
-			String deviceType) {
+	public void setDeviceType(String deviceType) {
 		this.deviceType = deviceType;
 	}
 }

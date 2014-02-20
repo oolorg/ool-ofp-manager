@@ -6,7 +6,6 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 import mockit.Delegate;
-import mockit.Expectations;
 import mockit.NonStrictExpectations;
 import ool.com.ofpm.business.LogicalBusiness;
 import ool.com.ofpm.business.LogicalBusinessImpl;
@@ -53,81 +52,50 @@ public class LogicalBusinessImplTest {
 	/*
 	 * Filterが機能し、要求外のノードを含むlinksやnodesの要素を削除するか
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
-	public void testDoGET() {
+	public void getLogicalTopologyTest() {
 		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
 		new NonStrictExpectations(gdbClient) {
-			{
-				try {
-					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
-					result = testLogicalTopologyOver;
-				} catch (GraphDBClientException gdbe) {
-					fail("GraphDBより予期しないエラーです");
-				}
-			}
-		};
-
-		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		LogicalTopologyJsonInOut bizOut = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
-		if(bizOut.getStatus() != 200) {
-			fail("応答Statusが正常値でありません");
-		}
-	}
-
-	/*
-	 * GraphDBよりExceptionが返答された場合、つめなおして応答するか確認します。
-	 */
-	@Test
-	public void testDoGETcheckGDBException() {
-		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
-		new Expectations(gdbClient) {
-			{
-				try {
-					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
-					result = new GraphDBClientException("ノードが見つかりません", 404);
-				} catch (GraphDBClientException gdbe) {
-					fail("GraphDBより予期しないエラーです");
-				}
-			}
-		};
-
-		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		LogicalTopologyJsonInOut bizOut = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
-		if(bizOut.getStatus() != Definition.STATUS_INTERNAL_ERROR) {
-			fail("404を応答しなければなりません。");
-		}
-	}
-
-	/*
-	 * validatorからExceptionが返答された場合、400エラーを返送するか確認です。
-	 */
-	//@Test
-	public void testDoGETcheckValidateException() {
-		new Expectations() {
 			CommonValidate validator;
 			{
 				try {
-					new CommonValidate();
+					// ここではGraphDBやClientなどに渡すデータが正常に整形されているかを確認しなければなりません
 					validator.checkDeviceNameArray((String[]) withNotNull());
-					result = new ValidateException("不正なパラメータです");
-				} catch (Exception e) {
-					fail("Validatorより予期しないエラーです");
+					result = null;
+					result = new ValidateException("Bad request");
+					result = null;
+
+					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
+					result = testLogicalTopologyOver;
+					result = new GraphDBClientException("Node not Find", Definition.STATUS_BAD_REQUEST);
+
+				} catch (GraphDBClientException gdbe) {
+					fail("Unexpected GraphDBClientException.");
+				} catch (ValidateException ve) {
+					fail("Unexpected ValidatenException.");
 				}
 			}
 		};
 
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		LogicalTopologyJsonInOut bizOut = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
-		if(bizOut.getStatus() != 400) {
-			fail("400を応答しなければなりません");
-		}
+		LogicalTopologyJsonInOut resLogiBiz;
+
+		resLogiBiz = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
+		assertEquals(resLogiBiz.getStatus(), Definition.STATUS_SUCCESS);
+
+		resLogiBiz = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
+		assertEquals(resLogiBiz.getStatus(), Definition.STATUS_BAD_REQUEST);
+
+		resLogiBiz = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
+		assertEquals(resLogiBiz.getStatus(), Definition.STATUS_INTERNAL_ERROR);
 	}
 
 	/*
 	 *
 	 */
 	//@Test
-	public void testDoPUT() {
+	public void updateLogicalTopologyTest() {
 		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
 		new NonStrictExpectations(gdbClient) {
 			LogicalTopologyValidate validator;
@@ -136,6 +104,8 @@ public class LogicalBusinessImplTest {
 				try {
 					new LogicalTopologyValidate();
 					validator.checkValidationRequestIn((LogicalTopology) withNotNull());
+					result = null;
+					result = new ValidateException();
 
 					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
 					result = testLogicalTopologyOver;
@@ -157,9 +127,12 @@ public class LogicalBusinessImplTest {
 		};
 
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
-		BaseResponse bizOut = logiBiz.updateLogicalTopology(testLogicalTopology);
-//		if(bizOut.getStatus() != Definition.STATUS_CREATED) {
-//			//fail("応答Statusが正常値でありません");
-//		}
+		BaseResponse resLogiBiz;
+
+		resLogiBiz = logiBiz.updateLogicalTopology(testLogicalTopology);
+		assertEquals(resLogiBiz.getStatus(), Definition.STATUS_CREATED);
+
+		resLogiBiz = logiBiz.updateLogicalTopology(testLogicalTopology);
+		assertEquals(resLogiBiz.getStatus(), Definition.STATUS_BAD_REQUEST);
 	}
 }
