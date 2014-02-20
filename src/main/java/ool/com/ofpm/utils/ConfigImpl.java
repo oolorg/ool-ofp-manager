@@ -6,6 +6,7 @@
 package ool.com.ofpm.utils;
 
 import java.io.StringWriter;
+import java.util.List;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -15,29 +16,29 @@ import org.apache.log4j.Logger;
 
 /**
  * 設定ファイルの読み込みを行うクラス。
- * 
+ *
  * @author kurahashi
  * @version 0.1
  */
 public class ConfigImpl implements Config {
 
     private static final Logger logger = Logger.getLogger(ConfigImpl.class);
-    
+
     private Configuration config = null;
-    
+
     /**
      * 設定ファイルを読み込む。
-     * 
+     *
      * @throws RuntimeException
      *             設定ファイルの読み込みに失敗(RuntimeExceptionで返す)
      */
     public ConfigImpl() {
         this(Definition.DEFAULT_PROPERTIY_FILE);
     }
-    
+
     /**
      * 設定ファイルを指定してインスタンスを生成する
-     * 
+     *
      * @param config
      *            設定ファイル
      */
@@ -50,10 +51,10 @@ public class ConfigImpl implements Config {
             throw new RuntimeException(message, e);
         }
     }
-    
+
     /**
      * 設定オブジェクトを指定してインスタンスを生成する
-     * 
+     *
      * @param config
      *            設定ファイル
      */
@@ -108,11 +109,17 @@ public class ConfigImpl implements Config {
 
     /**
      * 設定ファイルへの参照を提供するConfigurationオブジェクトを返す。
-     * 
+     *
      * @return 設定ファイルへの参照を提供するConfigurationオブジェクト
      */
     @Override
     public Configuration getConfiguration() {
         return this.config;
+    }
+
+    @Override
+    public List<Object> getList(String key) {
+           List<Object> values = getConfiguration().getList(key);
+           return values;
     }
 }

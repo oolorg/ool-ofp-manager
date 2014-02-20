@@ -45,17 +45,13 @@ public class LogicalServiceImplTest {
 
 
 
-	@Mocked HttpServletRequest req;
 	@Test
 	public void testDoGET() {
 		new Expectations() {
 			LogicalBusinessImpl logiBiz;
 			{
-				req.getParameter("deviceNames");
-				result = " ,  novaNode01 ,  , novaNode02, nova Node03, ,, ,";
-
 				new LogicalBusinessImpl();
-				logiBiz.doGET((String[]) withNotNull());
+				logiBiz.getLogicalTopology((String[]) withNotNull());
 				result = new Delegate() {
 					@SuppressWarnings("unused")
 					LogicalTopologyJsonInOut doGET(String[] params) {
@@ -74,7 +70,7 @@ public class LogicalServiceImplTest {
 		};
 
 		LogicalService ls = new LogicalServiceImpl();
-		ls.doGET(req);
+		ls.getLogicalTopology("novaNode01,novaNode02");
 	}
 
 	/*
@@ -86,7 +82,7 @@ public class LogicalServiceImplTest {
 			LogicalBusinessImpl logiBiz;
 			{
 				new LogicalBusinessImpl();
-				logiBiz.doPUT((LogicalTopology) withNotNull());
+				logiBiz.updateLogicalTopology((LogicalTopology) withNotNull());
 				result = new Delegate() {
 					@SuppressWarnings("unused")
 					BaseResponse doPUT(LogicalTopology topology) {
@@ -98,6 +94,6 @@ public class LogicalServiceImplTest {
 		};
 
 		LogicalService ls = new LogicalServiceImpl();
-		ls.doPUT(testLogicalTopologyJson);
+		ls.updateLogicalTopology(testLogicalTopologyJson);
 	}
 }

@@ -1,18 +1,18 @@
 package ool.com.ofpm.json;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 public 	class LogicalTopology {
-	private Set<BaseNode> nodes;
-	private Set<LogicalLink> links;
+	private List<BaseNode> nodes;
+	private List<LogicalLink> links;
 
 	public LogicalTopology() {
-		nodes = new HashSet<BaseNode>();
-		links = new HashSet<LogicalLink>();
+		nodes = new ArrayList<BaseNode>();
+		links = new ArrayList<LogicalLink>();
 	}
 	public LogicalTopology clone() {
 		LogicalTopology newTopo = new LogicalTopology();
@@ -40,43 +40,53 @@ public 	class LogicalTopology {
 		return HashCodeBuilder.reflectionHashCode(this);
 	}
 
-	public Set<BaseNode> getNodes() {
+	public List<BaseNode> getNodes() {
 		return nodes;
 	}
 	public void setNodes(
-			Set<BaseNode> nodes) {
+			List<BaseNode> nodes) {
 		this.nodes = nodes;
 	}
 
-	public Set<LogicalLink> getLinks() {
+	public List<LogicalLink> getLinks() {
 		return links;
 	}
-	public void setLinks(Set<LogicalLink> links) {
+	public void setLinks(List<LogicalLink> links) {
 		this.links = links;
 	}
 
 	public class LogicalLink {
-		private Set<String> deviceName;
+		private List<String> deviceName;
 
 		public LogicalLink() {
-			deviceName = new HashSet<String>();
+			deviceName = new ArrayList<String>();
 		}
 
-		public Set<String> getDeviceName() {
+		public List<String> getDeviceName() {
 			return deviceName;
 		}
 
-		public void setDeviceName(Set<String> deviceName) {
+		public void setDeviceName(List<String> deviceName) {
 			this.deviceName = deviceName;
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			return EqualsBuilder.reflectionEquals(this, obj);
+			if(this == obj) return true;
+			if(obj == null) return false;
+			if(this.getClass() != obj.getClass()) return false;
+			LogicalLink other = (LogicalLink)obj;
+			if(this.deviceName.size() != other.deviceName.size()) return false;
+			return this.deviceName.containsAll(other.deviceName);
 		}
 		@Override
 		public int hashCode() {
-			return HashCodeBuilder.reflectionHashCode(this);
+			int hash = 0;
+			if(this.deviceName == null) return hash;
+			for(String device : this.deviceName) {
+				hash += device.hashCode();
+			}
+			return hash;
 		}
 
 		public LogicalLink clone() {

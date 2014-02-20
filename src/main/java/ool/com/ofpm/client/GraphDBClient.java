@@ -5,7 +5,7 @@
  */
 package ool.com.ofpm.client;
 
-import java.util.Set;
+import java.util.List;
 
 import ool.com.ofpm.json.BaseNode;
 import ool.com.ofpm.json.LogicalTopology.LogicalLink;
@@ -17,8 +17,6 @@ import ool.com.ofpm.json.PatchLinkJsonIn;
  *
  */
 public interface GraphDBClient {
-	void exec();
-
 	// GraphDBから指定された装置間の接続情報（物理・論理含む）を取得
 //	public GraphDBResult getLinks(String[] deviceName);
 
@@ -32,7 +30,7 @@ public interface GraphDBClient {
 //	public GraphDBResult updatePort(String deviceName, NodeType type, String portName, NodeStatus status);
 
 	// 論理配線やPatchの設定
-	public LogicalTopologyJsonInOut getLogicalTopology(Set<BaseNode> nodes) throws GraphDBClientException;
+	public LogicalTopologyJsonInOut getLogicalTopology(List<BaseNode> nodes) throws GraphDBClientException;
 	public PatchLinkJsonIn     addLogicalLink(LogicalLink link) throws GraphDBClientException;
 	public PatchLinkJsonIn     delLogicalLink(LogicalLink link) throws GraphDBClientException;
 

@@ -2,7 +2,7 @@ package ool.com.ofpm.client;
 
 import java.lang.reflect.Type;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 
 import javax.ws.rs.core.MediaType;
 
@@ -10,30 +10,38 @@ import ool.com.ofpm.json.BaseNode;
 import ool.com.ofpm.json.LogicalTopology.LogicalLink;
 import ool.com.ofpm.json.LogicalTopologyJsonInOut;
 import ool.com.ofpm.json.PatchLinkJsonIn;
+import ool.com.ofpm.utils.Config;
+import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.Definition;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.WebResource.Builder;
 
 
 public class OrientDBClientImpl implements GraphDBClient {
-
-	public void exec() {
-		// TODO Auto-generated method stub
-
-	}
-
+	private static final Logger logger = Logger.getLogger(OrientDBClientImpl.class);
 	private static OrientDBClientImpl instance;
 	private final Client gdb_client;
 	private final Gson gson;
+	Config conf = new ConfigImpl();
 
-	public static synchronized OrientDBClientImpl getInstance() {
+	public static OrientDBClientImpl getInstance() {
+		if(logger.isDebugEnabled()) {
+			logger.debug("getInstance() - start");
+		}
 		if(instance == null) {
 			instance = new OrientDBClientImpl();
+		}
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("getInstance(ret=%s) - end", instance));
 		}
 		return instance;
 	}
@@ -42,74 +50,115 @@ public class OrientDBClientImpl implements GraphDBClient {
 		this.gson = new Gson();
 	}
 
-	public LogicalTopologyJsonInOut getLogicalTopology(Set<BaseNode> nodes) throws GraphDBClientException {
-		if(nodes == null) {
-			throw new NullPointerException();
+	public LogicalTopologyJsonInOut getLogicalTopology(List<BaseNode> nodes) throws GraphDBClientException {
+		final String func = "getLogicalTopology";
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(%s) - start", func, nodes));
 		}
+
+		LogicalTopologyJsonInOut res;
 		Iterator<BaseNode> ni = nodes.iterator();
-		String deviceNames = ni.next().getDeviceName();
-		while(ni.hasNext()) {
-			BaseNode node = ni.next();
-			deviceNames += "," + node.getDeviceName();
+		String deviceNames = StringUtils.join(ni, ",");
+
+		try {
+			ClientResponse gdbResponse;
+			Builder resBuilder;
+			String url = conf.getString(Definition.GRAPH_DB_URL) + Definition.GRAPH_DB_LINK_GET_PATH;
+			WebResource resource = this.gdb_client.resource(url);
+			resource    = resource.queryParam("deviceNames", deviceNames);
+			resBuilder  = resource.accept(MediaType.APPLICATION_JSON);
+			resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
+			gdbResponse = resBuilder.get(ClientResponse.class);
+
+			String resBody = gdbResponse.getEntity(String.class);
+			Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
+			res = gson.fromJson(resBody, type);
+		} catch (UniformInterfaceException uie) {
+			//HTTPレスポンスが300以上の場合つうちされます.
+			logger.error(uie.getMessage());
+			throw new GraphDBClientException("Connection faild with OrientDB", Definition.STATUS_INTERNAL_ERROR);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			throw new GraphDBClientException(e.getMessage(), Definition.STATUS_INTERNAL_ERROR);
 		}
 
-		ClientResponse gdbResponse;
-		Builder resBuilder;
-		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_ADDRESS + Definition.GRAPH_DB_LINK_GET);
-		resource    = resource.queryParam("deviceNames", deviceNames);
-		resBuilder  = resource.accept(MediaType.APPLICATION_JSON);
-		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
-		gdbResponse = resBuilder.get(ClientResponse.class);
-		if(Definition.STATUS_SUCCESS != gdbResponse.getStatus()) {
-			throw new GraphDBClientException("Connection faild with OrientDB", gdbResponse.getStatus());
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(res=%s) - end", func, res));
 		}
-
-		String resBody = gdbResponse.getEntity(String.class);
-		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
-		LogicalTopologyJsonInOut res = gson.fromJson(resBody, type);
 		return res;
 	}
 	public PatchLinkJsonIn addLogicalLink(LogicalLink link) throws GraphDBClientException {
-		Type type = new TypeToken<LogicalLink>(){}.getType();
-		String reqBody = gson.toJson(link, type);
+		final String func = "addLogicalLink";
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(%s) - start", func, link));
+		}
+		PatchLinkJsonIn res;
+		try {
+			Type type = new TypeToken<LogicalLink>(){}.getType();
+			String reqBody = gson.toJson(link, type);
 
-		ClientResponse gdbResponse;
-		Builder resBuilder;
-		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_ADDRESS + Definition.GRAPH_DB_LINK_CREATE_PATH);
-		resBuilder  = resource.entity(reqBody);
-		resBuilder  = resBuilder.accept(MediaType.APPLICATION_JSON);
-		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
-		gdbResponse = resBuilder.post(ClientResponse.class);
-		if(Definition.STATUS_SUCCESS != gdbResponse.getStatus()) {
-			throw new GraphDBClientException("Connection faild with OrientDB", gdbResponse.getStatus());
+			ClientResponse gdbResponse;
+			Builder resBuilder;
+			String url = conf.getString(Definition.GRAPH_DB_URL) + Definition.GRAPH_DB_LINK_CREATE_PATH;
+			WebResource resource = this.gdb_client.resource(url);
+			resBuilder  = resource.entity(reqBody);
+			resBuilder  = resBuilder.accept(MediaType.APPLICATION_JSON);
+			resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
+			gdbResponse = resBuilder.post(ClientResponse.class);
+
+			String resBody = gdbResponse.getEntity(String.class);
+			type = new TypeToken<PatchLinkJsonIn>(){}.getType();
+			res = gson.fromJson(resBody, type);
+
+		} catch(UniformInterfaceException uie) {
+			logger.error(uie.getMessage());
+			throw new GraphDBClientException("Connection faild with OrientDB", Definition.STATUS_INTERNAL_ERROR);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			throw new GraphDBClientException(e.getMessage(), Definition.STATUS_INTERNAL_ERROR);
 		}
 
-		String resBody = gdbResponse.getEntity(String.class);
-		type = new TypeToken<PatchLinkJsonIn>(){}.getType();
-		PatchLinkJsonIn res = gson.fromJson(resBody, type);
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(res=%s) - end", func, res));
+		}
 		return res;
 	}
 	public PatchLinkJsonIn delLogicalLink(LogicalLink link) throws GraphDBClientException {
-//		Iterator<String> si = link.getDeviceName().iterator();
-//		String deviceNames = si.next();
-//		deviceNames += ',' + si.next();
-		Type type = new TypeToken<LogicalLink>(){}.getType();
-		String reqBody = gson.toJson(link, type);
-
-		ClientResponse gdbResponse;
-		Builder resBuilder;
-		WebResource resource = this.gdb_client.resource(Definition.GRAPH_DB_ADDRESS + Definition.GRAPH_DB_LINK_DELETE_PATH);
-		resBuilder  = resource.entity(reqBody);
-		resBuilder  = resBuilder.accept(MediaType.APPLICATION_JSON);
-		resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
-		gdbResponse = resBuilder.post(ClientResponse.class);
-		if(Definition.STATUS_SUCCESS != gdbResponse.getStatus()) {
-			throw new GraphDBClientException("Connection faild with OrientDB", gdbResponse.getStatus());
+		final String func = "delLogicalLink";
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(%s) - start", func, link));
 		}
 
-		String resBody = gdbResponse.getEntity(String.class);
-		type = new TypeToken<PatchLinkJsonIn>(){}.getType();
-		PatchLinkJsonIn res = gson.fromJson(resBody, type);
+		PatchLinkJsonIn res;
+		try {
+			Type type = new TypeToken<LogicalLink>(){}.getType();
+			String reqBody = gson.toJson(link, type);
+
+			ClientResponse gdbResponse;
+			Builder resBuilder;
+			String url = conf.getString(Definition.GRAPH_DB_URL) + Definition.GRAPH_DB_LINK_DELETE_PATH;
+			WebResource resource = this.gdb_client.resource(url);
+			resBuilder  = resource.entity(reqBody);
+			resBuilder  = resBuilder.accept(MediaType.APPLICATION_JSON);
+			resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
+			gdbResponse = resBuilder.post(ClientResponse.class);
+
+			String resBody = gdbResponse.getEntity(String.class);
+			type = new TypeToken<PatchLinkJsonIn>(){}.getType();
+			res = gson.fromJson(resBody, type);
+
+		} catch(UniformInterfaceException uie) {
+			logger.error(uie.getMessage());
+			throw new GraphDBClientException("Connection faild with OrientDB", Definition.STATUS_INTERNAL_ERROR);
+
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			throw new GraphDBClientException(e.getMessage(), Definition.STATUS_INTERNAL_ERROR);
+		}
+
+		if(logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(res=%s) - end", func, res));
+		}
 		return res;
 	}
 }
