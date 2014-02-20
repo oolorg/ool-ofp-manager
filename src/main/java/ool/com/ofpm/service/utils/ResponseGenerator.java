@@ -15,9 +15,9 @@ public class ResponseGenerator {
 
 		ResponseBuilder res_builder = Response.status(status);
 		res_builder = res_builder.header("Access-Control-Allow-Origin", "*");
-		res_builder = res_builder.header("Access-Control-Allow-Header", "*");
-		res_builder = res_builder.header("Allow", "GET,POST,PUT,DELETE,OPTIONS");
-		res_builder = res_builder.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+		res_builder = res_builder.header("Access-Control-Allow-Headers", "*, Content-Type");
+		res_builder = res_builder.header("Allow", "GET,PUT,,OPTIONS");
+		res_builder = res_builder.header("Access-Control-Allow-Methods", "GET,PUT,OPTIONS");
 		res_builder = res_builder.entity(res_str);
 		Response res = res_builder.build();
 

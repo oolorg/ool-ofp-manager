@@ -3,17 +3,10 @@ package ool.com.ofpm.json;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-
 public 	class LogicalTopology {
-	private List<BaseNode> nodes;
-	private List<LogicalLink> links;
+	private List<BaseNode> nodes = new ArrayList<BaseNode>();
+	private List<LogicalLink> links = new ArrayList<LogicalLink>();
 
-	public LogicalTopology() {
-		nodes = new ArrayList<BaseNode>();
-		links = new ArrayList<LogicalLink>();
-	}
 	public LogicalTopology clone() {
 		LogicalTopology newTopo = new LogicalTopology();
 		for(BaseNode node: nodes) {
@@ -33,11 +26,30 @@ public 	class LogicalTopology {
 
 	@Override
 	public boolean equals(Object obj) {
-		return EqualsBuilder.reflectionEquals(this, obj);
+		if(this == obj) return true;
+		if(obj != null) return false;
+		if(this.getClass() != obj.getClass()) return false;
+		LogicalTopology other = (LogicalTopology)obj;
+		if(this.nodes.size() != other.nodes.size()) return false;
+		if(this.links.size() != other.links.size()) return false;
+		for(BaseNode node : other.nodes) {
+			if(! this.nodes.contains(node)) return false;
+		}
+		for(LogicalLink link : other.links) {
+			if(! this.links.contains(link)) return false;
+		}
+		return true;
 	}
 	@Override
 	public int hashCode() {
-		return HashCodeBuilder.reflectionHashCode(this);
+		int hash = 0;
+		for(BaseNode node : this.nodes) {
+			hash += node.hashCode();
+		}
+		for(LogicalLink link : this.links) {
+			hash += link.hashCode();
+		}
+		return hash;
 	}
 
 	public List<BaseNode> getNodes() {
@@ -84,7 +96,7 @@ public 	class LogicalTopology {
 			int hash = 0;
 			if(this.deviceName == null) return hash;
 			for(String device : this.deviceName) {
-				hash += device.hashCode();
+				if(device != null) hash += device.hashCode();
 			}
 			return hash;
 		}

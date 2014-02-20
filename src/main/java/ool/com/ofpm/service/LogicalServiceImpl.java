@@ -65,5 +65,10 @@ public class LogicalServiceImpl implements LogicalService {
 		return res;
 	}
 
+	@Override
+	public Response allowConnection() {
+		Response res = ResponseGenerator.generate("", Status.OK);
+		return res;
+	}
 }
 
