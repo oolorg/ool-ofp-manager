@@ -16,12 +16,11 @@ import ool.com.ofpm.json.AgentFlowJsonOut;
 import ool.com.ofpm.json.BaseNode;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.LogicalTopology;
+import ool.com.ofpm.json.LogicalTopology.LogicalLink;
 import ool.com.ofpm.json.LogicalTopologyJsonInOut;
 import ool.com.ofpm.validate.CommonValidate;
 import ool.com.ofpm.validate.LogicalTopologyValidate;
 import ool.com.ofpm.validate.ValidateException;
-
-import org.junit.Test;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -39,6 +38,13 @@ public class LogicalBusinessImplTest {
 	private LogicalTopologyJsonInOut testLogicalTopologyOver;
 	private LogicalTopologyJsonInOut testLogicalTopologyNull;
 
+
+	private String currentLogicalTopologyJson = "{nodes:[{deviceName:'Sample1', deviceName:'Sample2', deviceName:'Sample3'}], links:[{deviceName:['Sample1', 'Sample2']}]}";
+	private String validLogicalTopologyJson = "{nodes:[{deviceName:'Sample1', deviceName:'Sample2', deviceName:'Sample3'}], links:[{deviceName:['Sample2', 'Sample3']}]}";
+	private LogicalTopology validTopology;
+	private List<BaseNode> validNodes;
+	private List<LogicalLink> validLinks;
+
 	public LogicalBusinessImplTest () {
 		Type type = new TypeToken<LogicalTopology>(){}.getType();
 		testLogicalTopologyIn = gson.fromJson(testLogicalTopologyJsonIn, type);
@@ -47,13 +53,18 @@ public class LogicalBusinessImplTest {
 		type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
 		testLogicalTopologyOver = gson.fromJson(testLogicalTopologyJsonOver, type);
 		testLogicalTopologyNull = gson.fromJson(testLogicalTopologyJsonNull, type);
+
+		type = new TypeToken<LogicalTopology>() {}.getType();
+		validTopology = gson.fromJson(validLogicalTopologyJson, type);
+		validNodes = validTopology.getNodes();
+		validLinks = validTopology.getLinks();
 	}
 
 	/*
 	 * Filterが機能し、要求外のノードを含むlinksやnodesの要素を削除するか
 	 */
 	@SuppressWarnings("unchecked")
-	@Test
+	//@Test
 	public void getLogicalTopologyTest() {
 		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
 		new NonStrictExpectations(gdbClient) {
@@ -62,13 +73,32 @@ public class LogicalBusinessImplTest {
 				try {
 					// ここではGraphDBやClientなどに渡すデータが正常に整形されているかを確認しなければなりません
 					validator.checkDeviceNameArray((String[]) withNotNull());
-					result = null;
 					result = new ValidateException("Bad request");
 					result = null;
 
 					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
-					result = testLogicalTopologyOver;
 					result = new GraphDBClientException("Node not Find", Definition.STATUS_BAD_REQUEST);
+					result = new Delegate() {
+						@SuppressWarnings("unused")
+						public LogicalTopologyJsonInOut getLogicalTopology(List<BaseNode> nodes) {
+							assertNull(nodes);
+							assertEquals(nodes.size(), validNodes.size());
+							assertFalse(validNodes.containsAll(nodes));
+							return testLogicalTopologyOver;
+						}
+					};
+
+					gdbClient.addLogicalLink((LogicalLink) withNotNull());
+					result = new GraphDBClientException("", Definition.STATUS_CREATED);
+					//result = invalidBaseResponse;
+					result = new Delegate() {
+						public BaseResponse addLogicalLink(LogicalLink link) {
+							return null;
+							//assertNull(nodes);
+							//assertEquals(link);
+							//return validBaseResponse;
+						}
+					};
 
 				} catch (GraphDBClientException gdbe) {
 					fail("Unexpected GraphDBClientException.");
@@ -82,19 +112,21 @@ public class LogicalBusinessImplTest {
 		LogicalTopologyJsonInOut resLogiBiz;
 
 		resLogiBiz = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
+		assertEquals(resLogiBiz.getStatus(), Definition.STATUS_INTERNAL_ERROR);
+
+		resLogiBiz = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
 		assertEquals(resLogiBiz.getStatus(), Definition.STATUS_SUCCESS);
 
 		resLogiBiz = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
 		assertEquals(resLogiBiz.getStatus(), Definition.STATUS_BAD_REQUEST);
 
-		resLogiBiz = logiBiz.getLogicalTopology(testLogicalTopologyQueryIn);
-		assertEquals(resLogiBiz.getStatus(), Definition.STATUS_INTERNAL_ERROR);
 	}
 
 	/*
 	 *
 	 */
 	//@Test
+	@SuppressWarnings("unchecked")
 	public void updateLogicalTopologyTest() {
 		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
 		new NonStrictExpectations(gdbClient) {
@@ -112,6 +144,7 @@ public class LogicalBusinessImplTest {
 
 					client.updateFlows((AgentFlowJsonOut) withNotNull());
 					result = new Delegate() {
+						@SuppressWarnings("unused")
 						BaseResponse updateFlows(AgentFlowJsonOut in) {
 							BaseResponse res = new BaseResponse();
 							res.setStatus(Definition.STATUS_SUCCESS);
