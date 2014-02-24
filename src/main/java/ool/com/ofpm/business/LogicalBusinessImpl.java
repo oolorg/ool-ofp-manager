@@ -1,7 +1,6 @@
 package ool.com.ofpm.business;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,8 +11,8 @@ import ool.com.ofpm.client.AgentClientException;
 import ool.com.ofpm.client.GraphDBClient;
 import ool.com.ofpm.client.GraphDBClientException;
 import ool.com.ofpm.client.OrientDBClientImpl;
-import ool.com.ofpm.json.AgentFlowJsonOut;
-import ool.com.ofpm.json.AgentFlowJsonOut.AgentFlow;
+import ool.com.ofpm.json.AgentUpdateFlowRequest;
+import ool.com.ofpm.json.AgentUpdateFlowRequest.AgentUpdateFlowData;
 import ool.com.ofpm.json.BaseNode;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.LogicalTopology;
@@ -26,21 +25,25 @@ import ool.com.ofpm.validate.CommonValidate;
 import ool.com.ofpm.validate.LogicalTopologyValidate;
 import ool.com.ofpm.validate.ValidateException;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 public class LogicalBusinessImpl implements LogicalBusiness {
 	private static final Logger logger = Logger.getLogger(LogicalBusinessImpl.class);
 
 	private AgentManager acm;
-	private AgentFlowJsonOut agentFlowJson = new AgentFlowJsonOut();
+	private AgentUpdateFlowRequest agentFlowJson = new AgentUpdateFlowRequest();
 	private final GraphDBClient graphDBClient = OrientDBClientImpl.getInstance();
+	private Gson gson = new Gson();
 
 	private void filterTopology(List<BaseNode> nodes, LogicalTopology topology) {
 		String fname = "filterTopology";
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(nodes=%s, topology=%s) - start", fname, nodes, topology));
 
-		List<BaseNode> topoNodes = topology.getNodes();
+//		List<BaseNode> topoNodes = topology.getNodes();
 		List<LogicalLink> topoLinks = topology.getLinks();
 
 //		List<BaseNode> removalNodes = new ArrayList<BaseNode>();
@@ -66,13 +69,15 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s() - end", fname));
 	}
 
-	public LogicalTopologyJsonInOut getLogicalTopology(String[] deviceNames) {
+	public String getLogicalTopology(String deviceNamesCSV) {
 		String fname = "getLogicalTopology";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(deviceNames=[\"%s\"]) - start", fname, StringUtils.join(deviceNames, "\",\"")));
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(deviceNames=%s) - start", fname, deviceNamesCSV));
 
 		LogicalTopologyJsonInOut res = new LogicalTopologyJsonInOut();
 		try {
 			CommonValidate validator = new CommonValidate();
+			validator.checkDeviceNamesCSV(deviceNamesCSV);
+			String[] deviceNames = deviceNamesCSV.split(",");
 			validator.checkDeviceNameArray(deviceNames);
 
 			List<BaseNode> nodes = new ArrayList<BaseNode>();
@@ -84,6 +89,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", nodes));
 			res = graphDBClient.getLogicalTopology(nodes);
+			this.filterTopology(nodes, res.getResult());
 			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", res));
 
 		} catch (ValidateException ve) {
@@ -102,18 +108,28 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			res.setMessage("Eroor :-( ");
 		}
 
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
-		return res;
+		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
+		String resBody = this.gson.toJson(res, type);
+
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, resBody));
+		return resBody;
 	}
 
-	public BaseResponse updateLogicalTopology(LogicalTopology requestedTopology) {
+	public String updateLogicalTopology(String requestedTopologyJson) {
 		String fname = "updateLogicalTopology";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(requestedTopology=%s) - start", fname, requestedTopology));
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(requestedTopology=%s) - start", fname, requestedTopologyJson));
 
 		LogicalTopologyValidate validator = new LogicalTopologyValidate();
 		acm = AgentManager.getInstance();
 		BaseResponse res = new BaseResponse();
+		res.setMessage("");
+
 		try {
+			// Type type = new TypeToken<LogicalTopology>(){}.getType();
+			// LogicalTopology requestedTopology = this.gson.fromJson(requestedTopologyJson, type);
+			CommonValidate varry = new CommonValidate();
+			varry.checkDeviceNamesCSV(requestedTopologyJson);
+			LogicalTopology requestedTopology = LogicalTopology.fromJson(requestedTopologyJson);
 			validator.checkValidationRequestIn(requestedTopology);
 
 			List<BaseNode> requestedNodes = requestedTopology.getNodes();
@@ -125,14 +141,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			LogicalTopology currentTopology = responseGraphDB.getResult();
 			this.filterTopology(requestedNodes, currentTopology);
 
-			// inTopo と outTopo の差分を作成し、加算リスト、減算リスト
 			LogicalTopology incTopology = requestedTopology.sub(currentTopology);
 			LogicalTopology decTopology = currentTopology.sub(requestedTopology);
 
 			List<PatchLink> reducedLinks   = new ArrayList<PatchLink>();
 			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
-//			List<PatchLink> reducedLinks   = this.gdbUpdateLinkReqs(decTopology, graphDBClient.getClass().getMethod("delLogicalTopology", LogicalLink.class));
-//			List<PatchLink> augmentedLinks = this.gdbUpdateLinkReqs(incTopology, graphDBClient.getClass().getMethod("addLogicalTopology", LogicalLink.class));
 			for(LogicalLink link : decTopology.getLinks()) {
 				if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(link=%s) - called", link));
 				PatchLinkJsonIn reducedPatches = graphDBClient.delLogicalLink(link);
@@ -141,7 +154,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				if(reducedPatches.getStatus() != Definition.STATUS_SUCCESS) {
 					res.setStatus( reducedPatches.getStatus());
 					res.setMessage(reducedPatches.getMessage());
-					return res;
+					break;
 				}
 				reducedLinks.addAll(reducedPatches.getResult());
 			}
@@ -153,102 +166,92 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				if(augmentedPatches.getStatus() != Definition.STATUS_CREATED) {
 					res.setStatus( augmentedPatches.getStatus());
 					res.setMessage(augmentedPatches.getMessage());
-					return res;
+					return res.toJson();
 				}
 				augmentedLinks.addAll(augmentedPatches.getResult());
 			}
 
-			Map<AgentClient, List<AgentFlow>> agentFlowUpdateReqList = new HashMap<AgentClient, List<AgentFlow>>();
-			this.registAgentUpdateFlowRequest(agentFlowUpdateReqList, reducedLinks,   "delete");
-			this.registAgentUpdateFlowRequest(agentFlowUpdateReqList, augmentedLinks, "create");
+			Map<AgentClient, List<AgentUpdateFlowData>> agentUpdateFlowDataList = this.makeAgentUpdateFlowList(reducedLinks,   "delete");
+			Map<AgentClient, List<AgentUpdateFlowData>> bufAgentUpdateReqList   = this.makeAgentUpdateFlowList(augmentedLinks, "create");
+			agentUpdateFlowDataList.putAll(bufAgentUpdateReqList);
 
-			for(AgentClient agentClient : agentFlowUpdateReqList.keySet()) {
-				agentFlowJson.setList(agentFlowUpdateReqList.get(agentClient));
+			for(AgentClient agentClient : agentUpdateFlowDataList.keySet()) {
+				agentFlowJson.setList(agentUpdateFlowDataList.get(agentClient));
 
 				if(logger.isInfoEnabled()) logger.info(String.format("agentClient.updateFlows(flows=%s) - called", agentFlowJson));
 				BaseResponse resAgent = agentClient.updateFlows(agentFlowJson);
 				if(logger.isInfoEnabled()) logger.info(String.format("agentClinet.updateFlows(ret=%s) - returned", agentFlowJson));
 
+				res = resAgent;
 				if(resAgent.getStatus() != Definition.STATUS_SUCCESS) {
-					// TODO: ここでトランザクション入れないとだめだよ
-					return resAgent;
+					// TODO: do cancel commit to graphdb
+					break;
 				}
 			}
 
-			res.setStatus(Definition.STATUS_SUCCESS);
-			res.setMessage("");
+			return res.toJson();
+
+		} catch (JsonSyntaxException jse) {
+			logger.error(jse.getMessage());
+			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setMessage("Invalid json structure.");
+			return res.toJson();
 
 		} catch (ValidateException ve) {
 			logger.error(ve.getMessage());
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
-
-		} catch (AgentClientException ace) {
-			logger.error(ace.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(ace.getMessage());
+			return res.toJson();
 
 		} catch (GraphDBClientException gdbe) {
 			logger.error(gdbe.getMessage());
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage(gdbe.getMessage());
+			return res.toJson();
+
+		} catch (AgentClientException ace) {
+			logger.error(ace.getMessage());
+			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setMessage(ace.getMessage());
+			return res.toJson();
 
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
+			return res.toJson();
+
+		} finally {
+			if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
+
 		}
-
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, res));
-		return res;
+		// must be not writing code from this point foward
 	}
 
-	// 現在の実装では使用しません
-	private List<PatchLink> gdbUpdateLinkReqs(LogicalTopology topology, Method method) throws GraphDBClientException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		List<PatchLink> updatedLinks = new ArrayList<PatchLink>();
-		for(LogicalLink link : topology.getLinks()) {
-			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(link=%s) - calling", link));
-			PatchLinkJsonIn updatedPatches = (PatchLinkJsonIn)method.invoke(this.graphDBClient, link);
-			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.delLogicalTopology(link=%s) - returned", link));
+	private Map<AgentClient, List<AgentUpdateFlowData>> makeAgentUpdateFlowList(List<PatchLink> updatedLinks, String type) {
+		String fname = "makeAgentUpdateFlowList";
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(updatedLinks=%s, type=%s) - start", fname, updatedLinks, type));
 
-			if(updatedPatches.getStatus() != Definition.STATUS_SUCCESS) {
-				this.cancelUpdate(updatedPatches.getStatus(), updatedPatches.getMessage());
-			}
-			updatedLinks.addAll(updatedPatches.getResult());
-		}
-		return updatedLinks;
-	}
-
-	// 現在の実装では使用しません
-	private BaseResponse cancelUpdate(int status, String message) {
-		BaseResponse res = new BaseResponse();
-		res.setStatus(status);
-		res.setMessage(message);
-		return res;
-	}
-
-	private void registAgentUpdateFlowRequest(Map<AgentClient, List<AgentFlow>> agentFlows, List<PatchLink> updatedLinks, String type) {
-		String fname = "registUpdateFlowRequest";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(agentFlows=%s, updatedLinks=%s, type=%s) - start", fname, agentFlows, updatedLinks, type));
-
+		Map<AgentClient, List<AgentUpdateFlowData>> pairAgentClient_UpdateFlowDataList = new HashMap<AgentClient, List<AgentUpdateFlowData>>();
 		for(PatchLink link : updatedLinks) {
 			String switchIp = acm.getSwitchIp(link.getDeviceName());
 			String ofcUrl   = acm.getOfcIp(switchIp);
 
-			AgentFlow newFlow = agentFlowJson.new AgentFlow();
-			newFlow.setIp(switchIp);
-			newFlow.setType(type);
-			newFlow.setPort(link.getPortName());
-			newFlow.setOfcUrl(ofcUrl);
+			AgentUpdateFlowData newUpdateFlowData = agentFlowJson.new AgentUpdateFlowData();
+			newUpdateFlowData.setIp(switchIp);
+			newUpdateFlowData.setType(type);
+			newUpdateFlowData.setPort(link.getPortName());
+			newUpdateFlowData.setOfcUrl(ofcUrl);
 
 			AgentClient agentClient = acm.getAgentClient(switchIp);
-			if(!agentFlows.containsKey(agentClient)) {
-				agentFlows.put(agentClient, new ArrayList<AgentFlow>());
+			if(!pairAgentClient_UpdateFlowDataList.containsKey(agentClient)) {
+				pairAgentClient_UpdateFlowDataList.put(agentClient, new ArrayList<AgentUpdateFlowData>());
 			}
-			List<AgentFlow> flows = agentFlows.get(agentClient);
-			flows.add(newFlow);
+			List<AgentUpdateFlowData> agentClientFlowDataList = pairAgentClient_UpdateFlowDataList.get(agentClient);
+			agentClientFlowDataList.add(newUpdateFlowData);
 		}
 
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s() - end", fname));
+		return pairAgentClient_UpdateFlowDataList;
 	}
 }

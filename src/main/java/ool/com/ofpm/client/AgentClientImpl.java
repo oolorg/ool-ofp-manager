@@ -4,7 +4,7 @@ import java.lang.reflect.Type;
 
 import javax.ws.rs.core.MediaType;
 
-import ool.com.ofpm.json.AgentFlowJsonOut;
+import ool.com.ofpm.json.AgentUpdateFlowRequest;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.BaseResultIn;
 import ool.com.ofpm.utils.Definition;
@@ -49,7 +49,7 @@ public class AgentClientImpl implements AgentClient {
 		return gson.fromJson(res_str, collectionType);
 	}
 
-	public BaseResponse updateFlows(AgentFlowJsonOut flows) throws AgentClientException {
+	public BaseResponse updateFlows(AgentUpdateFlowRequest flows) throws AgentClientException {
 		final String func = "updateFlows";
 		if(logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(%s) - start", func, flows));
@@ -61,7 +61,7 @@ public class AgentClientImpl implements AgentClient {
 		String reqData = "";
 		ClientResponse resAgent;
 		try {
-			type = new TypeToken<AgentFlowJsonOut>(){}.getType();
+			type = new TypeToken<AgentUpdateFlowRequest>(){}.getType();
 			reqData = gson.toJson(flows, type);
 
 			Builder resBuilder = this.resource.entity(reqData);

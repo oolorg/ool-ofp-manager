@@ -17,12 +17,12 @@ public interface LogicalService {
 	@GET
 	@Consumes({ MediaType.APPLICATION_FORM_URLENCODED })
     @Produces({ MediaType.APPLICATION_JSON })
-	public Response getLogicalTopology(@QueryParam("deviceNames") String deviceNames);
+	public Response getLogicalTopology(@QueryParam("deviceNames") String deviceNamesCSV);
 
 	@PUT
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-	public Response updateLogicalTopology(@RequestBody String params);
+	public Response updateLogicalTopology(@RequestBody String requestedTopologyJson);
 
 	@OPTIONS
 	public Response allowConnection();

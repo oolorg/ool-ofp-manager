@@ -19,6 +19,7 @@ import org.apache.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
@@ -29,8 +30,13 @@ public class OrientDBClientImpl implements GraphDBClient {
 	private static final Logger logger = Logger.getLogger(OrientDBClientImpl.class);
 	private static OrientDBClientImpl instance;
 	private final Client gdb_client;
-	private final Gson gson;
+	private final Gson gson = new Gson();
 	Config conf = new ConfigImpl();
+
+
+	private OrientDBClientImpl() {
+		this.gdb_client = Client.create();
+	}
 
 	public static OrientDBClientImpl getInstance() {
 		if(logger.isDebugEnabled()) {
@@ -43,10 +49,6 @@ public class OrientDBClientImpl implements GraphDBClient {
 			logger.debug(String.format("getInstance(ret=%s) - end", instance));
 		}
 		return instance;
-	}
-	OrientDBClientImpl() {
-		this.gdb_client = Client.create();
-		this.gson = new Gson();
 	}
 
 	public LogicalTopologyJsonInOut getLogicalTopology(List<BaseNode> nodes) throws GraphDBClientException {
@@ -74,16 +76,26 @@ public class OrientDBClientImpl implements GraphDBClient {
 			resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
 			gdbResponse = resBuilder.get(ClientResponse.class);
 
+			if(gdbResponse.getStatus() != Definition.STATUS_SUCCESS) {
+				logger.error(gdbResponse.getEntity(String.class));
+				throw new GraphDBClientException("OrientDBs response is wrong.");
+			}
+
 			String resBody = gdbResponse.getEntity(String.class);
 			Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
 			res = gson.fromJson(resBody, type);
+
 		} catch (UniformInterfaceException uie) {
-			//HTTPレスポンスが300以上の場合つうちされます.
+			// I expect to notify this Exception when Http-Response-Code is more than 300,
+			// But ClientResponse.classを指定したため通知されないと考えられます。
 			logger.error(uie.getMessage());
-			throw new GraphDBClientException("Connection faild with OrientDB", Definition.STATUS_INTERNAL_ERROR);
+			throw new GraphDBClientException("OrientDBs response is wrong.");
+		} catch (ClientHandlerException che) {
+			logger.error(che.getMessage());
+			throw new GraphDBClientException("Connection faild with OrientDB.");
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			throw new GraphDBClientException(e.getMessage(), Definition.STATUS_INTERNAL_ERROR);
+			throw new GraphDBClientException(e.getMessage());
 		}
 
 		if(logger.isDebugEnabled()) {
@@ -110,16 +122,24 @@ public class OrientDBClientImpl implements GraphDBClient {
 			resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
 			gdbResponse = resBuilder.post(ClientResponse.class);
 
+			if(gdbResponse.getStatus() != Definition.STATUS_SUCCESS) {
+				logger.error(gdbResponse.getEntity(String.class));
+				throw new GraphDBClientException("OrientDBs response is wrong.");
+			}
+
 			String resBody = gdbResponse.getEntity(String.class);
 			type = new TypeToken<PatchLinkJsonIn>(){}.getType();
 			res = gson.fromJson(resBody, type);
 
-		} catch(UniformInterfaceException uie) {
+		} catch (UniformInterfaceException uie) {
 			logger.error(uie.getMessage());
-			throw new GraphDBClientException("Connection faild with OrientDB", Definition.STATUS_INTERNAL_ERROR);
+			throw new GraphDBClientException("OrientDBs response is wrong.");
+		} catch (ClientHandlerException che) {
+			logger.error(che.getMessage());
+			throw new GraphDBClientException("Connection faild with OrientDB.");
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			throw new GraphDBClientException(e.getMessage(), Definition.STATUS_INTERNAL_ERROR);
+			throw new GraphDBClientException(e.getMessage());
 		}
 
 		if(logger.isDebugEnabled()) {
@@ -147,17 +167,24 @@ public class OrientDBClientImpl implements GraphDBClient {
 			resBuilder  = resBuilder.type(MediaType.APPLICATION_JSON);
 			gdbResponse = resBuilder.post(ClientResponse.class);
 
+			if(gdbResponse.getStatus() != Definition.STATUS_SUCCESS) {
+				logger.error(gdbResponse.getEntity(String.class));
+				throw new GraphDBClientException("OrientDBs response is wrong.");
+			}
+
 			String resBody = gdbResponse.getEntity(String.class);
 			type = new TypeToken<PatchLinkJsonIn>(){}.getType();
 			res = gson.fromJson(resBody, type);
 
-		} catch(UniformInterfaceException uie) {
+		} catch (UniformInterfaceException uie) {
 			logger.error(uie.getMessage());
-			throw new GraphDBClientException("Connection faild with OrientDB", Definition.STATUS_INTERNAL_ERROR);
-
+			throw new GraphDBClientException("OrientDBs response is wrong.");
+		} catch (ClientHandlerException che) {
+			logger.error(che.getMessage());
+			throw new GraphDBClientException("Connection faild with OrientDB.");
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			throw new GraphDBClientException(e.getMessage(), Definition.STATUS_INTERNAL_ERROR);
+			throw new GraphDBClientException(e.getMessage());
 		}
 
 		if(logger.isDebugEnabled()) {

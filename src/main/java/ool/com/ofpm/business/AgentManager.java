@@ -32,7 +32,7 @@ public class AgentManager {
 	}
 
 	public static AgentManager getInstance() {
-		String fname = "AgentManager";
+		String fname = "getInstance";
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s() - start", fname));
 
 		if(instance == null) {
@@ -40,7 +40,6 @@ public class AgentManager {
 		}
 		Config config = new ConfigImpl();
 		Object[] recode = config.getList(Definition.AGENT_RECODE).toArray();
-		//String[] rec = recode.split(",");
 		instance.setAgentClient(recode[0].toString(), recode[1].toString(), recode[2].toString(), recode[3].toString());
 
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, instance));

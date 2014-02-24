@@ -80,9 +80,7 @@ public class OrientDBClientImplTest {
 			gdbClient.getLogicalTopology(testLogicalTopologyIn.getNodes());
 			fail();
 		} catch (GraphDBClientException gdbe) {
-			if(gdbe.getStatus() == 201) {
-				fail();
-			}
+
 		}
 		try {
 			gdbClient.getLogicalTopology(null);

@@ -1,5 +1,13 @@
 package ool.com.ofpm.json;
 
+import java.lang.reflect.Type;
+
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 
 public class BaseResponse {
 	private int status;
@@ -20,16 +28,16 @@ public class BaseResponse {
 
 	@Override
 	public boolean equals(Object obj) {
-		if(this == obj) return true;
-		if(obj == null) return false;
-		if(this.getClass() != obj.getClass()) return false;
-		BaseResponse other = (BaseResponse)obj;
-		if(this.status != other.status) return false;
-		return (this.message == other.message);
+		return EqualsBuilder.reflectionEquals(this, obj);
 	}
 	@Override
 	public int hashCode() {
-		if(this.message == null) return 0;
-		return this.message.hashCode();
+		return HashCodeBuilder.reflectionHashCode(this);
+	}
+
+	public String toJson() {
+		Gson gson = new Gson();
+		Type type = new TypeToken<BaseResponse>() {}.getType();
+		return gson.toJson(this, type);
 	}
 }

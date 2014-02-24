@@ -4,18 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class AgentFlowJsonOut {
-	private List<AgentFlow> list;
+public class AgentUpdateFlowRequest {
+	private List<AgentUpdateFlowData> list;
 
-	public List<AgentFlow> getList() {
+	public List<AgentUpdateFlowData> getList() {
 		return list;
 	}
 
-	public void setList(List<AgentFlow> list) {
+	public void setList(List<AgentUpdateFlowData> list) {
 		this.list = list;
 	}
 
-	public class AgentFlow {
+	public class AgentUpdateFlowData {
 		private String ofcUrl;
 		private String type;
 		private String ip;

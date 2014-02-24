@@ -1,7 +1,11 @@
 package ool.com.ofpm.json;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 public 	class LogicalTopology {
 	private List<BaseNode> nodes = new ArrayList<BaseNode>();
@@ -22,6 +26,11 @@ public 	class LogicalTopology {
 		cloneTopo.nodes.removeAll(otherTopo.nodes);
 		cloneTopo.links.removeAll(otherTopo.links);
 		return cloneTopo;
+	}
+	public static LogicalTopology fromJson(String json) {
+		Gson gson = new Gson();
+		Type type = new TypeToken<LogicalTopology>(){}.getType();
+		return gson.fromJson(json, type);
 	}
 
 	@Override
