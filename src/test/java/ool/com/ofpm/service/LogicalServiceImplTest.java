@@ -1,4 +1,4 @@
-package ool.com.ofpm.utils;
+package ool.com.ofpm.service;
 
 import static org.junit.Assert.*;
 
@@ -12,8 +12,6 @@ import ool.com.ofpm.business.LogicalBusinessImpl;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.LogicalTopology;
 import ool.com.ofpm.json.LogicalTopologyJsonInOut;
-import ool.com.ofpm.service.LogicalService;
-import ool.com.ofpm.service.LogicalServiceImpl;
 
 import org.junit.Test;
 
@@ -25,17 +23,13 @@ public class LogicalServiceImplTest {
 	private Gson gson = new Gson();
 
 	private String testLogicalTopologyJson = "{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'}], links:[{deviceName:['novaNode01', 'novaNode02']}]}";
-//	private LogicalTopology testLogicalTopology;
-
 	private String testLogicalTopologyOutJson = "{status:200, message:'null', result:{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'}], links:[{deviceName:['novaNode01', 'novaNode02']}]}}";
 	private LogicalTopologyJsonInOut testLogicalTopologyOut;
-
 	private String validBaseResponseJson = "{status:201, message:''}";
 	private BaseResponse validBaseResponse;
 
 	public LogicalServiceImplTest() {
 		Type type = new TypeToken<LogicalTopology>(){}.getType();
-//		testLogicalTopology = gson.fromJson(testLogicalTopologyJson, type);
 		type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
 		testLogicalTopologyOut = gson.fromJson(testLogicalTopologyOutJson, type);
 		type = new TypeToken<BaseResponse>() {}.getType();
@@ -61,9 +55,6 @@ public class LogicalServiceImplTest {
 		assertEquals(topoOut, testLogicalTopologyOut);
 	}
 
-	/*
-	 *
-	 */
 	@Test
 	public void updateLogicalTopologyTest() {
 		new Expectations() {

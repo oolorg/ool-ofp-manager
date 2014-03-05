@@ -1,13 +1,10 @@
-package ool.com.ofpm.utils;
+package ool.com.ofpm.client;
 
 import static org.junit.Assert.*;
 
 import java.lang.reflect.Type;
 
 import mockit.NonStrictExpectations;
-import ool.com.ofpm.client.GraphDBClient;
-import ool.com.ofpm.client.GraphDBClientException;
-import ool.com.ofpm.client.OrientDBClientImpl;
 import ool.com.ofpm.json.LogicalTopology;
 import ool.com.ofpm.json.LogicalTopologyJsonInOut;
 
@@ -19,20 +16,16 @@ public class OrientDBClientImplTest {
 	private Gson gson = new Gson();
 	private String testLogicalTopologyJsonIn   = "{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'}]}";
 	private String testLogicalTopologyJson     = "{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'}], links:[{deviceName:['novaNode01', 'novaNode02']}]}";
-	private String testLogicalTopologyJsonOver = "{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'},{deviceName:'novaNode03'}], links:[{deviceName:['novaNode01', 'novaNode02']},{deviceName:['novaNode01','novaNode03']}]}";
 
 
 	private LogicalTopology testLogicalTopologyIn;
 	private LogicalTopology testLogicalTopology;
-	private LogicalTopology testLogicalTopologyOver;
 
 	public OrientDBClientImplTest () {
 		Type type = new TypeToken<LogicalTopology>(){}.getType();
 		testLogicalTopologyIn = gson.fromJson(testLogicalTopologyJsonIn, type);
 		type = new TypeToken<LogicalTopology>(){}.getType();
 		testLogicalTopology = gson.fromJson(testLogicalTopologyJson, type);
-		type = new TypeToken<LogicalTopology>(){}.getType();
-		testLogicalTopologyOver = gson.fromJson(testLogicalTopologyJsonOver, type);
 	}
 	/*
 	 * 正常版

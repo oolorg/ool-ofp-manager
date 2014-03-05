@@ -1,52 +1,37 @@
 package ool.com.ofpm.service;
 
-import java.lang.reflect.Type;
-
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import ool.com.ofpm.business.PhysicalBusiness;
 import ool.com.ofpm.business.PhysicalBusinessImpl;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.ResultOut;
-import ool.com.ofpm.service.utils.ResponseGenerator;
 
+import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 @Component
 public class PhysicalServiceImpl implements PhysicalService {
-	Gson gson = new Gson();
+	private static final Logger logger = Logger.getLogger(LogicalServiceImpl.class);
 
 	@Override
-	public Response getPhysicalTopology() {
-		PhysicalBusiness physBiz = new PhysicalBusinessImpl();
-		ResultOut outPara = physBiz.getPhysicalTopology();
+	public String connectPhysicalLink(String physicalLinkJson) {
+		String fname = "connectPhysicalLink";
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, physicalLinkJson));
 
-		Type type = new TypeToken<ResultOut>(){}.getType();
-		String res = this.gson.toJson(outPara, type);
-		return ResponseGenerator.generate(res,  Status.OK);
+		PhysicalBusiness physBiz = new PhysicalBusinessImpl();
+		String resPhysBiz = physBiz.connectPhysicalLink(physicalLinkJson);
+
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, resPhysBiz));
+		return resPhysBiz;
 	}
 
 	@Override
-	public Response updatePhysicalTopology(String params) {
-		Type type = new TypeToken<ResultOut.Data>(){}.getType();
-		ResultOut.Data inPara = this.gson.fromJson(params, type);
+	public String disconnectPhysicalLink(String physicalLinkJson) {
+		String fname = "disconnectPhysicalLink";
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, physicalLinkJson));
 
 		PhysicalBusiness physBiz = new PhysicalBusinessImpl();
-		BaseResponse outPara = physBiz.updatePhysicalTopology();
+		String resPhysBiz = physBiz.disconnectPhysicalLink(physicalLinkJson);
 
-		type = new TypeToken<BaseResponse>(){}.getType();
-		String res = this.gson.toJson(outPara, type);
-		return ResponseGenerator.generate(res,  Status.OK);
-	}
-	public Response get(
-			@PathParam("switchId") String switchId) {
-		// TODO Auto-generated method stub
-		return null;
+		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, resPhysBiz));
+		return resPhysBiz;
 	}
 
 }

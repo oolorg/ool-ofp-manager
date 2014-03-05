@@ -1,6 +1,5 @@
 package ool.com.ofpm.business;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,9 +26,7 @@ import ool.com.ofpm.validate.ValidateException;
 
 import org.apache.log4j.Logger;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
 public class LogicalBusinessImpl implements LogicalBusiness {
 	private static final Logger logger = Logger.getLogger(LogicalBusinessImpl.class);
@@ -37,13 +34,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	private AgentManager acm;
 	private AgentUpdateFlowRequest agentFlowJson = new AgentUpdateFlowRequest();
 	private final GraphDBClient graphDBClient = OrientDBClientImpl.getInstance();
-	private Gson gson = new Gson();
 
 	private void filterTopology(List<BaseNode> nodes, LogicalTopology topology) {
 		String fname = "filterTopology";
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(nodes=%s, topology=%s) - start", fname, nodes, topology));
 
-//		List<BaseNode> topoNodes = topology.getNodes();
 		List<LogicalLink> topoLinks = topology.getLinks();
 
 //		List<BaseNode> removalNodes = new ArrayList<BaseNode>();
@@ -89,8 +84,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", nodes));
 			res = graphDBClient.getLogicalTopology(nodes);
-			this.filterTopology(nodes, res.getResult());
 			if(logger.isInfoEnabled()) logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", res));
+			this.filterTopology(nodes, res.getResult());
 
 		} catch (ValidateException ve) {
 			logger.error(ve.getMessage());
@@ -108,8 +103,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			res.setMessage("Eroor :-( ");
 		}
 
-		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
-		String resBody = this.gson.toJson(res, type);
+		String resBody = res.toJson();
 
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, resBody));
 		return resBody;
@@ -125,8 +119,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		res.setMessage("");
 
 		try {
-			// Type type = new TypeToken<LogicalTopology>(){}.getType();
-			// LogicalTopology requestedTopology = this.gson.fromJson(requestedTopologyJson, type);
 			CommonValidate varry = new CommonValidate();
 			varry.checkDeviceNamesCSV(requestedTopologyJson);
 			LogicalTopology requestedTopology = LogicalTopology.fromJson(requestedTopologyJson);

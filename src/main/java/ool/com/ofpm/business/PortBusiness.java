@@ -1,15 +1,11 @@
 package ool.com.ofpm.business;
 
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.PortJsonIn;
+
 
 public interface PortBusiness {
-	public BaseResponse createPort(
-			PortJsonIn params);
+	public String createPort(String portInfoJson);
 
-	public BaseResponse deletePort(
-			PortJsonIn params);
+	public String deletePort(String params);
 
-	public BaseResponse updatePort(
-			PortJsonIn params);
+	public String updatePort(String params);
 }

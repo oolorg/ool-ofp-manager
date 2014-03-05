@@ -1,15 +1,10 @@
 package ool.com.ofpm.business;
 
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.DeviceJsonIn;
 
 public interface DeviceBusiness {
-	public BaseResponse createDevice(
-			DeviceJsonIn params);
+	public String createDevice(String deviceInfoJson);
 
-	public BaseResponse deleteDevice(
-			DeviceJsonIn params);
+	public String deleteDevice(String params);
 
-	public BaseResponse updateDevice(
-			DeviceJsonIn params);
+	public String updateDevice(String params);
 }

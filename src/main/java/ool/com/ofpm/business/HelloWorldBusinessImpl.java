@@ -8,6 +8,7 @@ package ool.com.ofpm.business;
 import javax.servlet.http.HttpServletRequest;
 
 import ool.com.ofpm.client.GraphDBClient;
+import ool.com.ofpm.client.GraphDBClientException;
 import ool.com.ofpm.client.Neo4jDBClientImpl;
 import ool.com.ofpm.json.HelloWorldJsonPostIn;
 import ool.com.ofpm.json.HelloWorldJsonPostOut;
@@ -50,11 +51,13 @@ public class HelloWorldBusinessImpl
 		HelloWorldJsonPostOut ret = new HelloWorldJsonPostOut();
 		try {
 			validator.postValidation();
-			GraphDBClient dbClient = Neo4jDBClientImpl
-					.getInstance();
-			//dbClient.exec();
+			GraphDBClient dbClient = Neo4jDBClientImpl.getInstance();
+			dbClient.getLogicalTopology(null);
 			ret.setEnabled("OK");
 		} catch (ValidateException e) {
+			// TODO Auto-generated catch block
+			e.getMessage();
+		} catch (GraphDBClientException e) {
 			// TODO Auto-generated catch block
 			e.getMessage();
 		}

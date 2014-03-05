@@ -2,6 +2,7 @@ package ool.com.ofpm.json;
 
 
 
+
 public class BaseNode {
 	private String deviceName;
 	private String deviceType;
@@ -17,6 +18,7 @@ public class BaseNode {
 	public BaseNode clone() {
 		BaseNode newNode = new BaseNode();
 		newNode.deviceName = deviceName;
+		newNode.deviceType = deviceType;
 		return newNode;
 	}
 	@Override
@@ -40,4 +42,5 @@ public class BaseNode {
 	public void setDeviceType(String deviceType) {
 		this.deviceType = deviceType;
 	}
+
 }

@@ -10,8 +10,6 @@ import ool.com.ofpm.service.utils.ResponseGenerator;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.Gson;
-
 /*
  * 指摘の修正
  * ログ Log4j
@@ -21,7 +19,6 @@ import com.google.gson.Gson;
 @Component
 public class LogicalServiceImpl implements LogicalService {
 	private static final Logger logger = Logger.getLogger(LogicalServiceImpl.class);
-	Gson gson = new Gson();
 
 	@Override
 	public Response getLogicalTopology(String deviceNamesCSV) {

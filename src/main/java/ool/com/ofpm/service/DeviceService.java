@@ -7,27 +7,23 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Path("/device_mng")
 public interface DeviceService {
 	@POST
-	@Path("/")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-	public Response createDevice(@RequestBody String params);
+	public String createDevice(@RequestBody String params);
 
 	@DELETE
-	@Path("/")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-	public Response deleteDevice(@RequestBody String params);
+	public String deleteDevice(@RequestBody String params);
 
 	@PUT
-	@Path("/")
     @Consumes({ MediaType.APPLICATION_JSON })
     @Produces({ MediaType.APPLICATION_JSON })
-	public Response updateDevice(@RequestBody String params);
+	public String updateDevice(@RequestBody String params);
 }

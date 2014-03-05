@@ -40,4 +40,10 @@ public class BaseResponse {
 		Type type = new TypeToken<BaseResponse>() {}.getType();
 		return gson.toJson(this, type);
 	}
+	public static BaseResponse fromJson(String json) {
+		Gson gson = new Gson();
+		Type type = new TypeToken<BaseResponse>() {}.getType();
+		return gson.fromJson(json, type);
+	}
+
 }

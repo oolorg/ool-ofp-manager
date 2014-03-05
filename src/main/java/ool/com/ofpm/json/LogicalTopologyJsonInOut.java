@@ -1,5 +1,10 @@
 package ool.com.ofpm.json;
 
+import java.lang.reflect.Type;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 
 
 
@@ -31,5 +36,12 @@ public class LogicalTopologyJsonInOut extends BaseResponse {
 		int hash = super.hashCode();
 		if(this.result != null) hash += this.result.hashCode();
 		return hash;
+	}
+
+	@Override
+	public String toJson() {
+		Gson gson = new Gson();
+		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
+		return gson.toJson(this, type);
 	}
 }

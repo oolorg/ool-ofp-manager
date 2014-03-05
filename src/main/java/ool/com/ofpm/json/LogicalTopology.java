@@ -120,5 +120,11 @@ public 	class LogicalTopology {
 			}
 			return newLogicalLink;
 		}
+
+		public String toJson() {
+			Gson gson = new Gson();
+			Type type = new TypeToken<LogicalLink>(){}.getType();
+			return gson.toJson(this, type);
+		}
 	}
 }

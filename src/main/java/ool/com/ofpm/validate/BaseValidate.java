@@ -10,20 +10,20 @@ package ool.com.ofpm.validate;
  *
  */
 public abstract class BaseValidate {
-	
+
     //abstract boolean checkNullAndEmpty(String value);
 
     //abstract boolean checkPattern(String value);
-	
+
     /**
      * オブジェクトnullチェック
      * @param value
-     * @return not null true, null false 
+     * @return not null true, null false
      */
     protected static boolean checkNull(Object value) {
     	return value == null;
     }
-	
+
     /**
      * 文字サイズをチェック
      * @param value
@@ -36,7 +36,7 @@ public abstract class BaseValidate {
     	}
     	return false;
     }
-    
+
     /**
     * 半角数字チェック
     * @param value
@@ -47,5 +47,9 @@ public abstract class BaseValidate {
     		return false;
     	}
     	return true;
+    }
+
+    public void checkStringBlank(String value) throws ValidateException {
+
     }
 }

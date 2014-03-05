@@ -1,4 +1,4 @@
-package ool.com.ofpm.utils;
+package ool.com.ofpm.json;
 
 import static org.junit.Assert.*;
 

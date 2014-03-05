@@ -6,7 +6,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Context;
 
 import ool.com.ofpm.business.AgentManager;
-import ool.com.ofpm.utils.Definition;
 
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
@@ -22,14 +21,14 @@ public class ConfigServiceImpl {
 		String fname = "gdbConfig";
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, req));
 
-		String ip             = req.getParameter("ip");
-		String linkGetPath    = req.getParameter("linkGetPath");
-		String linkCreatePath = req.getParameter("linkCreatePath");
-		String linkDeletePath = req.getParameter("linkDeletePath");
-		//if(ip != "") Definition.GRAPH_DB_ADDRESS           = "http://" + ip;
-		if(ip != "") Definition.GRAPH_DB_LINK_GET_PATH          = linkGetPath;
-		if(ip != "") Definition.GRAPH_DB_LINK_CREATE_PATH  = linkCreatePath;
-		if(ip != "") Definition.GRAPH_DB_LINK_DELETE_PATH  = linkDeletePath;
+//		String ip             = req.getParameter("ip");
+//		String linkGetPath    = req.getParameter("linkGetPath");
+//		String linkCreatePath = req.getParameter("linkCreatePath");
+//		String linkDeletePath = req.getParameter("linkDeletePath");
+//		//if(ip != "") Definition.GRAPH_DB_ADDRESS           = "http://" + ip;
+//		if(ip != "") Definition.GRAPH_DB_LINK_GET_PATH          = linkGetPath;
+//		if(ip != "") Definition.GRAPH_DB_LINK_CREATE_PATH  = linkCreatePath;
+//		if(ip != "") Definition.GRAPH_DB_LINK_DELETE_PATH  = linkDeletePath;
 
 		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, req));
 		return "Success";

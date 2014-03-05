@@ -1,4 +1,4 @@
-package ool.com.ofpm.utils;
+package ool.com.ofpm.business;
 
 import static org.junit.Assert.*;
 
@@ -7,16 +7,13 @@ import java.util.List;
 
 import mockit.Delegate;
 import mockit.NonStrictExpectations;
-import ool.com.ofpm.business.AgentManager;
-import ool.com.ofpm.business.LogicalBusiness;
-import ool.com.ofpm.business.LogicalBusinessImpl;
 import ool.com.ofpm.client.GraphDBClientException;
 import ool.com.ofpm.client.OrientDBClientImpl;
 import ool.com.ofpm.json.BaseNode;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.LogicalTopology;
-import ool.com.ofpm.json.LogicalTopology.LogicalLink;
 import ool.com.ofpm.json.LogicalTopologyJsonInOut;
+import ool.com.ofpm.utils.Definition;
 
 import org.junit.Test;
 
@@ -29,45 +26,32 @@ public class LogicalBusinessImplTest {
 	private String testLogicalTopologyJson     = "{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'}], links:[{deviceName:['novaNode01', 'novaNode02']}]}";
 	private String testLogicalTopologyJsonOver = "{status:200, result:{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'},{deviceName:'novaNode03'}], links:[{deviceName:['novaNode01', 'novaNode02']},{deviceName:['novaNode01','novaNode03']}]}}";
 	private String testLogicalTopologyJsonNull = "{status:400, message:'bad request!'}";
-	private String[] testLogicalTopologyQueryIn  = {"novaNode01","novaNode02"};
 
-	private LogicalTopology testLogicalTopologyIn;
-	private LogicalTopology testLogicalTopology;
 	private LogicalTopologyJsonInOut testLogicalTopologyOver;
-	private LogicalTopologyJsonInOut testLogicalTopologyNull;
 
 
-	//private String currentLogicalTopologyJson = "{nodes:[{deviceName:'Sample1', deviceName:'Sample2', deviceName:'Sample3'}], links:[{deviceName:['Sample1', 'Sample2']}}]}";
 	private String validLogicalTopologyJson = "{nodes:[{deviceName:'Sample1'}, {deviceName:'Sample2'}, {deviceName:'Sample3'}], links:[{deviceName:['Sample2', 'Sample3']}]}";
-	private String requestedTopologyJson = validLogicalTopologyJson;
 	private String currentTopologyJson = "{nodes:[{deviceName:'Sample1'}, {deviceName:'Sample2'}, {deviceName:'Sample3'}], links:[{deviceName:['Sample2', 'Sample3']}, {deviceName:['Sample4', 'Sample1']}]}";
 	private LogicalTopology validTopology;
 	private List<BaseNode> validNodes;
-	private List<LogicalLink> validLinks;
 	private LogicalTopology currentTopology;
 	private LogicalTopologyJsonInOut currentTopologyInOut = new LogicalTopologyJsonInOut();
 
 	public LogicalBusinessImplTest () {
 		Type type = new TypeToken<LogicalTopology>(){}.getType();
-		testLogicalTopologyIn = gson.fromJson(testLogicalTopologyJsonIn, type);
 		type = new TypeToken<LogicalTopology>(){}.getType();
-		testLogicalTopology = gson.fromJson(testLogicalTopologyJson, type);
 		type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
 		testLogicalTopologyOver = gson.fromJson(testLogicalTopologyJsonOver, type);
-		testLogicalTopologyNull = gson.fromJson(testLogicalTopologyJsonNull, type);
 
 		type = new TypeToken<LogicalTopology>() {}.getType();
 		validTopology = gson.fromJson(validLogicalTopologyJson, type);
 		validNodes = validTopology.getNodes();
-		validLinks = validTopology.getLinks();
 		currentTopology = gson.fromJson(currentTopologyJson, type);
 		currentTopologyInOut.setResult(currentTopology);
 		currentTopologyInOut.setStatus(Definition.STATUS_SUCCESS);
 	}
 
-	/*
-	 * Filterが機能し、要求外のノードを含むlinksやnodesの要素を削除するか
-	 */
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void getLogicalTopologyTest() {
@@ -137,6 +121,7 @@ public class LogicalBusinessImplTest {
 		resLogiBizJson = logiBiz.getLogicalTopology("Sample1,Sample2,Sample3");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
 		assertEquals("Must be status is 200 when process complete.", Definition.STATUS_SUCCESS, resLogiBiz.getStatus());
+		System.out.println(resLogiBizJson);
 		assertEquals("Check response data that is filtered.", validTopology, resLogiBiz.getResult());
 
 	}
@@ -144,6 +129,7 @@ public class LogicalBusinessImplTest {
 	/*
 	 *
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public void updateLogicalTopologyTest() {
 		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
