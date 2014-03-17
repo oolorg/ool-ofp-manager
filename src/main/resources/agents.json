@@ -1,8 +1,8 @@
 [
 	{
-		"ip":"192.168.1.22:8080",
+		"ip":"192.168.1.22:18080",
 		"switchies":[
-			{"deviceName":"Switch1", "ip":"192.168.1.10", "ofcUrl":"http://192.168.1.22:8888/ofc/ryu/ctrl"}
+			{"deviceName":"CENTEC_V350_SW04", "ip":"192.168.1.77", "ofcUrl":"http://192.168.1.22:28080/ofc/ryu/ctrl"}
 		]
 	}
 ]
