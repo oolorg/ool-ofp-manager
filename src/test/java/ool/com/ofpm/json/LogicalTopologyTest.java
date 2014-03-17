@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
-import ool.com.ofpm.json.BaseNode;
+import ool.com.ofpm.json.Node;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.LogicalTopology;
 
@@ -37,8 +37,8 @@ public class LogicalTopologyTest {
 		LogicalTopology topo1 = new LogicalTopology();
 		LogicalTopology topo2 = new LogicalTopology();
 		if(! topo1.equals(topo2)) fail();
-		List<BaseNode> nodes1 = topo1.getNodes();
-		BaseNode node1_1 = new BaseNode();
+		List<Node> nodes1 = topo1.getNodes();
+		Node node1_1 = new Node();
 		nodes1.add(node1_1);
 		if(topo1.equals(topo2)) fail();
 	}

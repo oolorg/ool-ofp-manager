@@ -1,8 +1,8 @@
-package ool.com.ofpm.client;
+package ool.com.ofpm.exception;
 
 public class GraphDBClientException extends Exception {
 
-	public GraphDBClientException (String msg) {
+	public GraphDBClientException(String msg) {
 		super(msg);
 	}
 }

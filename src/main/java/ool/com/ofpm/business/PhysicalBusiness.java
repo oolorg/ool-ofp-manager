@@ -1,6 +1,5 @@
 package ool.com.ofpm.business;
 
-
 public interface PhysicalBusiness {
 	public String connectPhysicalLink(String physicalLinkJson);
 

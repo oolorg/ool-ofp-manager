@@ -8,15 +8,26 @@ import com.google.gson.reflect.TypeToken;
 
 
 
-public class LogicalTopologyJsonInOut extends BaseResponse {
+public class LogicalTopologyGetJsonOut extends BaseResponse {
 	private LogicalTopology result = new LogicalTopology();
 
 	public LogicalTopology getResult() {
 		return result;
 	}
-
 	public void setResult(LogicalTopology result) {
 		this.result = result;
+	}
+
+	public static LogicalTopologyGetJsonOut fromJson(String json) {
+		Gson gson = new Gson();
+		Type type = new TypeToken<LogicalTopologyGetJsonOut>(){}.getType();
+		return gson.fromJson(json, type);
+	}
+	@Override
+	public String toJson() {
+		Gson gson = new Gson();
+		Type type = new TypeToken<LogicalTopologyGetJsonOut>(){}.getType();
+		return gson.toJson(this, type);
 	}
 
 	@Override
@@ -24,11 +35,9 @@ public class LogicalTopologyJsonInOut extends BaseResponse {
 		if(this == obj) return true;
 		if(obj == null) return false;
 		if(this.getClass() != obj.getClass()) return false;
-		LogicalTopologyJsonInOut other = (LogicalTopologyJsonInOut)obj;
+		LogicalTopologyGetJsonOut other = (LogicalTopologyGetJsonOut)obj;
 		if(this.getStatus() != other.getStatus()) return false;
 		if(! this.getMessage().equals(other.getMessage())) return false;
-//		if(! super.equals(obj)) return false;
-//		LogicalTopologyJsonInOut other = (LogicalTopologyJsonInOut)obj;
 		return this.result.equals(other.result);
 	}
 	@Override
@@ -37,11 +46,8 @@ public class LogicalTopologyJsonInOut extends BaseResponse {
 		if(this.result != null) hash += this.result.hashCode();
 		return hash;
 	}
-
 	@Override
-	public String toJson() {
-		Gson gson = new Gson();
-		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
-		return gson.toJson(this, type);
+	public String toString() {
+		return this.toJson();
 	}
 }

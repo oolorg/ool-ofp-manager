@@ -7,12 +7,12 @@ import java.util.List;
 
 import mockit.Delegate;
 import mockit.NonStrictExpectations;
-import ool.com.ofpm.client.GraphDBClientException;
 import ool.com.ofpm.client.OrientDBClientImpl;
-import ool.com.ofpm.json.BaseNode;
+import ool.com.ofpm.exception.GraphDBClientException;
 import ool.com.ofpm.json.BaseResponse;
+import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
 import ool.com.ofpm.json.LogicalTopology;
-import ool.com.ofpm.json.LogicalTopologyJsonInOut;
+import ool.com.ofpm.json.Node;
 import ool.com.ofpm.utils.Definition;
 
 import org.junit.Test;
@@ -22,25 +22,22 @@ import com.google.gson.reflect.TypeToken;
 
 public class LogicalBusinessImplTest {
 	private Gson gson = new Gson();
-	private String testLogicalTopologyJsonIn   = "{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'}]}";
-	private String testLogicalTopologyJson     = "{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'}], links:[{deviceName:['novaNode01', 'novaNode02']}]}";
 	private String testLogicalTopologyJsonOver = "{status:200, result:{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'},{deviceName:'novaNode03'}], links:[{deviceName:['novaNode01', 'novaNode02']},{deviceName:['novaNode01','novaNode03']}]}}";
-	private String testLogicalTopologyJsonNull = "{status:400, message:'bad request!'}";
 
-	private LogicalTopologyJsonInOut testLogicalTopologyOver;
+	private LogicalTopologyGetJsonOut testLogicalTopologyOver;
 
 
 	private String validLogicalTopologyJson = "{nodes:[{deviceName:'Sample1'}, {deviceName:'Sample2'}, {deviceName:'Sample3'}], links:[{deviceName:['Sample2', 'Sample3']}]}";
 	private String currentTopologyJson = "{nodes:[{deviceName:'Sample1'}, {deviceName:'Sample2'}, {deviceName:'Sample3'}], links:[{deviceName:['Sample2', 'Sample3']}, {deviceName:['Sample4', 'Sample1']}]}";
 	private LogicalTopology validTopology;
-	private List<BaseNode> validNodes;
+	private List<Node> validNodes;
 	private LogicalTopology currentTopology;
-	private LogicalTopologyJsonInOut currentTopologyInOut = new LogicalTopologyJsonInOut();
+	private LogicalTopologyGetJsonOut currentTopologyInOut = new LogicalTopologyGetJsonOut();
 
 	public LogicalBusinessImplTest () {
 		Type type = new TypeToken<LogicalTopology>(){}.getType();
 		type = new TypeToken<LogicalTopology>(){}.getType();
-		type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
+		type = new TypeToken<LogicalTopologyGetJsonOut>(){}.getType();
 		testLogicalTopologyOver = gson.fromJson(testLogicalTopologyJsonOver, type);
 
 		type = new TypeToken<LogicalTopology>() {}.getType();
@@ -59,11 +56,11 @@ public class LogicalBusinessImplTest {
 		new NonStrictExpectations(gdbClient) {
 			{
 				try {
-					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
+					gdbClient.getLogicalTopology((List<Node>) withNotNull());
 					result = new GraphDBClientException("Test Exception");
 					result = new Delegate() {
 						@SuppressWarnings("unused")
-						public LogicalTopologyJsonInOut getLogicalTopology(List<BaseNode> nodes) {
+						public LogicalTopologyGetJsonOut getLogicalTopology(List<Node> nodes) {
 							assertNotNull("There is nodes, must be not null.", nodes);
 							assertEquals("Different number of input nodes bitween valid node.", validNodes.size(), nodes.size());
 							assertTrue("There is node that is not contain to validNodes.", validNodes.containsAll(nodes));
@@ -79,8 +76,8 @@ public class LogicalBusinessImplTest {
 
 		LogicalBusiness logiBiz = new LogicalBusinessImpl();
 		String resLogiBizJson;
-		LogicalTopologyJsonInOut resLogiBiz;
-		Type type = new TypeToken<LogicalTopologyJsonInOut>(){}.getType();
+		LogicalTopologyGetJsonOut resLogiBiz;
+		Type type = new TypeToken<LogicalTopologyGetJsonOut>(){}.getType();
 
 		resLogiBizJson = logiBiz.getLogicalTopology(null);
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
@@ -89,14 +86,6 @@ public class LogicalBusinessImplTest {
 		resLogiBizJson = logiBiz.getLogicalTopology("");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
 		assertEquals("Must be status is 400 when DeviceName is empty(\"\").", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
-
-		resLogiBizJson = logiBiz.getLogicalTopology("Sample1, Sample2");
-		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 400 when DeviceName begins with space.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
-
-		resLogiBizJson = logiBiz.getLogicalTopology("Sample1 ,Sample2");
-		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 400 when DeviceName ending with space.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.getLogicalTopology("Sample1,,Sample2");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
@@ -121,8 +110,6 @@ public class LogicalBusinessImplTest {
 		resLogiBizJson = logiBiz.getLogicalTopology("Sample1,Sample2,Sample3");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
 		assertEquals("Must be status is 200 when process complete.", Definition.STATUS_SUCCESS, resLogiBiz.getStatus());
-		System.out.println(resLogiBizJson);
-		assertEquals("Check response data that is filtered.", validTopology, resLogiBiz.getResult());
 
 	}
 
@@ -137,7 +124,7 @@ public class LogicalBusinessImplTest {
 		new NonStrictExpectations(gdbClient, acm) {
 			{
 				try {
-					gdbClient.getLogicalTopology((List<BaseNode>) withNotNull());
+					gdbClient.getLogicalTopology((List<Node>) withNotNull());
 					result = testLogicalTopologyOver;
 //
 //					client.updateFlows((AgentUpdateFlowRequest) withNotNull());

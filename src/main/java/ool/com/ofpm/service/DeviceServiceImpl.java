@@ -6,46 +6,82 @@ import ool.com.ofpm.business.DeviceBusinessImpl;
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.Gson;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 
 @Component
 public class DeviceServiceImpl implements DeviceService {
-	private static final Logger logger = Logger.getLogger(ConfigServiceImpl.class);
-	Gson gson = new Gson();
+	private static final Logger logger = Logger.getLogger(DeviceServiceImpl.class);
+
+	@Inject
+	DeviceBusiness deviceBiz;
+	Injector injector;
 
 	@Override
-	public String createDevice(String deviceInfoJson) {
+	public String createDevice(String newDeviceInfoJson) {
 		String fname = "createDevice";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, deviceInfoJson));
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(deviceInfoJson=%s) - start", fname, newDeviceInfoJson));
+		}
 
-		DeviceBusiness deviceBiz = new DeviceBusinessImpl();
-		String resDeviceBiz = deviceBiz.createDevice(deviceInfoJson);
+		this.injector = Guice.createInjector(new AbstractModule() {
+			@Override
+			protected void configure() {
+				bind(DeviceBusiness.class).to(DeviceBusinessImpl.class);
+			}
+		});
+		DeviceServiceImpl main = injector.getInstance(DeviceServiceImpl.class);
+		String resDeviceBiz = main.deviceBiz.createDevice(newDeviceInfoJson);
 
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
+		}
 		return resDeviceBiz;
 	}
 
 	@Override
-	public String deleteDevice(String params) {
-		String fname = "createDevice";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, params));
+	public String deleteDevice(String deviceName) {
+		String fname = "deleteDevice";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
+		}
 
-		DeviceBusiness deviceBiz = new DeviceBusinessImpl();
-		String resDeviceBiz = deviceBiz.deleteDevice(params);
+		this.injector = Guice.createInjector(new AbstractModule() {
+			@Override
+			protected void configure() {
+				bind(DeviceBusiness.class).to(DeviceBusinessImpl.class);
+			}
+		});
+		DeviceServiceImpl main = injector.getInstance(DeviceServiceImpl.class);
+		String resDeviceBiz = main.deviceBiz.deleteDevice(deviceName);
 
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
+		}
 		return resDeviceBiz;
 	}
 
 	@Override
-	public String updateDevice(String params) {
-		String fname = "createDevice";
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(req=%s) - start", fname, params));
+	public String updateDevice(String updateDeviceInfoJson) {
+		String fname = "updateDevice";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(deviceInfoJson=%s) - start", fname, updateDeviceInfoJson));
+		}
 
-		DeviceBusiness deviceBiz = new DeviceBusinessImpl();
-		String resDeviceBiz = deviceBiz.updateDevice(params);
+		this.injector = Guice.createInjector(new AbstractModule() {
+			@Override
+			protected void configure() {
+				bind(DeviceBusiness.class).to(DeviceBusinessImpl.class);
+			}
+		});
+		DeviceServiceImpl main = injector.getInstance(DeviceServiceImpl.class);
+		String resDeviceBiz = main.deviceBiz.updateDevice(updateDeviceInfoJson);
 
-		if(logger.isDebugEnabled()) logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
+		}
 		return resDeviceBiz;
 	}
 

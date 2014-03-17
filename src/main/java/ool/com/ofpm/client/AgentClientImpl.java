@@ -1,18 +1,17 @@
 package ool.com.ofpm.client;
 
-import java.lang.reflect.Type;
-
 import javax.ws.rs.core.MediaType;
 
-import ool.com.ofpm.json.AgentUpdateFlowRequest;
+import ool.com.ofpm.exception.AgentClientException;
+import ool.com.ofpm.json.AgentClientUpdateFlowReq;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.utils.Definition;
+import ool.com.ofpm.utils.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
@@ -21,58 +20,59 @@ import com.sun.jersey.api.client.WebResource.Builder;
 public class AgentClientImpl implements AgentClient {
 	private static final Logger logger = Logger.getLogger(AgentClientImpl.class);
 	private WebResource resource;
-	private Gson gson = new Gson();
-	private String agentIp;
+	private String ip;
 
 	public AgentClientImpl(String ip) {
-		if(logger.isDebugEnabled()) {
+		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("AgentClientImpl(%s) - start", ip));
 		}
-		this.agentIp = ip;
+		this.ip = ip;
 		this.resource = Client.create().resource("http://" + ip + Definition.AGENT_PATH);
-		if(logger.isDebugEnabled()) {
+		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("AgentClientImpl() - end"));
 		}
 	}
 
-	public BaseResponse updateFlows(AgentUpdateFlowRequest flows) throws AgentClientException {
+	public BaseResponse updateFlows(AgentClientUpdateFlowReq flows) throws AgentClientException {
 		final String func = "updateFlows";
-		if(logger.isDebugEnabled()) {
+		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(%s) - start", func, flows));
 		}
 
-		BaseResponse res = new BaseResponse();
-
-		Type type;
-		String reqData = "";
-		ClientResponse resAgent;
+		BaseResponse ret = new BaseResponse();
 		try {
-			type = new TypeToken<AgentUpdateFlowRequest>(){}.getType();
-			reqData = gson.toJson(flows, type);
-
-			Builder resBuilder = this.resource.entity(reqData);
+			Builder resBuilder = this.resource.entity(flows.toJson());
 			resBuilder = resBuilder.accept(MediaType.APPLICATION_JSON);
 			resBuilder = resBuilder.type(MediaType.APPLICATION_JSON);
-			resAgent = resBuilder.put(ClientResponse.class);
+			ClientResponse res = resBuilder.put(ClientResponse.class);
 
-			type = new TypeToken<BaseResponse>(){}.getType();
-			res = gson.fromJson(resAgent.getEntity(String.class), type);
+			if (res.getStatus() != Definition.STATUS_SUCCESS) {
+				logger.error(res.getEntity(String.class));
+				throw new AgentClientException(String.format(ErrorMessage.WRONG_RESPONSE, "Agent-" + this.ip));
+			}
+			ret = BaseResponse.fromJson(res.getEntity(String.class));
 		} catch (UniformInterfaceException uie) {
-			// TODO: Agentとの通信エラーは上に通知する
 			logger.error(uie.getMessage());
-			throw new AgentClientException("Connection faild bitween AgentClient");
-
+			throw new AgentClientException(String.format(ErrorMessage.CONNECTION_FAIL, "Agent-" + this.ip));
+		} catch (ClientHandlerException che) {
+			logger.error(che);
+			throw new AgentClientException(String.format(ErrorMessage.CONNECTION_FAIL, "Agent-" + this.ip));
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage("Sorry. I have BUG.");
+			throw new AgentClientException(ErrorMessage.UNEXPECTED_ERROR);
 		}
-		if(logger.isDebugEnabled()) {
-			logger.debug(String.format("%s (ret=%s) - end", func, res));
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s (ret=%s) - end", func, ret.toJson()));
 		}
-		return res;
+		return ret;
 	}
+
 	public String getIp() {
-		return this.agentIp;
+		return this.ip;
+	}
+
+	@Override
+	public String toString() {
+		return super.toString() + ":" + this.ip;
 	}
 }

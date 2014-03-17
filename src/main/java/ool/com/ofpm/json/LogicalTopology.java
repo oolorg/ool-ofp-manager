@@ -7,13 +7,14 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-public 	class LogicalTopology {
-	private List<BaseNode> nodes = new ArrayList<BaseNode>();
+public 	class LogicalTopology implements Cloneable {
+	private List<Node> nodes = new ArrayList<Node>();
 	private List<LogicalLink> links = new ArrayList<LogicalLink>();
 
+	@Override
 	public LogicalTopology clone() {
 		LogicalTopology newTopo = new LogicalTopology();
-		for(BaseNode node: nodes) {
+		for(Node node: nodes) {
 			newTopo.nodes.add(node.clone());
 		}
 		for(LogicalLink link: links) {
@@ -41,7 +42,7 @@ public 	class LogicalTopology {
 		LogicalTopology other = (LogicalTopology)obj;
 		if(this.nodes.size() != other.nodes.size()) return false;
 		if(this.links.size() != other.links.size()) return false;
-		for(BaseNode node : other.nodes) {
+		for(Node node : other.nodes) {
 			if(! this.nodes.contains(node)) return false;
 		}
 		for(LogicalLink link : other.links) {
@@ -53,7 +54,7 @@ public 	class LogicalTopology {
 	public int hashCode() {
 		int hash = 0;
 		if(this.nodes != null) {
-			for(BaseNode node : this.nodes) {
+			for(Node node : this.nodes) {
 				if(node != null) hash += node.hashCode();
 			}
 		}
@@ -64,11 +65,17 @@ public 	class LogicalTopology {
 		}
 		return hash;
 	}
+	@Override
+	public String toString() {
+		Gson gson = new Gson();
+		Type type = new TypeToken<LogicalTopology>() {}.getType();
+		return gson.toJson(this, type);
+	}
 
-	public List<BaseNode> getNodes() {
+	public List<Node> getNodes() {
 		return nodes;
 	}
-	public void setNodes(List<BaseNode> nodes) {
+	public void setNodes(List<Node> nodes) {
 		this.nodes = nodes;
 	}
 
@@ -79,17 +86,12 @@ public 	class LogicalTopology {
 		this.links = links;
 	}
 
-	public class LogicalLink {
-		private List<String> deviceName;
-
-		public LogicalLink() {
-			deviceName = new ArrayList<String>();
-		}
+	public class LogicalLink implements Cloneable {
+		private List<String> deviceName = new ArrayList<String>();
 
 		public List<String> getDeviceName() {
 			return deviceName;
 		}
-
 		public void setDeviceName(List<String> deviceName) {
 			this.deviceName = deviceName;
 		}
@@ -112,7 +114,7 @@ public 	class LogicalTopology {
 			}
 			return hash;
 		}
-
+		@Override
 		public LogicalLink clone() {
 			LogicalLink newLogicalLink = new LogicalLink();
 			for(String dName : deviceName) {
@@ -120,11 +122,14 @@ public 	class LogicalTopology {
 			}
 			return newLogicalLink;
 		}
-
 		public String toJson() {
 			Gson gson = new Gson();
 			Type type = new TypeToken<LogicalLink>(){}.getType();
 			return gson.toJson(this, type);
+		}
+		@Override
+		public String toString() {
+			return this.toJson();
 		}
 	}
 }

@@ -34,6 +34,10 @@ public class BaseResponse {
 	public int hashCode() {
 		return HashCodeBuilder.reflectionHashCode(this);
 	}
+	@Override
+	public String toString() {
+		return this.toJson();
+	}
 
 	public String toJson() {
 		Gson gson = new Gson();

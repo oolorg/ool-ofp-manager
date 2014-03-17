@@ -1,10 +1,9 @@
 package ool.com.ofpm.business;
 
-
 public interface DeviceBusiness {
-	public String createDevice(String deviceInfoJson);
+	public String createDevice(String newDeviceInfoJson);
 
-	public String deleteDevice(String params);
+	public String deleteDevice(String deviceName);
 
-	public String updateDevice(String params);
+	public String updateDevice(String newDeviceInfoJson);
 }

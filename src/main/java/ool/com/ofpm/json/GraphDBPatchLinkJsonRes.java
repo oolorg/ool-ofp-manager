@@ -7,7 +7,7 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-public class PatchLinkJsonIn extends BaseResponse {
+public class GraphDBPatchLinkJsonRes extends BaseResponse {
 	private List<PatchLink> result = new ArrayList<PatchLink>();
 
 	public class PatchLink {
@@ -27,6 +27,13 @@ public class PatchLinkJsonIn extends BaseResponse {
 				List<Integer> portName) {
 			this.portName = portName;
 		}
+
+		@Override
+		public String toString() {
+			Gson gson = new Gson();
+			Type type = new TypeToken<PatchLink>() {}.getType();
+			return gson.toJson(this, type);
+		}
 	}
 
 	public List<PatchLink> getResult() {
@@ -38,17 +45,19 @@ public class PatchLinkJsonIn extends BaseResponse {
 		this.result = result;
 	}
 
-	public static PatchLinkJsonIn fromJson(String json) {
+	public static GraphDBPatchLinkJsonRes fromJson(String json) {
 		Gson gson = new Gson();
-		Type type = new TypeToken<PatchLinkJsonIn>(){}.getType();
+		Type type = new TypeToken<GraphDBPatchLinkJsonRes>(){}.getType();
 		return gson.fromJson(json, type);
 	}
-
 	@Override
 	public String toJson() {
 		Gson gson = new Gson();
-		Type type = new TypeToken<PatchLinkJsonIn>(){}.getType();
+		Type type = new TypeToken<GraphDBPatchLinkJsonRes>(){}.getType();
 		return gson.toJson(this, type);
 	}
-
+	@Override
+	public String toString() {
+		return this.toJson();
+	}
 }
