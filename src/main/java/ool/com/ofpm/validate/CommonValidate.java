@@ -30,7 +30,6 @@ public class CommonValidate extends BaseValidate {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(params=%s) - start", fname, params));
 		}
-		/* TODO テナント処理を実装しなきゃ */
 		int size = params.size();
 		for (int dni = 0; dni < size; dni++) {
 			for (int ci = dni + 1; ci < size; ci++) {

@@ -17,7 +17,6 @@ import org.apache.log4j.Logger;
 public class LogicalTopologyValidate extends BaseValidate {
 	private static Logger logger = Logger.getLogger(LogicalTopologyValidate.class);
 
-	// TODO: テナントのチェックが必要です
 	public void checkValidationRequestIn(LogicalTopology logicalTopology) throws ValidateException {
 		String fname = "checkValidation";
 		if (logger.isDebugEnabled()) {

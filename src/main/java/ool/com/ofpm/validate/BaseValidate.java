@@ -7,29 +7,29 @@ package ool.com.ofpm.validate;
 
 /**
  * @author 1131080355959
- * 
+ *
  */
 public abstract class BaseValidate {
-
-	// abstract boolean checkNullAndEmpty(String value);
-
-	// abstract boolean checkPattern(String value);
-
 	/**
-	 * オブジェクトnullチェック
-	 * 
+	 * Determine if Object is null.
+	 *
 	 * @param value
-	 * @return not null true, null false
+	 * @return
+	 * true : Not null. <br>
+	 * false: null.
 	 */
 	protected static boolean checkNull(Object value) {
 		return value == null;
 	}
 
 	/**
-	 * 文字サイズをチェック
-	 * 
-	 * @param value length
-	 * @return not over true/over false;
+	 * Determine if length of string is less than or equal length.
+	 *
+	 * @param value
+	 * @param length
+	 * @return
+	 * true : Not over. <br>
+	 * false: Over.
 	 */
 	protected static boolean checkOverLength(String value, int length) {
 		if (value.length() > length) {
@@ -39,10 +39,12 @@ public abstract class BaseValidate {
 	}
 
 	/**
-	 * 半角数字チェック
-	 * 
+	 * Determine if string contains multi-byte charactor.
+	 *
 	 * @param value
-	 * @return すべて半角数字 true/それ以外 false
+	 * @return
+	 * true : Not contains multi-byte charactor. <br>
+	 * false: Contains multi-byte charactor.
 	 */
 	protected static boolean checkHalfNum(String value) {
 		if (value == null || !value.matches("^[0-9]+$")) {

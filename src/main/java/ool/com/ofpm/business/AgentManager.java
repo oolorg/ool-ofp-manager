@@ -1,27 +1,26 @@
 package ool.com.ofpm.business;
 
-import java.lang.reflect.Type;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
 
 import ool.com.ofpm.client.AgentClient;
 import ool.com.ofpm.client.AgentClientImpl;
 import ool.com.ofpm.exception.AgentManagerException;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.AgentInfoUpdateJsonIn;
-import ool.com.ofpm.json.AgentInfoUpdateJsonIn.SwitchInfo;
+import ool.com.ofpm.json.AgentInfo;
+import ool.com.ofpm.json.AgentInfo.SwitchInfo;
+import ool.com.ofpm.json.AgentInfoListConfigIn;
 import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.utils.ErrorMessage;
-import ool.com.ofpm.validate.AgentInfoUpdateJsonInValidate;
+import ool.com.ofpm.validate.AgentInfoValidate;
 
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 public class AgentManager {
 	private static final Logger logger = Logger.getLogger(AgentManager.class);
@@ -43,26 +42,20 @@ public class AgentManager {
 		if (instance == null) {
 			instance = new AgentManager();
 		}
-//		Config config = new ConfigImpl();
-//		Object[] recode = config.getList(Definition.AGENT_RECODE).toArray();
-//		instance.setAgentClient(recode[0].toString(), recode[1].toString(), recode[3].toString(), recode[2].toString());
 
 		try {
-			StringBuilder json = new StringBuilder();;
-			Scanner scanner = new Scanner(new PropertiesConfiguration(Definition.AGENT_CONFIG_FILE).getFile());
-			for ( ; scanner.hasNextLine(); json.append(scanner.next()));
-			scanner.close();
+			JAXBContext context = JAXBContext.newInstance(AgentInfoListConfigIn.class);
+			Unmarshaller ums = context.createUnmarshaller();
+			URL url = Thread.currentThread().getContextClassLoader().getResource(Definition.AGENT_CONFIG_FILE);
 
-			Gson gson = new Gson();
-			Type type = new TypeToken<List<AgentInfoUpdateJsonIn>>() {}.getType();
-			List<AgentInfoUpdateJsonIn> agentInfos = gson.fromJson(json.toString(), type);
-			AgentInfoUpdateJsonInValidate validator = new AgentInfoUpdateJsonInValidate();
+			AgentInfoListConfigIn agentConfig =  (AgentInfoListConfigIn)ums.unmarshal(url);
+			List<AgentInfo> agentInfos = agentConfig.getAgents();
+			AgentInfoValidate validator = new AgentInfoValidate();
 			for (int ai = 0; ai < agentInfos.size(); ai++) {
-				AgentInfoUpdateJsonIn agentInfo = agentInfos.get(ai);
-
+				AgentInfo agentInfo = agentInfos.get(ai);
 				try {
 					validator.checkValidation(agentInfo);
-					for (SwitchInfo switchInfo : agentInfo.getSwitchies()) {
+					for (SwitchInfo switchInfo : agentInfo.getSwitches()) {
 						instance.setAgentClient(switchInfo.getDeviceName(), switchInfo.getIp(), switchInfo.getOfcUrl(), agentInfo.getIp());
 					}
 				} catch (ValidateException ve) {
@@ -71,6 +64,8 @@ public class AgentManager {
 			}
 		} catch (Exception e) {
 			logger.error(e);
+		} catch (Throwable t) {
+			logger.error(t);
 		}
 
 		if (logger.isDebugEnabled()) {

@@ -1,0 +1,7 @@
+<xml xmlns="ool.com.ofpm.json">
+	<Agents>
+		<AgentInfo ip="192.168.1.22:18080">
+			<SwitchInfo deviceName="CENTEC_V350_SW04" ip="192.168.1.77" ofcUrl="http://192.168.1.22:28080/ofc/ryu/ctrl" />
+		</AgentInfo>
+	</Agents>
+</xml>

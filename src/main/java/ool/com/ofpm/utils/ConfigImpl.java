@@ -15,7 +15,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 
 /**
- * 設定ファイルの読み込みを行うクラス。
+ * Class to load config file.
  *
  * @author kurahashi
  * @version 0.1
@@ -27,20 +27,20 @@ public class ConfigImpl implements Config {
     private Configuration config = null;
 
     /**
-     * 設定ファイルを読み込む。
+     * Load config file.
      *
      * @throws RuntimeException
-     *             設定ファイルの読み込みに失敗(RuntimeExceptionで返す)
+     * Failed to load config file.
      */
     public ConfigImpl() {
         this(Definition.DEFAULT_PROPERTIY_FILE);
     }
 
     /**
-     * 設定ファイルを指定してインスタンスを生成する
+     * Specify config file and then create instance.
      *
      * @param config
-     *            設定ファイル
+     * 	File path.
      */
     public ConfigImpl(String config) {
         try {
@@ -53,10 +53,10 @@ public class ConfigImpl implements Config {
     }
 
     /**
-     * 設定オブジェクトを指定してインスタンスを生成する
+     * Specify config object and then create instance.
      *
      * @param config
-     *            設定ファイル
+     * Config object.
      */
     public ConfigImpl(Configuration config) {
         this.config = config;
@@ -108,9 +108,10 @@ public class ConfigImpl implements Config {
     }
 
     /**
-     * 設定ファイルへの参照を提供するConfigurationオブジェクトを返す。
+     * Configuration object is returned, it to provide reference to config file.
      *
-     * @return 設定ファイルへの参照を提供するConfigurationオブジェクト
+     * @return
+     * Configuration object to provide reference to config file.
      */
     @Override
     public Configuration getConfiguration() {

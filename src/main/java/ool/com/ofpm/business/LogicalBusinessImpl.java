@@ -16,11 +16,11 @@ import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.AgentClientUpdateFlowReq;
 import ool.com.ofpm.json.AgentClientUpdateFlowReq.AgentUpdateFlowData;
 import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
 import ool.com.ofpm.json.GraphDBPatchLinkJsonRes;
 import ool.com.ofpm.json.GraphDBPatchLinkJsonRes.PatchLink;
 import ool.com.ofpm.json.LogicalTopology;
 import ool.com.ofpm.json.LogicalTopology.LogicalLink;
+import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
 import ool.com.ofpm.json.Node;
 import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.utils.ErrorMessage;
@@ -44,16 +44,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 
 		List<LogicalLink> topoLinks = topology.getLinks();
-
-		// List<BaseNode> removalNodes = new
-		// ArrayList<BaseNode>();
-		// for(BaseNode topoNode : topoNodes) {
-		// if(!nodes.contains(topoNode)) {
-		// removalNodes.add(topoNode);
-		// }
-		// }
-		// topoNodes.removeAll(removalNodes);
-
 		List<String> deviceNames = new ArrayList<String>();
 		for (Node node : nodes) {
 			deviceNames.add(node.getDeviceName());
@@ -100,8 +90,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			if (logger.isInfoEnabled()) {
 				logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", res));
 			}
-			// this.filterTopology(nodes, res.getResult());
-
 		} catch (ValidateException ve) {
 			logger.error(ve);
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
@@ -214,7 +202,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 				res = resAgent;
 				if (resAgent.getStatus() != Definition.STATUS_SUCCESS) {
-					// TODO: do cancel commit to graphdb
+					/* TODO: Implement transaction */
 					res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 					res.setMessage(ErrorMessage.UNEXPECTED_ERROR);
 					break;
@@ -260,9 +248,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			if (logger.isDebugEnabled()) {
 				logger.debug(String.format("%s(ret=%s) - end", fname, res.toJson()));
 			}
-
 		}
-		// must be not writing code from this point foward
+		/* must be not writing code from this point foward */
 	}
 
 	private Map<AgentClient, List<AgentUpdateFlowData>> makeAgentUpdateFlowList(List<PatchLink> updatedLinks, String type) throws AgentManagerException {

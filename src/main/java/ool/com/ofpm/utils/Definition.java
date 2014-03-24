@@ -5,17 +5,6 @@
  */
 package ool.com.ofpm.utils;
 
-/*
- * TODO: AgentServiceの追加
- * TODO: SQLite化による軽量化
- * TODO: リファクタ、json構造クラスの統合
- * TODO: ResponseGeneratorの機能をApacheのmod_headerへ
- */
-
-/**
- * @author 1131080355959
- *
- */
 public class Definition {
 	/* Define static http code */
     public static final int STATUS_SUCCESS        = 200;
@@ -31,7 +20,7 @@ public class Definition {
 
 	/* Define property file */
 	public static final String DEFAULT_PROPERTIY_FILE = "ofpm.properties";
-	public static final String AGENT_CONFIG_FILE      = "agents.json";
+	public static final String AGENT_CONFIG_FILE      = "agents.xml";
 
 	/* Define agent manager config */
 	public static final String AGENT_PATH   = "/ofpa/ctrl";

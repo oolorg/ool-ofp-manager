@@ -6,8 +6,8 @@ import javax.ws.rs.client.Invocation.Builder;
 
 import mockit.NonStrictExpectations;
 import ool.com.ofpm.exception.GraphDBClientException;
-import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
 import ool.com.ofpm.json.LogicalTopology;
+import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
 import ool.com.ofpm.utils.Definition;
 
 import com.sun.jersey.api.client.ClientHandlerException;
@@ -19,10 +19,6 @@ public class OrientDBClientImplTest {
 
 	private LogicalTopology testLogicalTopologyIn = LogicalTopology.fromJson(testLogicalTopologyJsonIn);
 	private LogicalTopology testLogicalTopology   = LogicalTopology.fromJson(testLogicalTopologyJson);
-
-	/*
-	 * 正常版
-	 */
 
 	public void testGetLogicalTopology() {
 		new NonStrictExpectations() {

@@ -10,7 +10,7 @@ import java.util.List;
 import org.apache.commons.configuration.Configuration;
 
 /**
- * 設定ファイルの情報を取得するためのインタフェース
+ * Interface to get properties config file.
  *
  * @author kurahashi
  * @version 0.1
@@ -18,56 +18,58 @@ import org.apache.commons.configuration.Configuration;
  */
 public interface Config {
 	/**
-     * 設定項目に対応する値を取得する
+     * Get value to corresponding to the key.
      *
      * @param key
-     *            設定項目名
-     * @return 文字列型の値
+     * @return
+     * 	string value.
      */
     String getString(String key);
 
     /**
-     * 設定項目に対応する値を取得する
+     * Get value to corresponding to the key.
+     * Specified value is returned if not contains key to config file.
      *
      * @param key
-     *            設定項目名
      * @param defaultValue
-     *            デフォルト値
-     * @return 文字列型の値
+     * @return
+     * 	String value.
      */
     String getString(String key, String defaultValue);
 
     /**
-     * 設定項目に対応する値を取得する
+     * Get value to corresponding to the key.
      *
      * @param key
-     *            設定項目名
-     * @return intの値
+     * @return
+     * 	int value.
      */
     int getInt(String key);
 
     /**
-     * 設定項目に対応する値を取得する
+     * Get value to corresponding to the key.
+     * Specified value is returned if not contains key to config file.
      *
      * @param key
-     *            設定項目名
      * @param defaultValue
-     *            デフォルト値
-     * @return intの値
+     * @return
+     * 	int value.
      */
     int getInt(String key, int defaultValue);
 
     /**
-     * 設定ファイルの内容を文字列で返す
+     * Return with string in contents of config file.
      *
-     * @return 設定ファイルの内容を示す文字列
+     * @return
+     * 	Contents of config file.
      */
     String getContents();
 
     /**
-     * 設定ファイルのオブジェクトを返す
+     * Return with Configuration object in contents of config file.
      *
-     * @return 設定ファイルオブジェクト
+     * @return
+     * 	Contents of Configuration object.
      */
     Configuration getConfiguration();
 
