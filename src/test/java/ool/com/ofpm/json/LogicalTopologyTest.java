@@ -4,9 +4,9 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
-import ool.com.ofpm.json.Node;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.LogicalTopology;
+import ool.com.odbcl.json.BaseResponse;
+import ool.com.odbcl.json.LogicalTopology;
+import ool.com.odbcl.json.Node;
 
 import org.junit.Test;
 

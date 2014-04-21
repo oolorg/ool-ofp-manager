@@ -1,7 +1,7 @@
 package ool.com.ofpm.validate;
 
+import ool.com.odbcl.json.LogicalTopology.LogicalLink;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.LogicalTopology.LogicalLink;
 import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.utils.ErrorMessage;
 

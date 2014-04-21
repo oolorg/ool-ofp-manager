@@ -6,26 +6,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ool.com.odbcl.client.GraphDBClient;
+import ool.com.odbcl.client.OrientDBClientImpl;
+import ool.com.odbcl.exception.GraphDBClientException;
+import ool.com.odbcl.json.BaseResponse;
+import ool.com.odbcl.json.GraphDBPatchLinkJsonRes;
+import ool.com.odbcl.json.GraphDBPatchLinkJsonRes.PatchLink;
+import ool.com.odbcl.json.LogicalTopology;
+import ool.com.odbcl.json.LogicalTopology.LogicalLink;
+import ool.com.odbcl.json.LogicalTopologyGetJsonOut;
+import ool.com.odbcl.json.Node;
 import ool.com.ofpm.client.AgentClient;
-import ool.com.ofpm.client.GraphDBClient;
-import ool.com.ofpm.client.OrientDBClientImpl;
 import ool.com.ofpm.exception.AgentClientException;
 import ool.com.ofpm.exception.AgentManagerException;
-import ool.com.ofpm.exception.GraphDBClientException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.AgentClientUpdateFlowReq;
 import ool.com.ofpm.json.AgentClientUpdateFlowReq.AgentUpdateFlowData;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.GraphDBPatchLinkJsonRes;
-import ool.com.ofpm.json.GraphDBPatchLinkJsonRes.PatchLink;
-import ool.com.ofpm.json.LogicalTopology;
-import ool.com.ofpm.json.LogicalTopology.LogicalLink;
-import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
-import ool.com.ofpm.json.Node;
+import ool.com.ofpm.utils.Config;
+import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.utils.ErrorMessage;
 import ool.com.ofpm.validate.CommonValidate;
 import ool.com.ofpm.validate.LogicalTopologyValidate;
+import ool.com.openam.client.OpenAmClient;
+import ool.com.openam.client.OpenAmClientException;
+import ool.com.openam.client.OpenAmClientImpl;
+import ool.com.openam.json.TokenValidChkOut;
 
 import org.apache.log4j.Logger;
 
@@ -36,6 +42,14 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	private AgentManager agentManager;
 	private AgentClientUpdateFlowReq agentFlowJson = new AgentClientUpdateFlowReq();
+
+	Config conf = new ConfigImpl();
+
+	public LogicalBusinessImpl() {
+		if (logger.isDebugEnabled()) {
+			logger.debug("LogicalBusinessImpl");
+		}
+	}
 
 	private void filterTopology(List<Node> nodes, LogicalTopology topology) {
 		String fname = "filterTopology";
@@ -61,20 +75,43 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 	}
 
-	public String getLogicalTopology(String deviceNamesCSV) {
+	public String getLogicalTopology(String deviceNamesCSV, String tokenId) {
 		String fname = "getLogicalTopology";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(deviceNames=%s) - start", fname, deviceNamesCSV));
+			logger.debug(String.format("%s(deviceNames=%s, tokenId%s) - start", fname, deviceNamesCSV, tokenId));
 		}
 
 		LogicalTopologyGetJsonOut res = new LogicalTopologyGetJsonOut();
-		GraphDBClient graphDBClient = OrientDBClientImpl.getInstance();
+		String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
+		GraphDBClient graphDBClient = new OrientDBClientImpl(odbsUrl);
+		String openamUrl = conf.getString(Definition.OPEN_AM_URL);
+		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
 		try {
 			CommonValidate validator = new CommonValidate();
 			validator.checkStringBlank(deviceNamesCSV);
 			List<String> deviceNames = Arrays.asList(deviceNamesCSV.split(Definition.CSV_SPLIT_REGEX));
 			validator.checkArrayStringBlank(deviceNames);
 			validator.checkArrayOverlapped(deviceNames);
+
+			validator.checkStringBlank(tokenId);
+
+			boolean isTokenValid = false;
+			if (openAmClient != null) {
+				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
+				isTokenValid = tokenValidchkOut.getIsTokenValid();
+			}
+			if (isTokenValid != true) {
+				if (logger.isDebugEnabled()) {
+					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				}
+				res.setStatus(Definition.STATUS_BAD_REQUEST);
+				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				String ret = res.toJson();
+				if (logger.isDebugEnabled()) {
+					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				}
+				return ret;
+			}
 
 			List<Node> nodes = new ArrayList<Node>();
 			for (String deviceName : deviceNames) {
@@ -100,6 +137,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage(gdbe.getMessage());
 
+		} catch (OpenAmClientException oace) {
+			logger.error(oace);
+			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setMessage(oace.getMessage());
+
 		} catch (Exception e) {
 			logger.error(e);
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
@@ -121,14 +163,37 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		BaseResponse res = new BaseResponse();
 		res.setStatus(Definition.STATUS_SUCCESS);
-		GraphDBClient graphDBClient = OrientDBClientImpl.getInstance();
+		String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
+		GraphDBClient graphDBClient = new OrientDBClientImpl(odbsUrl);
+		String openamUrl = conf.getString(Definition.OPEN_AM_URL);
+		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
 		try {
 			LogicalTopology requestedTopology = LogicalTopology.fromJson(requestedTopologyJson);
 
 			LogicalTopologyValidate validator = new LogicalTopologyValidate();
 			validator.checkValidationRequestIn(requestedTopology);
 
+			String tokenId = requestedTopology.getTokenId();
+			boolean isTokenValid = false;
+			if (openAmClient != null) {
+				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
+				isTokenValid = tokenValidchkOut.getIsTokenValid();
+			}
+			if (isTokenValid != true) {
+				if (logger.isDebugEnabled()) {
+					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				}
+				res.setStatus(Definition.STATUS_BAD_REQUEST);
+				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				String ret = res.toJson();
+				if (logger.isDebugEnabled()) {
+					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				}
+				return ret;
+			}
+
 			List<Node> requestedNodes = requestedTopology.getNodes();
+
 
 			if (logger.isInfoEnabled()) {
 				logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", requestedNodes));
@@ -195,12 +260,12 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				if (logger.isInfoEnabled()) {
 					logger.info(String.format("agentClient.updateFlows(flows=%s) - called", agentFlowJson));
 				}
-				BaseResponse resAgent = agentClient.updateFlows(agentFlowJson);
+				ool.com.ofpm.json.BaseResponse resAgent = agentClient.updateFlows(agentFlowJson);
 				if (logger.isInfoEnabled()) {
 					logger.info(String.format("agentClinet.updateFlows(ret=%s) - returned", resAgent.toJson()));
 				}
 
-				res = resAgent;
+				//res = resAgent;
 				if (resAgent.getStatus() != Definition.STATUS_SUCCESS) {
 					/* TODO: Implement transaction */
 					res.setStatus(Definition.STATUS_INTERNAL_ERROR);

@@ -7,12 +7,12 @@ import java.util.List;
 
 import mockit.Delegate;
 import mockit.NonStrictExpectations;
-import ool.com.ofpm.client.OrientDBClientImpl;
-import ool.com.ofpm.exception.GraphDBClientException;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.LogicalTopology;
-import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
-import ool.com.ofpm.json.Node;
+import ool.com.odbcl.client.OrientDBClientImpl;
+import ool.com.odbcl.exception.GraphDBClientException;
+import ool.com.odbcl.json.BaseResponse;
+import ool.com.odbcl.json.LogicalTopology;
+import ool.com.odbcl.json.LogicalTopologyGetJsonOut;
+import ool.com.odbcl.json.Node;
 import ool.com.ofpm.utils.Definition;
 
 import org.junit.Test;
@@ -52,7 +52,7 @@ public class LogicalBusinessImplTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void getLogicalTopologyTest() {
-		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
+		final OrientDBClientImpl gdbClient = new OrientDBClientImpl("172.16.1.81:8080");//OrientDBClientImpl.getInstance();
 		new NonStrictExpectations(gdbClient) {
 			{
 				try {
@@ -119,7 +119,7 @@ public class LogicalBusinessImplTest {
 	@SuppressWarnings("unchecked")
 	//@Test
 	public void updateLogicalTopologyTest() {
-		final OrientDBClientImpl gdbClient = OrientDBClientImpl.getInstance();
+		final OrientDBClientImpl gdbClient =  new OrientDBClientImpl("172.16.1.81:8080");//OrientDBClientImpl.getInstance();
 		final AgentManager acm = AgentManager.getInstance();
 		new NonStrictExpectations(gdbClient, acm) {
 			{

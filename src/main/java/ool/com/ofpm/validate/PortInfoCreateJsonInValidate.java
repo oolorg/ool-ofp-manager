@@ -1,7 +1,7 @@
 package ool.com.ofpm.validate;
 
+import ool.com.odbcl.json.PortInfoCreateJsonIn;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.PortInfoCreateJsonIn;
 import ool.com.ofpm.utils.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;

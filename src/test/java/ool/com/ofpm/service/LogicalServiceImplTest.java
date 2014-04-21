@@ -6,10 +6,10 @@ import java.lang.reflect.Type;
 
 import mockit.Expectations;
 import mockit.NonStrictExpectations;
+import ool.com.odbcl.json.BaseResponse;
+import ool.com.odbcl.json.LogicalTopology;
+import ool.com.odbcl.json.LogicalTopologyGetJsonOut;
 import ool.com.ofpm.business.LogicalBusinessImpl;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
-import ool.com.ofpm.json.LogicalTopology;
 
 import org.junit.Test;
 

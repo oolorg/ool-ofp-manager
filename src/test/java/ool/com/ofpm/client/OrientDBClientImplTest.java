@@ -1,73 +1,35 @@
 package ool.com.ofpm.client;
 
 import static org.junit.Assert.*;
+import ool.com.odbcl.client.GraphDBClient;
+import ool.com.odbcl.client.OrientDBClientImpl;
+import ool.com.odbcl.exception.GraphDBClientException;
+import ool.com.odbcl.json.LogicalTopology;
+import ool.com.odbcl.json.LogicalTopologyGetJsonOut;
 
-import javax.ws.rs.client.Invocation.Builder;
-
-import mockit.NonStrictExpectations;
-import ool.com.ofpm.exception.GraphDBClientException;
-import ool.com.ofpm.json.LogicalTopology;
-import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
-import ool.com.ofpm.utils.Definition;
-
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.ClientResponse;
+import org.junit.Test;
 
 public class OrientDBClientImplTest {
-	private String testLogicalTopologyJsonIn   = "{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'}]}";
-	private String testLogicalTopologyJson     = "{nodes:[{deviceName:'novaNode01'},{deviceName:'novaNode02'}], links:[{deviceName:['novaNode01', 'novaNode02']}]}";
+	private static final String ORIENT_DB_SERVICE_URL = "172.16.1.84:12424";
+
+	private String testLogicalTopologyJsonIn   = "{nodes:[{deviceName:'server-200'},{deviceName:'server-201'}]}";
+	private String testLogicalTopologyJson     = "{nodes:[{deviceName:'server-200'},{deviceName:'server-201'}], links:[{deviceName:['server-200', 'server-201']}]}";
 
 	private LogicalTopology testLogicalTopologyIn = LogicalTopology.fromJson(testLogicalTopologyJsonIn);
 	private LogicalTopology testLogicalTopology   = LogicalTopology.fromJson(testLogicalTopologyJson);
 
+	@Test
 	public void testGetLogicalTopology() {
-		new NonStrictExpectations() {
-			ClientResponse gdbResponse;
-			Builder resBuilder;
-			{
-				resBuilder.get(ClientResponse.class);
-				//result = new UniformInterfaceException(gdbResponse);
-				result = new ClientHandlerException();
-				result = new Exception();
-				result = testLogicalTopologyJson;
+		//GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
 
-				gdbResponse.getStatus();
-				result = Definition.STATUS_BAD_REQUEST;
-				result = Definition.STATUS_SUCCESS;
+		GraphDBClient gdbClient = new OrientDBClientImpl(ORIENT_DB_SERVICE_URL);
 
-				gdbResponse.getEntity(String.class);
-				result = testLogicalTopologyJson;
-			}
-		};
-
-		GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
-//		try {
-//			gdbClient.getLogicalTopology(testLogicalTopologyIn.getNodes());
-//			fail();
-//		} catch (GraphDBClientException gdbe) {
-//			System.out.println(gdbe.getMessage());
-//		}
-		try {
-			gdbClient.getLogicalTopology(testLogicalTopologyIn.getNodes());
-			fail();
-		} catch (GraphDBClientException gdbe) {
-			System.out.println(gdbe.getMessage());
-		}
-		try {
-			gdbClient.getLogicalTopology(testLogicalTopologyIn.getNodes());
-			fail();
-		} catch (GraphDBClientException gdbe) {
-			System.out.println(gdbe.getMessage());
-		}
-		try {
-			gdbClient.getLogicalTopology(testLogicalTopologyIn.getNodes());
-		} catch (GraphDBClientException gdbe) {
-			System.out.println(gdbe.getMessage());
-		}
 		try {
 			LogicalTopologyGetJsonOut resGdb = gdbClient.getLogicalTopology(testLogicalTopologyIn.getNodes());
-			assertEquals(resGdb.getResult(), testLogicalTopology);
+			//assertEquals(resGdb.getResult(), testLogicalTopology);
+			System.out.println(String.format("status=%d",resGdb.getStatus()));
 		} catch (GraphDBClientException gdbe) {
+			System.out.println(gdbe.getMessage());
 			fail();
 		}
 	}

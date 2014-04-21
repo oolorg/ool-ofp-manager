@@ -1,11 +1,13 @@
 package ool.com.ofpm.business;
 
-import ool.com.ofpm.client.GraphDBClient;
-import ool.com.ofpm.client.OrientDBClientImpl;
-import ool.com.ofpm.exception.GraphDBClientException;
+import ool.com.odbcl.client.GraphDBClient;
+import ool.com.odbcl.client.OrientDBClientImpl;
+import ool.com.odbcl.exception.GraphDBClientException;
+import ool.com.odbcl.json.BaseResponse;
+import ool.com.odbcl.json.PhysicalLinkJsonIn;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.PhysicalLinkJsonIn;
+import ool.com.ofpm.utils.Config;
+import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.utils.ErrorMessage;
 import ool.com.ofpm.validate.PhysicalLinkJsonInValidate;
@@ -18,6 +20,8 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 	private static final Logger logger = Logger.getLogger(PhysicalBusinessImpl.class);
 	private static final String CONNECT = "connectPhysicalLink";
 	private static final String DISCONNECT = "disconnectPhysicalLink";
+
+	Config conf = new ConfigImpl();
 
 	private String commonLogic(String physicalLinkJson, String gdbClientMethodName) {
 		final String fname = "commonLogic";
@@ -32,7 +36,9 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 			PhysicalLinkJsonInValidate validator = new PhysicalLinkJsonInValidate();
 			validator.checkValidation(physicalLink);
 
-			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
+			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
+//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
+			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
 			if (logger.isInfoEnabled()) {
 				logger.info(String.format("graphDBClient.%s(physicalLinkJson=%s) - called", gdbClientMethodName, physicalLinkJson));
 			}

@@ -1,12 +1,13 @@
 package ool.com.ofpm.business;
 
-import ool.com.ofpm.client.GraphDBClient;
-import ool.com.ofpm.client.OrientDBClientImpl;
-import ool.com.ofpm.exception.GraphDBClientException;
+import ool.com.odbcl.client.GraphDBClient;
+import ool.com.odbcl.client.OrientDBClientImpl;
+import ool.com.odbcl.json.BaseResponse;
+import ool.com.odbcl.json.DeviceInfoCreateJsonIn;
+import ool.com.odbcl.json.DeviceInfoUpdateJsonIn;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.DeviceInfoCreateJsonIn;
-import ool.com.ofpm.json.DeviceInfoUpdateJsonIn;
+import ool.com.ofpm.utils.Config;
+import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.utils.ErrorMessage;
 import ool.com.ofpm.validate.CommonValidate;
@@ -19,6 +20,8 @@ import com.google.gson.JsonSyntaxException;
 
 public class DeviceBusinessImpl implements DeviceBusiness {
 	private static final Logger logger = Logger.getLogger(DeviceBusinessImpl.class);
+
+	Config conf = new ConfigImpl();
 
 	public String createDevice(String newDeviceInfoJson) {
 		String fname = "createDevice";
@@ -33,7 +36,9 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			DeviceInfoCreateJsonInValidate validator = new DeviceInfoCreateJsonInValidate();
 			validator.checkValidation(deviceInfo);
 
-			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
+			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
+//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
+			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
 			if (logger.isInfoEnabled()) {
 				logger.info(String.format("graphDBClient.nodeCreate(deviceInfo=%s) - called", deviceInfo.toJson()));
 			}
@@ -51,10 +56,12 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 
+			/*
 		} catch (GraphDBClientException gdbe) {
 			logger.error(gdbe);
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage(gdbe.getMessage());
+			*/
 
 		} catch (Exception e) {
 			logger.error(e);
@@ -80,7 +87,9 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			CommonValidate validator = new CommonValidate();
 			validator.checkStringBlank(deviceName);
 
-			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
+			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
+//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
+			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
 			if (logger.isInfoEnabled()) {
 				logger.info(String.format("graphDBClient.nodeDelete(deviceName=%s) - called", deviceName));
 			}
@@ -94,10 +103,12 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(message);
 
+			/*
 		} catch (GraphDBClientException gdbe) {
 			logger.error(gdbe);
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage(gdbe.getMessage());
+			*/
 
 		} catch (Exception e) {
 			logger.error(e);
@@ -125,7 +136,9 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			DeviceInfoUpdateJsonInValidate validator = new DeviceInfoUpdateJsonInValidate();
 			validator.checkValidation(newDeviceInfo);
 
-			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
+			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
+//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
+			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
 			if (logger.isInfoEnabled()) {
 				logger.info(String.format("graphDBClient.nodeUpdate(deviceInfo=%s) - called", newDeviceInfo.toJson()));
 			}
@@ -141,10 +154,12 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			logger.error(ve);
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
+			/*
 		} catch (GraphDBClientException gdbe) {
 			logger.error(gdbe);
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage(gdbe.getMessage());
+			*/
 		} catch (Exception e) {
 			logger.error(e);
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);

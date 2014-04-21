@@ -1,7 +1,7 @@
 package ool.com.ofpm.validate;
 
+import ool.com.odbcl.json.DeviceInfoCreateJsonIn;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.DeviceInfoCreateJsonIn;
 import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.utils.ErrorMessage;
 

@@ -4,10 +4,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import ool.com.odbcl.json.LogicalTopology;
+import ool.com.odbcl.json.LogicalTopology.LogicalLink;
+import ool.com.odbcl.json.Node;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.LogicalTopology;
-import ool.com.ofpm.json.LogicalTopology.LogicalLink;
-import ool.com.ofpm.json.Node;
 import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.utils.ErrorMessage;
 
@@ -68,6 +68,19 @@ public class LogicalTopologyValidate extends BaseValidate {
 			}
 		}
 
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s() - end", fname));
+		}
+	}
+
+	public void checkStringBlank(String param) throws ValidateException {
+		String fname = "checkStringBlank";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(param=%s) - start", fname, param));
+		}
+		if (StringUtils.isBlank(param)) {
+			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "parameter"));
+		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s() - end", fname));
 		}

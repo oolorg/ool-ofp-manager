@@ -40,6 +40,9 @@ public class Definition {
 	public static final String GRAPH_DB_PHYS_LINK_CONNECT_PATH     = "/orientdbservice/topology/physicalTopology/connect";
 	public static final String GRAPH_DB_PHYS_LINK_DISCONNECT_PATH  = "/orientdbservice/topology/physicalTopology/disconnect";
 
+	/* Define Open AM url */
+	public static final String OPEN_AM_URL                         = "openam.url";
+
 	/* Define validation parameters */
 	public static final int COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK = 2;
 	public static final String[] ENABLE_OFP_FLAGS    = {"true", "false"};

@@ -20,10 +20,10 @@ public class LogicalServiceImpl implements LogicalService {
 	Injector injector;
 
 	@Override
-	public String getLogicalTopology(String deviceNamesCSV) {
+	public String getLogicalTopology(String deviceNamesCSV, String tokenId) {
 		String fname = "getLogicalTopology";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(deviceNamesCSV=%s) - start", fname, deviceNamesCSV));
+			logger.debug(String.format("%s(deviceNamesCSV=%s, tokenId=%s) - start", fname, deviceNamesCSV, tokenId));
 		}
 
 		this.injector = Guice.createInjector(new AbstractModule() {
@@ -33,7 +33,7 @@ public class LogicalServiceImpl implements LogicalService {
 			}
 		});
 		LogicalServiceImpl main = this.injector.getInstance(LogicalServiceImpl.class);
-		String resLogiBiz = main.logiBiz.getLogicalTopology(deviceNamesCSV);
+		String resLogiBiz = main.logiBiz.getLogicalTopology(deviceNamesCSV, tokenId);
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));

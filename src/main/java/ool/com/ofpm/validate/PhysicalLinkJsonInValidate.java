@@ -2,9 +2,9 @@ package ool.com.ofpm.validate;
 
 import java.util.List;
 
+import ool.com.odbcl.json.PhysicalLinkJsonIn;
+import ool.com.odbcl.json.PortInfo;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.PhysicalLinkJsonIn;
-import ool.com.ofpm.json.PortInfo;
 import ool.com.ofpm.utils.Definition;
 import ool.com.ofpm.utils.ErrorMessage;
 
