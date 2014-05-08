@@ -28,20 +28,24 @@ public class Definition {
 
 	/* Define graph db url */
 	public static final String GRAPH_DB_URL                        = "gdb.url";
-	public static final String GRAPH_DB_LOGI_LINK_CONNECT_PATH     = "/orientdbservice/ofpatch/connect";
-	public static final String GRAPH_DB_LOGI_LINK_DISCONNECT_PATH  = "/orientdbservice/ofpatch/disconnect";
-	public static final String GRAPH_DB_NODE_CREATE_PATH           = "/orientdbservice/deviceManager/nodeCreate";
-	public static final String GRAPH_DB_NODE_UPDATE_PATH           = "/orientdbservice/deviceManager/nodeUpdate";
-	public static final String GRAPH_DB_NODE_DELETE_PATH           = "/orientdbservice/deviceManager/nodeDelete";
-	public static final String GRAPH_DB_PORT_CREATE_PATH           = "/orientdbservice/deviceManager/portCreate";
-	public static final String GRAPH_DB_PORT_UPDATE_PATH           = "/orientdbservice/deviceManager/portUpdate";
-	public static final String GRAPH_DB_PORT_DELETE_PATH           = "/orientdbservice/deviceManager/portDelete";
-	public static final String GRAPH_DB_LOGI_TOPO_GET_PATH         = "/orientdbservice/topology/logicalTopology";
-	public static final String GRAPH_DB_PHYS_LINK_CONNECT_PATH     = "/orientdbservice/topology/physicalTopology/connect";
-	public static final String GRAPH_DB_PHYS_LINK_DISCONNECT_PATH  = "/orientdbservice/topology/physicalTopology/disconnect";
 
 	/* Define Open AM url */
 	public static final String OPEN_AM_URL                         = "openam.url";
+
+	/* Define Device Manager url */
+	public static final String DEVICE_MANAGER_URL                  = "devicemanager.url";
+
+	/* Define Network Config Setupper url */
+	public static final String NETWORK_CONFIG_SETUPPER_URL         = "networkconfigsetupper.url";
+	public static final String NCS_PLANE_SW_CONFIG                 = "/plane_sw_config";
+
+	/* Define Open AM admin user */
+	public static final String OPEN_AM_ADMIN_USER_ID               = "amadmin";
+	public static final String OPEN_AM_ADMIN_USER_PW               = "okinawa1940";
+
+	/* Define host name */
+	public static final String D_PLANE_SW_HOST_NAME                = "D-Plane_SW01";
+	public static final String OFP_SW_HOST_NAME                    = "OFP_SW01";
 
 	/* Define validation parameters */
 	public static final int COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK = 2;

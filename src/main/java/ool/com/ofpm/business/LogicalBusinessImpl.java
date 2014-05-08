@@ -6,22 +6,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ool.com.dmdb.client.DeviceManagerDBClient;
+import ool.com.dmdb.client.DeviceManagerDBClientImpl;
+import ool.com.dmdb.json.Used;
 import ool.com.odbcl.client.GraphDBClient;
 import ool.com.odbcl.client.OrientDBClientImpl;
 import ool.com.odbcl.exception.GraphDBClientException;
 import ool.com.odbcl.json.BaseResponse;
+import ool.com.odbcl.json.ConnectedPortGetJsonOut;
 import ool.com.odbcl.json.GraphDBPatchLinkJsonRes;
 import ool.com.odbcl.json.GraphDBPatchLinkJsonRes.PatchLink;
+import ool.com.odbcl.json.GraphDevicePort;
 import ool.com.odbcl.json.LogicalTopology;
 import ool.com.odbcl.json.LogicalTopology.LogicalLink;
 import ool.com.odbcl.json.LogicalTopologyGetJsonOut;
 import ool.com.odbcl.json.Node;
+import ool.com.odbcl.utils.GraphDBUtil;
 import ool.com.ofpm.client.AgentClient;
+import ool.com.ofpm.client.NetworkConfigSetupperClient;
+import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
 import ool.com.ofpm.exception.AgentClientException;
 import ool.com.ofpm.exception.AgentManagerException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.AgentClientUpdateFlowReq;
 import ool.com.ofpm.json.AgentClientUpdateFlowReq.AgentUpdateFlowData;
+import ool.com.ofpm.json.NetworkConfigSetupperIn;
+import ool.com.ofpm.json.NetworkConfigSetupperInData;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.Definition;
@@ -31,6 +41,8 @@ import ool.com.ofpm.validate.LogicalTopologyValidate;
 import ool.com.openam.client.OpenAmClient;
 import ool.com.openam.client.OpenAmClientException;
 import ool.com.openam.client.OpenAmClientImpl;
+import ool.com.openam.json.OpenAmIdentitiesOut;
+import ool.com.openam.json.TokenIdOut;
 import ool.com.openam.json.TokenValidChkOut;
 
 import org.apache.log4j.Logger;
@@ -127,6 +139,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			if (logger.isInfoEnabled()) {
 				logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", res));
 			}
+
+			this.filterTopology(nodes, res.getResult());
 		} catch (ValidateException ve) {
 			logger.error(ve);
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
@@ -167,6 +181,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		GraphDBClient graphDBClient = new OrientDBClientImpl(odbsUrl);
 		String openamUrl = conf.getString(Definition.OPEN_AM_URL);
 		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
+		String deviceManagerUrl = conf.getString(Definition.DEVICE_MANAGER_URL);
+		DeviceManagerDBClient deviceManagerDBClient = new DeviceManagerDBClientImpl(deviceManagerUrl);
+		String networkConfigSetupperUrl = conf.getString(Definition.NETWORK_CONFIG_SETUPPER_URL);
+		NetworkConfigSetupperClient networkConfigSetupperClien = new NetworkConfigSetupperClientImpl(networkConfigSetupperUrl);
+
 		try {
 			LogicalTopology requestedTopology = LogicalTopology.fromJson(requestedTopologyJson);
 
@@ -246,6 +265,43 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 					res.setMessage(augmentedPatches.getMessage());
 					return res.toJson();
 				}
+
+				List<String> deviceNames = link.getDeviceName();
+				if (deviceNames.contains(Definition.D_PLANE_SW_HOST_NAME)) {
+					ConnectedPortGetJsonOut connectedPortGetJsonOut= graphDBClient.getConnectedPort(Definition.OFP_SW_HOST_NAME);
+					List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
+					String dPlaneSwPortName = new String();
+					String deviceName = new String();
+					for (Integer portNumber : portNames) {
+						GraphDevicePort graphDevicePort = GraphDBUtil.searchNeighborPort(Definition.OFP_SW_HOST_NAME, portNumber, connectedPortGetJsonOut.getResult());
+						if (graphDevicePort.getDeviceName().equals(Definition.D_PLANE_SW_HOST_NAME)) {
+							dPlaneSwPortName = graphDevicePort.getPortName();
+						} else {
+							deviceName = graphDevicePort.getDeviceName();
+						}
+					}
+
+					// Get device used info from Device manager.
+					//List<Used> uses = deviceManagerDBClient.readUsed(tokenId, deviceName, null);
+					List<Used> uses = deviceManagerDBClient.readUsed(tokenId, deviceName, null);
+					Used used = uses.get(0);
+
+					// Get vlanID from OpenAM with userID and tokenId of administrator.
+					TokenIdOut adminToken = openAmClient.authenticate(Definition.OPEN_AM_ADMIN_USER_ID , Definition.OPEN_AM_ADMIN_USER_PW);
+					OpenAmIdentitiesOut openAmIdentitiesOut = openAmClient.readIdentities(adminToken.getTokenId(), used.getUserName());
+					String dVlan = openAmIdentitiesOut.getdVlan().get(0);
+
+					// Send parameters(auth id,deviceName, vlan id) to NCS.
+					NetworkConfigSetupperIn networkConfigSetupperIn = new NetworkConfigSetupperIn();
+					networkConfigSetupperIn.setTokenId(tokenId);
+					List<ool.com.ofpm.json.NetworkConfigSetupperInData> params = networkConfigSetupperIn.getParams();
+					List<String> portNamesData = new ArrayList<String>();
+					portNamesData.add(dPlaneSwPortName);
+					NetworkConfigSetupperInData param = new NetworkConfigSetupperInData(Definition.D_PLANE_SW_HOST_NAME, dVlan, portNamesData);
+					params.add(param);
+					ool.com.ofpm.json.BaseResponse resNcs = networkConfigSetupperClien.sendPlaneSwConfigData(networkConfigSetupperIn);
+				}
+
 				augmentedLinks.addAll(augmentedPatches.getResult());
 			}
 
