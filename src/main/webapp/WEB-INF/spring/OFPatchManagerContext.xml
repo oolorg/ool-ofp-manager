@@ -13,16 +13,18 @@
 	<context:component-scan base-package="ool.com.ofpm.jaxrs" />
 
 	<jaxrs:server id="ofp-manager" address="/">
-    	<jaxrs:serviceBeans>
-        	<ref bean="port_srv" />
-        	<ref bean="device_srv" />
-        	<ref bean="logi_srv" />
-        	<ref bean="phys_srv" />
-    	</jaxrs:serviceBeans>
+		<jaxrs:serviceBeans>
+			<ref bean="port_srv" />
+			<ref bean="device_srv" />
+			<ref bean="logi_srv" />
+			<ref bean="phys_srv" />
+			<ref bean="deviceMng_srv" />
+		</jaxrs:serviceBeans>
 	</jaxrs:server>
 
 	<bean id="port_srv" class="ool.com.ofpm.service.PortServiceImpl" />
 	<bean id="device_srv" class="ool.com.ofpm.service.DeviceServiceImpl" />
 	<bean id="logi_srv" class="ool.com.ofpm.service.LogicalServiceImpl" />
 	<bean id="phys_srv" class="ool.com.ofpm.service.PhysicalServiceImpl" />
+	<bean id="deviceMng_srv" class="ool.com.ofpm.service.DeviceManagerServiceImpl" />
 </beans>

@@ -1,18 +1,22 @@
 package ool.com.ofpm.business;
 
-import ool.com.odbcl.client.GraphDBClient;
-import ool.com.odbcl.client.OrientDBClientImpl;
-import ool.com.odbcl.json.BaseResponse;
-import ool.com.odbcl.json.DeviceInfoCreateJsonIn;
-import ool.com.odbcl.json.DeviceInfoUpdateJsonIn;
+import java.sql.SQLException;
+
 import ool.com.ofpm.exception.ValidateException;
+import ool.com.ofpm.json.BaseResponse;
+import ool.com.ofpm.json.DeviceInfoCreateJsonIn;
+import ool.com.ofpm.json.DeviceInfoUpdateJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
-import ool.com.ofpm.utils.Definition;
-import ool.com.ofpm.utils.ErrorMessage;
 import ool.com.ofpm.validate.CommonValidate;
 import ool.com.ofpm.validate.DeviceInfoCreateJsonInValidate;
 import ool.com.ofpm.validate.DeviceInfoUpdateJsonInValidate;
+import ool.com.orientdb.client.ConnectionUtils;
+import ool.com.orientdb.client.ConnectionUtilsImpl;
+import ool.com.orientdb.client.Dao;
+import ool.com.orientdb.client.DaoImpl;
+import ool.com.util.Definition;
+import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
@@ -30,21 +34,21 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		}
 
 		BaseResponse res = new BaseResponse();
+		Dao dao = null;
+
 		try {
 			DeviceInfoCreateJsonIn deviceInfo = DeviceInfoCreateJsonIn.fromJson(newDeviceInfoJson);
 
 			DeviceInfoCreateJsonInValidate validator = new DeviceInfoCreateJsonInValidate();
 			validator.checkValidation(deviceInfo);
 
-			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
-//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
-			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.nodeCreate(deviceInfo=%s) - called", deviceInfo.toJson()));
-			}
-			res = gdbClient.nodeCreate(deviceInfo);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.nodeCreate(ret=%s) - returned", res.toJson()));
+			ConnectionUtils utils = new ConnectionUtilsImpl();
+			dao = new DaoImpl(utils);
+			if (dao.createNodeInfo(deviceInfo.getDeviceName(), deviceInfo.getDeviceType(), deviceInfo.getOfpFlag()) == Definition.DB_RESPONSE_STATUS_EXIST) {
+				res.setStatus(Definition.STATUS_BAD_REQUEST);
+				res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, deviceInfo.getDeviceName()));
+			} else {
+				res.setStatus(Definition.STATUS_CREATED);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
@@ -56,23 +60,31 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 
-			/*
-		} catch (GraphDBClientException gdbe) {
-			logger.error(gdbe);
+		} catch (SQLException e) {
+    		logger.error(e.getMessage());
+    		res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		res.setMessage(e.getMessage());
+		}  catch (RuntimeException re) {
+			logger.error(re.getMessage());
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(gdbe.getMessage());
-			*/
-
-		} catch (Exception e) {
-			logger.error(e);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(e.getMessage());
+			res.setMessage(re.getMessage());
+		} finally {
+			try {
+				if(dao != null) {
+					dao.close();
+				}
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setMessage(e.getMessage());
+			}
 		}
 
 		String ret = res.toJson();
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 		}
+
 		return ret;
 	}
 
@@ -83,37 +95,50 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		}
 
 		BaseResponse res = new BaseResponse();
+		Dao dao = null;
+
 		try {
 			CommonValidate validator = new CommonValidate();
 			validator.checkStringBlank(deviceName);
 
-			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
-//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
-			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.nodeDelete(deviceName=%s) - called", deviceName));
+			ConnectionUtils utils = new ConnectionUtilsImpl();
+			dao = new DaoImpl(utils);
+
+			int status = dao.deleteDeviceInfo(deviceName);
+			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(Definition.DB_RESPONSE_STATUS_NOT_FOUND);
+				res.setMessage(String.format(ErrorMessage.NOT_FOUND, deviceName));
+			} else if (status == Definition.STATUS_FORBIDDEN) {
+				res.setStatus(Definition.STATUS_FORBIDDEN);
+				res.setMessage(String.format(ErrorMessage.IS_PATCHED, deviceName));
+			} else {
+				res.setStatus(Definition.STATUS_SUCCESS);
 			}
-			res = gdbClient.nodeDelete(deviceName);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.nodeDelete(ret=%s) - returned", res.toJson()));
-			}
+
 		} catch (ValidateException ve) {
 			String message = String.format(ErrorMessage.IS_BLANK, "deviceName");
 			logger.error(ve.getClass().getName() + ": " + message);
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(message);
 
-			/*
-		} catch (GraphDBClientException gdbe) {
-			logger.error(gdbe);
+		} catch (SQLException e) {
+    		logger.error(e.getMessage());
+    		res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		res.setMessage(e.getMessage());
+		}  catch (RuntimeException re) {
+			logger.error(re.getMessage());
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(gdbe.getMessage());
-			*/
-
-		} catch (Exception e) {
-			logger.error(e);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(e.getMessage());
+			res.setMessage(re.getMessage());
+		} finally {
+			try {
+				if(dao != null) {
+					dao.close();
+				}
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setMessage(e.getMessage());
+			}
 		}
 
 		String ret = res.toJson();
@@ -124,27 +149,35 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 	}
 
 	public String updateDevice(String updateDeviceInfoJson) {
+
 		String fname = "updateDevice";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(newDeviceInfoJson=%s) - start", fname, updateDeviceInfoJson));
 		}
 
 		BaseResponse res = new BaseResponse();
+		Dao dao = null;
 		try {
 			DeviceInfoUpdateJsonIn newDeviceInfo = DeviceInfoUpdateJsonIn.fromJson(updateDeviceInfoJson);
 
 			DeviceInfoUpdateJsonInValidate validator = new DeviceInfoUpdateJsonInValidate();
 			validator.checkValidation(newDeviceInfo);
 
-			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
-//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
-			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.nodeUpdate(deviceInfo=%s) - called", newDeviceInfo.toJson()));
-			}
-			res = gdbClient.nodeUpdate(newDeviceInfo);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.nodeUpdate(ret=%s) - returned", res.toJson()));
+			ConnectionUtils utils = new ConnectionUtilsImpl();
+			dao = new DaoImpl(utils);
+
+			int status = dao.updateNodeInfo(
+					newDeviceInfo.getDeviceName(),
+					newDeviceInfo.getParams().getDeviceName(),
+					newDeviceInfo.getParams().getOfpFlag());
+			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(Definition.STATUS_NOTFOUND);
+				res.setMessage(String.format(ErrorMessage.NOT_FOUND, newDeviceInfo.getDeviceName()));
+			} else if (status == Definition.DB_RESPONSE_STATUS_EXIST) {
+				res.setStatus(Definition.STATUS_CONFLICT);
+				res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, newDeviceInfo.getDeviceName()));
+			} else {
+				res.setStatus(Definition.STATUS_CREATED);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
@@ -154,16 +187,24 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			logger.error(ve);
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
-			/*
-		} catch (GraphDBClientException gdbe) {
-			logger.error(gdbe);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(gdbe.getMessage());
-			*/
-		} catch (Exception e) {
-			logger.error(e);
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
+		}  catch (RuntimeException re) {
+			logger.error(re.getMessage());
+			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setMessage(re.getMessage());
+		} finally {
+			try {
+				if(dao != null) {
+					dao.close();
+				}
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setMessage(e.getMessage());
+			}
 		}
 
 		String ret = res.toJson();

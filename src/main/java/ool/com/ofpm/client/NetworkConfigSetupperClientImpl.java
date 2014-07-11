@@ -11,9 +11,9 @@ import ool.com.ofpm.exception.NetworkConfigSetupperException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.BaseResponse;
 import ool.com.ofpm.json.NetworkConfigSetupperIn;
-import ool.com.ofpm.utils.Definition;
-import ool.com.ofpm.utils.ErrorMessage;
 import ool.com.ofpm.validate.NetworkConfigSetupperInValidate;
+import ool.com.util.Definition;
+import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 

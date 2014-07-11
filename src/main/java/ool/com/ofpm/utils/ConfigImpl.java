@@ -8,6 +8,8 @@ package ool.com.ofpm.utils;
 import java.io.StringWriter;
 import java.util.List;
 
+import ool.com.util.Definition;
+
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.ConversionException;

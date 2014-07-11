@@ -1,5 +1,6 @@
 package ool.com.ofpm.business;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,20 +9,8 @@ import java.util.Map;
 
 import ool.com.dmdb.client.DeviceManagerDBClient;
 import ool.com.dmdb.client.DeviceManagerDBClientImpl;
+import ool.com.dmdb.exception.DeviceManagerDBClientException;
 import ool.com.dmdb.json.Used;
-import ool.com.odbcl.client.GraphDBClient;
-import ool.com.odbcl.client.OrientDBClientImpl;
-import ool.com.odbcl.exception.GraphDBClientException;
-import ool.com.odbcl.json.BaseResponse;
-import ool.com.odbcl.json.ConnectedPortGetJsonOut;
-import ool.com.odbcl.json.GraphDBPatchLinkJsonRes;
-import ool.com.odbcl.json.GraphDBPatchLinkJsonRes.PatchLink;
-import ool.com.odbcl.json.GraphDevicePort;
-import ool.com.odbcl.json.LogicalTopology;
-import ool.com.odbcl.json.LogicalTopology.LogicalLink;
-import ool.com.odbcl.json.LogicalTopologyGetJsonOut;
-import ool.com.odbcl.json.Node;
-import ool.com.odbcl.utils.GraphDBUtil;
 import ool.com.ofpm.client.AgentClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
@@ -30,12 +19,23 @@ import ool.com.ofpm.exception.AgentManagerException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.AgentClientUpdateFlowReq;
 import ool.com.ofpm.json.AgentClientUpdateFlowReq.AgentUpdateFlowData;
+import ool.com.ofpm.json.BaseResponse;
+import ool.com.ofpm.json.ConnectedPortGetJsonOut;
+import ool.com.ofpm.json.GraphDBPatchLinkJsonRes;
+import ool.com.ofpm.json.GraphDevicePort;
+import ool.com.ofpm.json.LogicalLink;
+import ool.com.ofpm.json.LogicalTopology;
+import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
+import ool.com.ofpm.json.LogicalTopologyUpdateJsonIn;
 import ool.com.ofpm.json.NetworkConfigSetupperIn;
 import ool.com.ofpm.json.NetworkConfigSetupperInData;
+import ool.com.ofpm.json.Node;
+import ool.com.ofpm.json.PatchLink;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
-import ool.com.ofpm.utils.Definition;
-import ool.com.ofpm.utils.ErrorMessage;
+import ool.com.ofpm.utils.GraphDBUtil;
+import ool.com.ofpm.utils.OFPatchBusiness;
+import ool.com.ofpm.utils.OFPatchBusinessImpl;
 import ool.com.ofpm.validate.CommonValidate;
 import ool.com.ofpm.validate.LogicalTopologyValidate;
 import ool.com.openam.client.OpenAmClient;
@@ -44,10 +44,17 @@ import ool.com.openam.client.OpenAmClientImpl;
 import ool.com.openam.json.OpenAmIdentitiesOut;
 import ool.com.openam.json.TokenIdOut;
 import ool.com.openam.json.TokenValidChkOut;
+import ool.com.orientdb.client.ConnectionUtils;
+import ool.com.orientdb.client.ConnectionUtilsImpl;
+import ool.com.orientdb.client.Dao;
+import ool.com.orientdb.client.DaoImpl;
+import ool.com.util.Definition;
+import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
 import com.google.gson.JsonSyntaxException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class LogicalBusinessImpl implements LogicalBusiness {
 	private static final Logger logger = Logger.getLogger(LogicalBusinessImpl.class);
@@ -57,34 +64,99 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	Config conf = new ConfigImpl();
 
+	OFPatchBusiness ofPatchBusiness = new OFPatchBusinessImpl();
+
 	public LogicalBusinessImpl() {
 		if (logger.isDebugEnabled()) {
 			logger.debug("LogicalBusinessImpl");
 		}
 	}
 
-	private void filterTopology(List<Node> nodes, LogicalTopology topology) {
+	private void filterTopology(List<ool.com.ofpm.json.Node> nodes, List<LogicalLink> linkList) {
 		String fname = "filterTopology";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(nodes=%s, topology=%s) - start", fname, nodes, topology));
+			logger.debug(String.format("%s(nodes=%s, linkList=%s) - start", fname, nodes, linkList));
 		}
 
-		List<LogicalLink> topoLinks = topology.getLinks();
 		List<String> deviceNames = new ArrayList<String>();
 		for (Node node : nodes) {
 			deviceNames.add(node.getDeviceName());
 		}
 		List<LogicalLink> removalLinks = new ArrayList<LogicalLink>();
-		for (LogicalLink topoLink : topoLinks) {
-			if (!deviceNames.containsAll(topoLink.getDeviceName())) {
-				removalLinks.add(topoLink);
+		for (LogicalLink link : linkList) {
+			if (!deviceNames.containsAll(link.getDeviceName())) {
+				removalLinks.add(link);
 			}
 		}
-		topoLinks.removeAll(removalLinks);
+		linkList.removeAll(removalLinks);
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s() - end", fname));
 		}
+	}
+
+	public BaseResponse getLogicalTopologyExec(List<Node> nodeList,List<LogicalLink> linkList) {
+		BaseResponse ret = new BaseResponse();
+		ConnectionUtils utils = new ConnectionUtilsImpl();
+		ODocument document = null;
+		Dao dao = null;
+		LogicalLink link = null;
+		List<List<String>> connectNodeList = new ArrayList<List<String>>();
+		List<List<String>> connectedDeviceNameList = new ArrayList<List<String>>();
+
+		try {
+			dao = new DaoImpl(utils);
+
+			for (int i=0; i < nodeList.size(); i++) {
+				Node node = nodeList.get(i);
+				document = dao.getDeviceInfo(node.getDeviceName());
+				node.setDeviceName(document.field("name").toString());
+				node.setDeviceType(document.field("type").toString());
+			}
+
+			for (Node node : nodeList) {
+				connectedDeviceNameList.addAll(dao.getPatchConnectedDevice(node.getDeviceName()));
+			}
+			for(List<String> connectNode : connectedDeviceNameList) {
+				if (isOverlap(connectNodeList, connectNode)) {
+					continue;
+				}
+				connectNodeList.add(connectNode);
+			}
+
+			for (List<String> cn : connectNodeList) {
+				link = new LogicalLink();
+				link.setDeviceName(cn);
+				linkList.add(link);
+			}
+
+			ret.setStatus(Definition.STATUS_SUCCESS);
+    	} catch (SQLException e) {
+    		logger.error(e.getMessage());
+			ret.setMessage(e.getMessage());
+    		if (e.getCause() != null) {
+    			ret.setStatus(Definition.STATUS_NOTFOUND);
+    		} else {
+    			ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		}
+		} catch (RuntimeException re) {
+			logger.error(re.getMessage());
+			ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		ret.setMessage(re.getMessage());
+		}
+    	finally {
+			try {
+				if(dao != null) {
+					dao.close();
+				}
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+	    		ret.setMessage(e.getMessage());
+			}
+		}
+
+		return ret;
 	}
 
 	public String getLogicalTopology(String deviceNamesCSV, String tokenId) {
@@ -94,10 +166,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 
 		LogicalTopologyGetJsonOut res = new LogicalTopologyGetJsonOut();
-		String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
-		GraphDBClient graphDBClient = new OrientDBClientImpl(odbsUrl);
+		LogicalTopology resultData = new LogicalTopology();
 		String openamUrl = conf.getString(Definition.OPEN_AM_URL);
 		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
+
 		try {
 			CommonValidate validator = new CommonValidate();
 			validator.checkStringBlank(deviceNamesCSV);
@@ -125,31 +197,32 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				return ret;
 			}
 
-			List<Node> nodes = new ArrayList<Node>();
+			List<Node> nodeList = new ArrayList<Node>();
 			for (String deviceName : deviceNames) {
 				Node node = new Node();
 				node.setDeviceName(deviceName);
-				nodes.add(node);
+				nodeList.add(node);
 			}
 
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", nodes));
-			}
-			res = graphDBClient.getLogicalTopology(nodes);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", res));
+			List<LogicalLink> linkList = new ArrayList<LogicalLink>();
+			BaseResponse ret = getLogicalTopologyExec(nodeList, linkList);
+			if (ret.getStatus() != Definition.STATUS_SUCCESS) {
+				nodeList.removeAll(nodeList);
 			}
 
-			this.filterTopology(nodes, res.getResult());
+			this.filterTopology(nodeList, linkList);
+
+			// create response data
+			resultData.setNodes(nodeList);
+			resultData.setLinks(linkList);
+			res.setResult(resultData);
+			res.setStatus(ret.getStatus());
+			res.setMessage(ret.getMessage());
+
 		} catch (ValidateException ve) {
 			logger.error(ve);
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
-
-		} catch (GraphDBClientException gdbe) {
-			logger.error(gdbe);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(gdbe.getMessage());
 
 		} catch (OpenAmClientException oace) {
 			logger.error(oace);
@@ -177,17 +250,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		BaseResponse res = new BaseResponse();
 		res.setStatus(Definition.STATUS_SUCCESS);
-		String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
-		GraphDBClient graphDBClient = new OrientDBClientImpl(odbsUrl);
 		String openamUrl = conf.getString(Definition.OPEN_AM_URL);
 		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
-		String deviceManagerUrl = conf.getString(Definition.DEVICE_MANAGER_URL);
-		DeviceManagerDBClient deviceManagerDBClient = new DeviceManagerDBClientImpl(deviceManagerUrl);
-		String networkConfigSetupperUrl = conf.getString(Definition.NETWORK_CONFIG_SETUPPER_URL);
-		NetworkConfigSetupperClient networkConfigSetupperClien = new NetworkConfigSetupperClientImpl(networkConfigSetupperUrl);
 
 		try {
-			LogicalTopology requestedTopology = LogicalTopology.fromJson(requestedTopologyJson);
+			LogicalTopologyUpdateJsonIn requestedTopology = LogicalTopologyUpdateJsonIn.fromJson(requestedTopologyJson);
 
 			LogicalTopologyValidate validator = new LogicalTopologyValidate();
 			validator.checkValidationRequestIn(requestedTopology);
@@ -212,38 +279,30 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 
 			List<Node> requestedNodes = requestedTopology.getNodes();
-
-
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.getLogicalTopology(nodes=%s) - called", requestedNodes));
-			}
-			LogicalTopologyGetJsonOut responseGraphDB = graphDBClient.getLogicalTopology(requestedNodes);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.getLogicalTopology(ret=%s) - returned", responseGraphDB));
-			}
-			if (responseGraphDB.getStatus() != Definition.STATUS_SUCCESS) {
-				res.setStatus(responseGraphDB.getStatus());
-				res.setMessage(responseGraphDB.getMessage());
-				return res.toJson();
+			List<LogicalLink> currentLinkList = new ArrayList<LogicalLink>();
+			BaseResponse getltsRet = getLogicalTopologyExec(requestedNodes, currentLinkList);
+			if (getltsRet.getStatus() != Definition.STATUS_SUCCESS) {
+				res.setStatus(getltsRet.getStatus());
+				res.setMessage(getltsRet.getMessage());
+				String ret = res.toJson();
+				if (logger.isDebugEnabled()) {
+					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				}
+				return ret;
 			}
 
-			LogicalTopology currentTopology = responseGraphDB.getResult();
-			this.filterTopology(requestedNodes, currentTopology);
+			this.filterTopology(requestedNodes, currentLinkList);
 
-			LogicalTopology incTopology = requestedTopology.sub(currentTopology);
-			LogicalTopology decTopology = currentTopology.sub(requestedTopology);
+			requestedTopology.getLinks().removeAll(currentLinkList);
+			List<LogicalLink> incLinkList = requestedTopology.getLinks();
+			currentLinkList.removeAll(incLinkList);
+			List<LogicalLink> decLinkList = currentLinkList;
 
 			List<PatchLink> reducedLinks = new ArrayList<PatchLink>();
 			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
-			for (LogicalLink link : decTopology.getLinks()) {
-				if (logger.isInfoEnabled()) {
-					logger.info(String.format("graphDBClient.delLogicalTopology(link=%s) - called", link));
-				}
-				GraphDBPatchLinkJsonRes reducedPatches = graphDBClient.delLogicalLink(link);
-				if (logger.isInfoEnabled()) {
-					logger.info(String.format("graphDBClient.delLogicalTopology(ret=%s) - returned", reducedPatches.toJson()));
-				}
+			for (LogicalLink link : decLinkList) {
 
+				GraphDBPatchLinkJsonRes reducedPatches = ofPatchBusiness.disConnectPatch(link.getDeviceName());
 				if (reducedPatches.getStatus() != Definition.STATUS_SUCCESS) {
 					res.setStatus(reducedPatches.getStatus());
 					res.setMessage(reducedPatches.getMessage());
@@ -251,15 +310,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 				reducedLinks.addAll(reducedPatches.getResult());
 			}
-			for (LogicalLink link : incTopology.getLinks()) {
-				if (logger.isInfoEnabled()) {
-					logger.info(String.format("graphDBClient.addLogicalTopology(nodes=%s) - called", link));
-				}
-				GraphDBPatchLinkJsonRes augmentedPatches = graphDBClient.addLogicalLink(link);
-				if (logger.isInfoEnabled()) {
-					logger.info(String.format("graphDBClient.addLogicalTopology(req=%s) - returned", augmentedPatches.toJson()));
-				}
+			for (LogicalLink link : incLinkList) {
 
+				GraphDBPatchLinkJsonRes augmentedPatches = ofPatchBusiness.connectPatch(link.getDeviceName());
 				if (augmentedPatches.getStatus() != Definition.STATUS_CREATED) {
 					res.setStatus(augmentedPatches.getStatus());
 					res.setMessage(augmentedPatches.getMessage());
@@ -267,39 +320,12 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 
 				List<String> deviceNames = link.getDeviceName();
-				if (deviceNames.contains(Definition.D_PLANE_SW_HOST_NAME)) {
-					ConnectedPortGetJsonOut connectedPortGetJsonOut= graphDBClient.getConnectedPort(Definition.OFP_SW_HOST_NAME);
-					List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
-					String dPlaneSwPortName = new String();
-					String deviceName = new String();
-					for (Integer portNumber : portNames) {
-						GraphDevicePort graphDevicePort = GraphDBUtil.searchNeighborPort(Definition.OFP_SW_HOST_NAME, portNumber, connectedPortGetJsonOut.getResult());
-						if (graphDevicePort.getDeviceName().equals(Definition.D_PLANE_SW_HOST_NAME)) {
-							dPlaneSwPortName = graphDevicePort.getPortName();
-						} else {
-							deviceName = graphDevicePort.getDeviceName();
-						}
-					}
-
-					// Get device used info from Device manager.
-					//List<Used> uses = deviceManagerDBClient.readUsed(tokenId, deviceName, null);
-					List<Used> uses = deviceManagerDBClient.readUsed(tokenId, deviceName, null);
-					Used used = uses.get(0);
-
-					// Get vlanID from OpenAM with userID and tokenId of administrator.
-					TokenIdOut adminToken = openAmClient.authenticate(Definition.OPEN_AM_ADMIN_USER_ID , Definition.OPEN_AM_ADMIN_USER_PW);
-					OpenAmIdentitiesOut openAmIdentitiesOut = openAmClient.readIdentities(adminToken.getTokenId(), used.getUserName());
-					String dVlan = openAmIdentitiesOut.getdVlan().get(0);
-
-					// Send parameters(auth id,deviceName, vlan id) to NCS.
-					NetworkConfigSetupperIn networkConfigSetupperIn = new NetworkConfigSetupperIn();
-					networkConfigSetupperIn.setTokenId(tokenId);
-					List<ool.com.ofpm.json.NetworkConfigSetupperInData> params = networkConfigSetupperIn.getParams();
-					List<String> portNamesData = new ArrayList<String>();
-					portNamesData.add(dPlaneSwPortName);
-					NetworkConfigSetupperInData param = new NetworkConfigSetupperInData(Definition.D_PLANE_SW_HOST_NAME, dVlan, portNamesData);
-					params.add(param);
-					ool.com.ofpm.json.BaseResponse resNcs = networkConfigSetupperClien.sendPlaneSwConfigData(networkConfigSetupperIn);
+				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
+				int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
+				if (notifyNcsRet != Definition.STATUS_SUCCESS) {
+					res.setStatus(augmentedPatches.getStatus());
+					res.setMessage(augmentedPatches.getMessage());
+					return res.toJson();
 				}
 
 				augmentedLinks.addAll(augmentedPatches.getResult());
@@ -342,12 +368,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			res.setMessage(ve.getMessage());
 			return res.toJson();
 
-		} catch (GraphDBClientException gdbe) {
-			logger.error(gdbe);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(gdbe.getMessage());
-			return res.toJson();
-
 		} catch (AgentClientException ace) {
 			logger.error(ace);
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
@@ -371,6 +391,69 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 		}
 		/* must be not writing code from this point foward */
+	}
+
+	public int notifyNcs(String tokenId, List<String> deviceNames, List<Integer> portNames) {
+		int ret = Definition.STATUS_SUCCESS;
+		String openamUrl = conf.getString(Definition.OPEN_AM_URL);
+		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
+		String deviceManagerUrl = conf.getString(Definition.DEVICE_MANAGER_URL);
+		DeviceManagerDBClient deviceManagerDBClient = new DeviceManagerDBClientImpl(deviceManagerUrl);
+		String networkConfigSetupperUrl = conf.getString(Definition.NETWORK_CONFIG_SETUPPER_URL);
+		NetworkConfigSetupperClient networkConfigSetupperClien = new NetworkConfigSetupperClientImpl(networkConfigSetupperUrl);
+		DeviceManagerBusiness deviceManagerBusiness = new DeviceManagerBusinessImpl();
+
+		try {
+			if (deviceNames.contains(Definition.D_PLANE_SW_HOST_NAME)) {
+				String res = deviceManagerBusiness.getConnectedPortInfo(Definition.OFP_SW_HOST_NAME);
+				ConnectedPortGetJsonOut connectedPortGetJsonOut = ConnectedPortGetJsonOut.fromJson(res);
+				if (connectedPortGetJsonOut.getStatus() != Definition.STATUS_SUCCESS) {
+					return connectedPortGetJsonOut.getStatus();
+				}
+
+				String dPlaneSwPortName = new String();
+				String deviceName = new String();
+				for (Integer portNumber : portNames) {
+					GraphDevicePort graphDevicePort = GraphDBUtil.searchNeighborPort(Definition.OFP_SW_HOST_NAME, portNumber, connectedPortGetJsonOut.getResult());
+					if (graphDevicePort.getDeviceName().equals(Definition.D_PLANE_SW_HOST_NAME)) {
+						dPlaneSwPortName = graphDevicePort.getPortName();
+					} else {
+						deviceName = graphDevicePort.getDeviceName();
+					}
+				}
+
+				// Get device used info from Device manager.
+				//List<Used> uses = deviceManagerDBClient.readUsed(tokenId, deviceName, null);
+				List<Used> uses = deviceManagerDBClient.readUsed(tokenId, deviceName, null);
+				Used used = uses.get(0);
+
+				// Get vlanID from OpenAM with userID and tokenId of administrator.
+				TokenIdOut adminToken = openAmClient.authenticate(Definition.OPEN_AM_ADMIN_USER_ID , Definition.OPEN_AM_ADMIN_USER_PW);
+				OpenAmIdentitiesOut openAmIdentitiesOut = openAmClient.readIdentities(adminToken.getTokenId(), used.getUserName());
+				String dVlan = openAmIdentitiesOut.getdVlan().get(0);
+
+				// Send parameters(auth id,deviceName, vlan id) to NCS.
+				NetworkConfigSetupperIn networkConfigSetupperIn = new NetworkConfigSetupperIn();
+				networkConfigSetupperIn.setTokenId(tokenId);
+				List<ool.com.ofpm.json.NetworkConfigSetupperInData> params = networkConfigSetupperIn.getParams();
+				List<String> portNamesData = new ArrayList<String>();
+				portNamesData.add(dPlaneSwPortName);
+				NetworkConfigSetupperInData param = new NetworkConfigSetupperInData(Definition.D_PLANE_SW_HOST_NAME, dVlan, portNamesData);
+				params.add(param);
+				BaseResponse resNcs = networkConfigSetupperClien.sendPlaneSwConfigData(networkConfigSetupperIn);
+				if (resNcs.getStatus() != Definition.STATUS_SUCCESS) {
+					return resNcs.getStatus();
+				}
+			}
+		} catch(OpenAmClientException oace) {
+			logger.error(oace);
+			return Definition.STATUS_INTERNAL_ERROR;
+		} catch(DeviceManagerDBClientException dmdce) {
+			logger.error(dmdce);
+			return Definition.STATUS_INTERNAL_ERROR;
+		}
+
+		return ret;
 	}
 
 	private Map<AgentClient, List<AgentUpdateFlowData>> makeAgentUpdateFlowList(List<PatchLink> updatedLinks, String type) throws AgentManagerException {
@@ -402,5 +485,33 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			logger.debug(String.format("%s(ret=%s) - end", fname, pairAgentClient_UpdateFlowDataList));
 		}
 		return pairAgentClient_UpdateFlowDataList;
+	}
+
+	private boolean isOverlap(List<List<String>> dataList, List<String> data) {
+		if (logger.isDebugEnabled()) {
+    		logger.debug(String.format("isOverlap(dataList=%s, data=%s) - start ", dataList, data));
+    	}
+		boolean oneWordOverlapFlg = false;
+		for (List<String> dataSet : dataList) {
+			oneWordOverlapFlg = false;
+			for ( String str : data) {
+				if (!dataSet.contains(str)) {
+					break;
+				} else {
+					if (oneWordOverlapFlg) {
+						if (logger.isDebugEnabled()) {
+				    		logger.debug(String.format("isOverlap(ret=%s) - end ", true));
+				    	}
+						return true;
+					} else {
+						oneWordOverlapFlg = true;
+					}
+				}
+			}
+		}
+		if (logger.isDebugEnabled()) {
+    		logger.debug(String.format("isOverlap(ret=%s) - end ", false));
+    	}
+		return false;
 	}
 }

@@ -5,5 +5,5 @@ public interface DeviceBusiness {
 
 	public String deleteDevice(String deviceName);
 
-	public String updateDevice(String newDeviceInfoJson);
+	public String updateDevice(String updateDeviceInfoJson);
 }

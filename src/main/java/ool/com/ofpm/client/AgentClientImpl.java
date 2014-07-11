@@ -5,8 +5,8 @@ import javax.ws.rs.core.MediaType;
 import ool.com.ofpm.exception.AgentClientException;
 import ool.com.ofpm.json.AgentClientUpdateFlowReq;
 import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.utils.Definition;
-import ool.com.ofpm.utils.ErrorMessage;
+import ool.com.util.Definition;
+import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 

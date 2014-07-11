@@ -13,7 +13,7 @@ import ool.com.odbcl.json.BaseResponse;
 import ool.com.odbcl.json.LogicalTopology;
 import ool.com.odbcl.json.LogicalTopologyGetJsonOut;
 import ool.com.odbcl.json.Node;
-import ool.com.ofpm.utils.Definition;
+import ool.com.util.Definition;
 
 import org.junit.Test;
 

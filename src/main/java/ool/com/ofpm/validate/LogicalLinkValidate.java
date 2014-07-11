@@ -1,9 +1,9 @@
 package ool.com.ofpm.validate;
 
-import ool.com.odbcl.json.LogicalTopology.LogicalLink;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.utils.Definition;
-import ool.com.ofpm.utils.ErrorMessage;
+import ool.com.ofpm.json.LogicalLink;
+import ool.com.util.Definition;
+import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 

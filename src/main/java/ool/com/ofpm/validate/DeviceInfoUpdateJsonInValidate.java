@@ -1,10 +1,10 @@
 package ool.com.ofpm.validate;
 
-import ool.com.odbcl.json.DeviceInfo;
-import ool.com.odbcl.json.DeviceInfoUpdateJsonIn;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.utils.Definition;
-import ool.com.ofpm.utils.ErrorMessage;
+import ool.com.ofpm.json.DeviceInfo;
+import ool.com.ofpm.json.DeviceInfoUpdateJsonIn;
+import ool.com.util.Definition;
+import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;

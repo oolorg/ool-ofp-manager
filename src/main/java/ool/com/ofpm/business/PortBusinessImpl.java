@@ -1,19 +1,22 @@
 package ool.com.ofpm.business;
 
-import ool.com.odbcl.client.GraphDBClient;
-import ool.com.odbcl.client.OrientDBClientImpl;
-import ool.com.odbcl.exception.GraphDBClientException;
-import ool.com.odbcl.json.BaseResponse;
-import ool.com.odbcl.json.PortInfoCreateJsonIn;
-import ool.com.odbcl.json.PortInfoUpdateJsonIn;
+import java.sql.SQLException;
+
 import ool.com.ofpm.exception.ValidateException;
+import ool.com.ofpm.json.BaseResponse;
+import ool.com.ofpm.json.PortInfoCreateJsonIn;
+import ool.com.ofpm.json.PortInfoUpdateJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
-import ool.com.ofpm.utils.Definition;
-import ool.com.ofpm.utils.ErrorMessage;
 import ool.com.ofpm.validate.CommonValidate;
 import ool.com.ofpm.validate.PortInfoCreateJsonInValidate;
 import ool.com.ofpm.validate.PortInfoUpdateJsonInValidate;
+import ool.com.orientdb.client.ConnectionUtils;
+import ool.com.orientdb.client.ConnectionUtilsImpl;
+import ool.com.orientdb.client.Dao;
+import ool.com.orientdb.client.DaoImpl;
+import ool.com.util.Definition;
+import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
@@ -31,21 +34,26 @@ public class PortBusinessImpl implements PortBusiness {
 		}
 
 		BaseResponse res = new BaseResponse();
+		Dao dao = null;
 		try {
 			PortInfoCreateJsonIn portInfo = PortInfoCreateJsonIn.fromJson(newPortInfoJson);
 
 			PortInfoCreateJsonInValidate validator = new PortInfoCreateJsonInValidate();
 			validator.checkValidation(portInfo);
 
-			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
-//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
-			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.portCreates(portInfo=%s) - called", portInfo.toJson()));
+			ConnectionUtils utils = new ConnectionUtilsImpl();
+			dao = new DaoImpl(utils);
+			int status = dao.createPortInfo(portInfo.getPortName(), portInfo.getPortNumber(), portInfo.getType(), portInfo.getDeviceName());
+
+			if ( status == Definition.DB_RESPONSE_STATUS_EXIST) {
+				res.setStatus(Definition.STATUS_BAD_REQUEST);
+				res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, portInfo.getPortName()));
+			} else if ( status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(Definition.STATUS_NOTFOUND);
+				res.setMessage(String.format(ErrorMessage.NOT_FOUND, portInfo.getDeviceName()));
 			}
-			res = gdbClient.portCreate(portInfo);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.portCreates(ret=%s) - returned", res));
+			else {
+				res.setStatus(Definition.STATUS_CREATED);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
@@ -55,14 +63,24 @@ public class PortBusinessImpl implements PortBusiness {
 			logger.error(ve);
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
-		} catch (GraphDBClientException gdbe) {
-			logger.error(gdbe);
+		} catch (SQLException e) {
+    		logger.error(e.getMessage());
+    		res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		res.setMessage(e.getMessage());
+		}  catch (RuntimeException re) {
+			logger.error(re.getMessage());
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(gdbe.getMessage());
-		} catch (Exception e) {
-			logger.error(e);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(e.getMessage());
+			res.setMessage(re.getMessage());
+		} finally {
+			try {
+				if(dao != null) {
+					dao.close();
+				}
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setMessage(e.getMessage());
+			}
 		}
 
 		String ret = res.toJson();
@@ -79,20 +97,24 @@ public class PortBusinessImpl implements PortBusiness {
 		}
 
 		BaseResponse res = new BaseResponse();
+		Dao dao = null;
 		try {
 			CommonValidate validator = new CommonValidate();
 			validator.checkStringBlank(portName);
 			validator.checkStringBlank(deviceName);
 
-			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
-//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
-			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.portDelete(portName=%s, deviceName=%s) - called", portName, deviceName));
-			}
-			res = gdbClient.portDelete(portName, deviceName);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.portDelete(ret=%s) - returned", res.toJson()));
+			ConnectionUtils utils = new ConnectionUtilsImpl();
+			dao = new DaoImpl(utils);
+
+			int status = dao.deletePortInfo(portName, deviceName);
+			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(Definition.DB_RESPONSE_STATUS_NOT_FOUND);
+				res.setMessage(String.format(ErrorMessage.NOT_FOUND, portName));
+			} else if (status == Definition.DB_RESPONSE_STATUS_FORBIDDEN) {
+				res.setStatus(Definition.DB_RESPONSE_STATUS_FORBIDDEN);
+				res.setMessage(String.format(ErrorMessage.IS_PATCHED, portName));
+			} else {
+				res.setStatus(Definition.STATUS_SUCCESS);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
@@ -103,14 +125,24 @@ public class PortBusinessImpl implements PortBusiness {
 			logger.error(ve.getClass().getName() + ": " + message);
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(message);
-		} catch (GraphDBClientException gdbe) {
-			logger.error(gdbe);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(gdbe.getMessage());
-		} catch (Exception e) {
-			logger.error(e);
+		} catch (SQLException e) {
+			logger.error(e.getMessage());
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
+		}  catch (RuntimeException re) {
+			logger.error(re.getMessage());
+			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setMessage(re.getMessage());
+		} finally {
+			try {
+				if(dao != null) {
+					dao.close();
+				}
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setMessage(e.getMessage());
+			}
 		}
 
 		String ret = res.toJson();
@@ -127,21 +159,31 @@ public class PortBusinessImpl implements PortBusiness {
 		}
 
 		BaseResponse res = new BaseResponse();
+		Dao dao = null;
 		try {
 			PortInfoUpdateJsonIn portInfo = PortInfoUpdateJsonIn.fromJson(updatePortInfoJson);
 
 			PortInfoUpdateJsonInValidate validator = new PortInfoUpdateJsonInValidate();
 			validator.checkValidation(portInfo);
 
-			String odbsUrl = conf.getString(Definition.GRAPH_DB_URL);
-//			GraphDBClient gdbClient = OrientDBClientImpl.getInstance();
-			GraphDBClient gdbClient = new OrientDBClientImpl(odbsUrl);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.portUpdates(portInfo=%s) - called", portInfo.toJson()));
-			}
-			res = gdbClient.portUpdate(portInfo);
-			if (logger.isInfoEnabled()) {
-				logger.info(String.format("graphDBClient.portUpdates(ret=%s) - returned", res.toJson()));
+			ConnectionUtils utils = new ConnectionUtilsImpl();
+			dao = new DaoImpl(utils);
+
+			int status = dao.updatePortInfo(
+					portInfo.getPortName(),
+					portInfo.getDeviceName(),
+					portInfo.getParams().getPortName(),
+					portInfo.getParams().getPortNumber(),
+					portInfo.getParams().getType());
+
+			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(Definition.STATUS_NOTFOUND);
+				res.setMessage(String.format(ErrorMessage.NOT_FOUND, portInfo.getPortName()));
+			} else if (status == Definition.DB_RESPONSE_STATUS_EXIST) {
+				res.setStatus(Definition.STATUS_CONFLICT);
+				res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, portInfo.getPortName()));
+			} else {
+				res.setStatus(Definition.STATUS_CREATED);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
@@ -151,14 +193,24 @@ public class PortBusinessImpl implements PortBusiness {
 			logger.error(ve);
 			res.setStatus(Definition.STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
-		} catch (GraphDBClientException gdbe) {
-			logger.error(gdbe);
+		} catch (SQLException e) {
+    		logger.error(e.getMessage());
+    		res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		res.setMessage(e.getMessage());
+		}  catch (RuntimeException re) {
+			logger.error(re.getMessage());
 			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(gdbe.getMessage());
-		} catch (Exception e) {
-			logger.error(e);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(e.getMessage());
+			res.setMessage(re.getMessage());
+		} finally {
+			try {
+				if(dao != null) {
+					dao.close();
+				}
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setMessage(e.getMessage());
+			}
 		}
 
 		String ret = res.toJson();

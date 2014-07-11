@@ -4,12 +4,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import ool.com.odbcl.json.LogicalTopology;
-import ool.com.odbcl.json.LogicalTopology.LogicalLink;
-import ool.com.odbcl.json.Node;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.utils.Definition;
-import ool.com.ofpm.utils.ErrorMessage;
+import ool.com.ofpm.json.LogicalLink;
+import ool.com.ofpm.json.LogicalTopology;
+import ool.com.ofpm.json.Node;
+import ool.com.util.Definition;
+import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;

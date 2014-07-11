@@ -84,5 +84,4 @@ public class DeviceServiceImpl implements DeviceService {
 		}
 		return resDeviceBiz;
 	}
-
 }
