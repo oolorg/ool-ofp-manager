@@ -1,4 +1,4 @@
-package ool.com.orientdb.Exception;
+package ool.com.orientdb.exception;
 
 public class ValidateException extends Exception{
 
