@@ -1,5 +1,8 @@
 package ool.com.ofpm.service;
 
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import ool.com.ofpm.business.PhysicalBusiness;
 import ool.com.ofpm.business.PhysicalBusinessImpl;
 
@@ -20,7 +23,7 @@ public class PhysicalServiceImpl implements PhysicalService {
 	Injector injector;
 
 	@Override
-	public String getPhysicalTopology(String deviceNamesCSV, String tokenId) {
+	public Response getPhysicalTopology(String deviceNamesCSV, String tokenId) {
 		String fname = "getPhysicalTopology";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceNamesCSV=%s, tokenId=%s) - start", fname, deviceNamesCSV, tokenId));
@@ -38,11 +41,11 @@ public class PhysicalServiceImpl implements PhysicalService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resPhysBiz));
 		}
-		return resPhysBiz;
+		return Response.ok(resPhysBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	@Override
-	public String updatePhysicalTopology(String requestedTopologyJson) {
+	public Response updatePhysicalTopology(String requestedTopologyJson) {
 		String fname = "updatePhysicalTopology";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(requestedTopologyJson=%s) - start", fname, requestedTopologyJson));
@@ -60,11 +63,11 @@ public class PhysicalServiceImpl implements PhysicalService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resPhysBiz));
 		}
-		return resPhysBiz;
+		return Response.ok(resPhysBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	@Override
-	public String connectPhysicalLink(String physicalLinkJson) {
+	public Response connectPhysicalLink(String physicalLinkJson) {
 		String fname = "connectPhysicalLink";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(req=%s) - start", fname, physicalLinkJson));
@@ -82,11 +85,11 @@ public class PhysicalServiceImpl implements PhysicalService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resPhysBiz));
 		}
-		return resPhysBiz;
+		return Response.ok(resPhysBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	@Override
-	public String disconnectPhysicalLink(String physicalLinkJson) {
+	public Response disconnectPhysicalLink(String physicalLinkJson) {
 		String fname = "disconnectPhysicalLink";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(req=%s) - start", fname, physicalLinkJson));
@@ -104,7 +107,7 @@ public class PhysicalServiceImpl implements PhysicalService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resPhysBiz));
 		}
-		return resPhysBiz;
+		return Response.ok(resPhysBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 }
