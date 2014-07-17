@@ -1,6 +1,9 @@
-package ool.com.ofpm.json;
+package ool.com.ofpm.json.device;
 
 import java.lang.reflect.Type;
+
+import ool.com.ofpm.json.common.Node;
+
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

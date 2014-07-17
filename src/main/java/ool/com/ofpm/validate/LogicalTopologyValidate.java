@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Set;
 
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.LogicalLink;
-import ool.com.ofpm.json.LogicalTopology;
-import ool.com.ofpm.json.Node;
+import ool.com.ofpm.json.common.Node;
+import ool.com.ofpm.json.topology.logical.LogicalLink;
+import ool.com.ofpm.json.topology.logical.LogicalTopology;
 import ool.com.util.Definition;
 import ool.com.util.ErrorMessage;
 

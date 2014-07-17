@@ -3,7 +3,7 @@
  * @date 2014/05/08
  * @TODO TODO
  */
-package ool.com.ofpm.json;
+package ool.com.ofpm.json.ncs;
 
 import java.util.List;
 

@@ -3,17 +3,17 @@
  * @date 2014/07/09
  * @TODO TODO
  */
-package ool.com.ofpm.utils;
+package ool.com.ofpm.business.common;
 
 import java.util.List;
 
-import ool.com.ofpm.json.GraphDBPatchLinkJsonRes;
+import ool.com.ofpm.json.ofpatch.GraphDBPatchLinkJsonRes;
 
 /**
  * @author 1131080355959
  *
  */
-public interface OFPatchBusiness {
+public interface OFPatchCommon {
 
 	GraphDBPatchLinkJsonRes connectPatch(List<String> deviceNameList);
 

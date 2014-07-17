@@ -3,7 +3,7 @@
  * @date 2014/02/17
  * @TODO
  */
-package ool.com.ofpm.utils;
+package ool.com.ofpm.business.common;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ool.com.ofpm.json.GraphDBPatchLinkJsonRes;
-import ool.com.ofpm.json.PatchLink;
+import ool.com.ofpm.json.ofc.PatchLink;
+import ool.com.ofpm.json.ofpatch.GraphDBPatchLinkJsonRes;
 import ool.com.orientdb.client.ConnectionUtils;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;
@@ -29,9 +29,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author 1131080355959
  *
  */
-public class OFPatchBusinessImpl implements OFPatchBusiness {
+public class OFPatchCommonImpl implements OFPatchCommon {
 
-	private static final Logger logger = Logger.getLogger(OFPatchBusinessImpl.class);
+	private static final Logger logger = Logger.getLogger(OFPatchCommonImpl.class);
 
 	/* (non-Javadoc)
 	 * @see ool.com.orientdb.business.OFPatchBusiness#connectPatch(ool.com.orientdb.json.ConnectPatchJsonPostIn)

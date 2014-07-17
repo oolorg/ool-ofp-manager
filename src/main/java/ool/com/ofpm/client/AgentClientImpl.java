@@ -3,8 +3,8 @@ package ool.com.ofpm.client;
 import javax.ws.rs.core.MediaType;
 
 import ool.com.ofpm.exception.AgentClientException;
-import ool.com.ofpm.json.AgentClientUpdateFlowReq;
-import ool.com.ofpm.json.BaseResponse;
+import ool.com.ofpm.json.common.BaseResponse;
+import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq;
 import ool.com.util.Definition;
 import ool.com.util.ErrorMessage;
 

@@ -4,9 +4,9 @@ import java.sql.SQLException;
 import java.util.List;
 
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.PhysicalLinkJsonIn;
-import ool.com.ofpm.json.PortInfo;
+import ool.com.ofpm.json.common.BaseResponse;
+import ool.com.ofpm.json.common.PortInfo;
+import ool.com.ofpm.json.topology.physical.PhysicalLinkJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.validate.PhysicalLinkJsonInValidate;

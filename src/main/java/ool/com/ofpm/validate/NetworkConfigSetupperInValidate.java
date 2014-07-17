@@ -6,7 +6,7 @@
 package ool.com.ofpm.validate;
 
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.NetworkConfigSetupperIn;
+import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
 import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;

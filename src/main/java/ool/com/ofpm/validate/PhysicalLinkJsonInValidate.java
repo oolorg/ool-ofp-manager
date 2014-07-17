@@ -3,8 +3,8 @@ package ool.com.ofpm.validate;
 import java.util.List;
 
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.PhysicalLinkJsonIn;
-import ool.com.ofpm.json.PortInfo;
+import ool.com.ofpm.json.common.PortInfo;
+import ool.com.ofpm.json.topology.physical.PhysicalLinkJsonIn;
 import ool.com.util.Definition;
 import ool.com.util.ErrorMessage;
 

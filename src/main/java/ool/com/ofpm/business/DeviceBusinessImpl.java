@@ -5,12 +5,12 @@ import java.sql.SQLException;
 import java.util.List;
 
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.DeviceInfoCreateJsonIn;
-import ool.com.ofpm.json.DeviceInfoUpdateJsonIn;
-import ool.com.ofpm.json.DeviceManagerGetConnectedPortInfoJsonOut;
-import ool.com.ofpm.json.PortInfoCreateJsonIn;
-import ool.com.ofpm.json.PortInfoUpdateJsonIn;
+import ool.com.ofpm.json.common.BaseResponse;
+import ool.com.ofpm.json.device.DeviceInfoCreateJsonIn;
+import ool.com.ofpm.json.device.DeviceInfoUpdateJsonIn;
+import ool.com.ofpm.json.device.DeviceManagerGetConnectedPortInfoJsonOut;
+import ool.com.ofpm.json.device.PortInfoCreateJsonIn;
+import ool.com.ofpm.json.device.PortInfoUpdateJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.validate.CommonValidate;

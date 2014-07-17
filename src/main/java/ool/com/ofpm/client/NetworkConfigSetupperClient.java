@@ -5,8 +5,8 @@
  */
 package ool.com.ofpm.client;
 
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.NetworkConfigSetupperIn;
+import ool.com.ofpm.json.common.BaseResponse;
+import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
 
 /**
  * @author 1134380013430

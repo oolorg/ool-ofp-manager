@@ -1,8 +1,11 @@
-package ool.com.ofpm.json;
+package ool.com.ofpm.json.ofpatch;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+
+import ool.com.ofpm.json.common.BaseResponse;
+import ool.com.ofpm.json.ofc.PatchLink;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

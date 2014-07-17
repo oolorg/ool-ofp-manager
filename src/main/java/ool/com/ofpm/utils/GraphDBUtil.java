@@ -2,8 +2,8 @@ package ool.com.ofpm.utils;
 
 import java.util.List;
 
-import ool.com.ofpm.json.GenericsLink;
-import ool.com.ofpm.json.GraphDevicePort;
+import ool.com.ofpm.json.common.GraphDevicePort;
+import ool.com.ofpm.json.device.GenericsLink;
 
 public class GraphDBUtil {
 	public static GraphDevicePort searchNeighborPort(String deviceName, String portName, List<GenericsLink<GraphDevicePort>> links) {

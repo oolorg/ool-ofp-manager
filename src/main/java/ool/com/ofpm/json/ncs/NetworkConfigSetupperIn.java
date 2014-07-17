@@ -3,7 +3,7 @@
  * @date 2014/04/23
  * @TODO TODO
  */
-package ool.com.ofpm.json;
+package ool.com.ofpm.json.ncs;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;

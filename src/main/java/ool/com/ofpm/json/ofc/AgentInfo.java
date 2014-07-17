@@ -1,4 +1,4 @@
-package ool.com.ofpm.json;
+package ool.com.ofpm.json.ofc;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;

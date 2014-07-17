@@ -11,31 +11,31 @@ import ool.com.dmdb.client.DeviceManagerDBClient;
 import ool.com.dmdb.client.DeviceManagerDBClientImpl;
 import ool.com.dmdb.exception.DeviceManagerDBClientException;
 import ool.com.dmdb.json.Used;
+import ool.com.ofpm.business.common.OFPatchCommon;
+import ool.com.ofpm.business.common.OFPatchCommonImpl;
 import ool.com.ofpm.client.AgentClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
 import ool.com.ofpm.exception.AgentClientException;
 import ool.com.ofpm.exception.AgentManagerException;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.AgentClientUpdateFlowReq;
-import ool.com.ofpm.json.AgentClientUpdateFlowReq.AgentUpdateFlowData;
-import ool.com.ofpm.json.BaseResponse;
-import ool.com.ofpm.json.ConnectedPortGetJsonOut;
-import ool.com.ofpm.json.GraphDBPatchLinkJsonRes;
-import ool.com.ofpm.json.GraphDevicePort;
-import ool.com.ofpm.json.LogicalLink;
-import ool.com.ofpm.json.LogicalTopology;
-import ool.com.ofpm.json.LogicalTopologyGetJsonOut;
-import ool.com.ofpm.json.LogicalTopologyUpdateJsonIn;
-import ool.com.ofpm.json.NetworkConfigSetupperIn;
-import ool.com.ofpm.json.NetworkConfigSetupperInData;
-import ool.com.ofpm.json.Node;
-import ool.com.ofpm.json.PatchLink;
+import ool.com.ofpm.json.common.BaseResponse;
+import ool.com.ofpm.json.common.GraphDevicePort;
+import ool.com.ofpm.json.common.Node;
+import ool.com.ofpm.json.device.ConnectedPortGetJsonOut;
+import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
+import ool.com.ofpm.json.ncs.NetworkConfigSetupperInData;
+import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq;
+import ool.com.ofpm.json.ofc.PatchLink;
+import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq.AgentUpdateFlowData;
+import ool.com.ofpm.json.ofpatch.GraphDBPatchLinkJsonRes;
+import ool.com.ofpm.json.topology.logical.LogicalLink;
+import ool.com.ofpm.json.topology.logical.LogicalTopology;
+import ool.com.ofpm.json.topology.logical.LogicalTopologyGetJsonOut;
+import ool.com.ofpm.json.topology.logical.LogicalTopologyUpdateJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.GraphDBUtil;
-import ool.com.ofpm.utils.OFPatchBusiness;
-import ool.com.ofpm.utils.OFPatchBusinessImpl;
 import ool.com.ofpm.validate.CommonValidate;
 import ool.com.ofpm.validate.LogicalTopologyValidate;
 import ool.com.openam.client.OpenAmClient;
@@ -64,7 +64,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	Config conf = new ConfigImpl();
 
-	OFPatchBusiness ofPatchBusiness = new OFPatchBusinessImpl();
+	OFPatchCommon ofPatchBusiness = new OFPatchCommonImpl();
 
 	public LogicalBusinessImpl() {
 		if (logger.isDebugEnabled()) {
@@ -72,7 +72,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 	}
 
-	private void filterTopology(List<ool.com.ofpm.json.Node> nodes, List<LogicalLink> linkList) {
+	private void filterTopology(List<ool.com.ofpm.json.common.Node> nodes, List<LogicalLink> linkList) {
 		String fname = "filterTopology";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(nodes=%s, linkList=%s) - start", fname, nodes, linkList));
@@ -342,7 +342,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				if (logger.isInfoEnabled()) {
 					logger.info(String.format("agentClient.updateFlows(flows=%s) - called", agentFlowJson));
 				}
-				ool.com.ofpm.json.BaseResponse resAgent = agentClient.updateFlows(agentFlowJson);
+				ool.com.ofpm.json.common.BaseResponse resAgent = agentClient.updateFlows(agentFlowJson);
 				if (logger.isInfoEnabled()) {
 					logger.info(String.format("agentClinet.updateFlows(ret=%s) - returned", resAgent.toJson()));
 				}
@@ -435,7 +435,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				// Send parameters(auth id,deviceName, vlan id) to NCS.
 				NetworkConfigSetupperIn networkConfigSetupperIn = new NetworkConfigSetupperIn();
 				networkConfigSetupperIn.setTokenId(tokenId);
-				List<ool.com.ofpm.json.NetworkConfigSetupperInData> params = networkConfigSetupperIn.getParams();
+				List<ool.com.ofpm.json.ncs.NetworkConfigSetupperInData> params = networkConfigSetupperIn.getParams();
 				List<String> portNamesData = new ArrayList<String>();
 				portNamesData.add(dPlaneSwPortName);
 				NetworkConfigSetupperInData param = new NetworkConfigSetupperInData(Definition.D_PLANE_SW_HOST_NAME, dVlan, portNamesData);

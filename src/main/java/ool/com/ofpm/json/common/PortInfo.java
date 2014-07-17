@@ -1,4 +1,4 @@
-package ool.com.ofpm.json;
+package ool.com.ofpm.json.common;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

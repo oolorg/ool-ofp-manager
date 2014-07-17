@@ -3,10 +3,13 @@
  * @date 2014/03/04
  * @TODO
  */
-package ool.com.ofpm.json;
+package ool.com.ofpm.json.device;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import ool.com.ofpm.json.common.BaseResponse;
+import ool.com.ofpm.json.common.Node;
 
 import com.google.gson.annotations.SerializedName;
 

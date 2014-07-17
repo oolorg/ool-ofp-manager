@@ -1,4 +1,4 @@
-package ool.com.ofpm.json;
+package ool.com.ofpm.json.device;
 
 import java.lang.reflect.Type;
 
