@@ -5,11 +5,11 @@ import java.util.List;
 
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
-import ool.com.ofpm.json.common.PortInfo;
+import ool.com.ofpm.json.device.PortInfo;
 import ool.com.ofpm.json.topology.physical.PhysicalLinkJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
-import ool.com.ofpm.validate.PhysicalLinkJsonInValidate;
+import ool.com.ofpm.validate.topology.physical.PhysicalLinkJsonInValidate;
 import ool.com.orientdb.client.ConnectionUtils;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;

@@ -1,13 +1,14 @@
-package ool.com.ofpm.validate;
+package ool.com.ofpm.validate.topology.logical;
 
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
+import ool.com.ofpm.validate.common.BaseValidate;
 import ool.com.util.Definition;
 import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
-public class LogicalLinkValidate {
+public class LogicalLinkValidate extends BaseValidate {
 	private static Logger logger = Logger.getLogger(LogicalLinkValidate.class);
 
 	public static void checkValidation(LogicalLink link) throws ValidateException {

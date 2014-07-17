@@ -1,10 +1,11 @@
-package ool.com.ofpm.validate;
+package ool.com.ofpm.validate.topology.physical;
 
 import java.util.List;
 
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.common.PortInfo;
+import ool.com.ofpm.json.device.PortInfo;
 import ool.com.ofpm.json.topology.physical.PhysicalLinkJsonIn;
+import ool.com.ofpm.validate.common.BaseValidate;
 import ool.com.util.Definition;
 import ool.com.util.ErrorMessage;
 

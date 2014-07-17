@@ -3,10 +3,12 @@
  * @date 2014/04/23
  * @TODO TODO
  */
-package ool.com.ofpm.validate;
+package ool.com.ofpm.validate.ncs;
 
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
+import ool.com.ofpm.validate.common.BaseValidate;
+import ool.com.ofpm.validate.device.DeviceInfoCreateJsonInValidate;
 import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;

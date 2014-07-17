@@ -5,6 +5,7 @@ import java.util.List;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.ofc.AgentInfo;
 import ool.com.ofpm.json.ofc.AgentInfo.SwitchInfo;
+import ool.com.ofpm.validate.common.BaseValidate;
 import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;

@@ -1,6 +1,5 @@
 package ool.com.ofpm.json.device;
 
-import ool.com.ofpm.json.common.PortInfo;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

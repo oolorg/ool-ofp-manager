@@ -21,13 +21,13 @@ import ool.com.ofpm.exception.AgentManagerException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.common.GraphDevicePort;
-import ool.com.ofpm.json.common.Node;
 import ool.com.ofpm.json.device.ConnectedPortGetJsonOut;
+import ool.com.ofpm.json.device.Node;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperInData;
 import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq;
-import ool.com.ofpm.json.ofc.PatchLink;
 import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq.AgentUpdateFlowData;
+import ool.com.ofpm.json.ofc.PatchLink;
 import ool.com.ofpm.json.ofpatch.GraphDBPatchLinkJsonRes;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
 import ool.com.ofpm.json.topology.logical.LogicalTopology;
@@ -36,8 +36,8 @@ import ool.com.ofpm.json.topology.logical.LogicalTopologyUpdateJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.GraphDBUtil;
-import ool.com.ofpm.validate.CommonValidate;
-import ool.com.ofpm.validate.LogicalTopologyValidate;
+import ool.com.ofpm.validate.common.BaseValidate;
+import ool.com.ofpm.validate.topology.logical.LogicalTopologyValidate;
 import ool.com.openam.client.OpenAmClient;
 import ool.com.openam.client.OpenAmClientException;
 import ool.com.openam.client.OpenAmClientImpl;
@@ -72,7 +72,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 	}
 
-	private void filterTopology(List<ool.com.ofpm.json.common.Node> nodes, List<LogicalLink> linkList) {
+	private void filterTopology(List<ool.com.ofpm.json.device.Node> nodes, List<LogicalLink> linkList) {
 		String fname = "filterTopology";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(nodes=%s, linkList=%s) - start", fname, nodes, linkList));
@@ -171,13 +171,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
 
 		try {
-			CommonValidate validator = new CommonValidate();
-			validator.checkStringBlank(deviceNamesCSV);
+			BaseValidate.checkStringBlank(deviceNamesCSV);
 			List<String> deviceNames = Arrays.asList(deviceNamesCSV.split(Definition.CSV_SPLIT_REGEX));
-			validator.checkArrayStringBlank(deviceNames);
-			validator.checkArrayOverlapped(deviceNames);
-
-			validator.checkStringBlank(tokenId);
+			BaseValidate.checkArrayStringBlank(deviceNames);
+			BaseValidate.checkArrayOverlapped(deviceNames);
+			BaseValidate.checkStringBlank(tokenId);
 
 			boolean isTokenValid = false;
 			if (openAmClient != null) {
@@ -401,7 +399,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		DeviceManagerDBClient deviceManagerDBClient = new DeviceManagerDBClientImpl(deviceManagerUrl);
 		String networkConfigSetupperUrl = conf.getString(Definition.NETWORK_CONFIG_SETUPPER_URL);
 		NetworkConfigSetupperClient networkConfigSetupperClien = new NetworkConfigSetupperClientImpl(networkConfigSetupperUrl);
-		DeviceManagerBusiness deviceManagerBusiness = new DeviceManagerBusinessImpl();
+		DeviceBusiness deviceManagerBusiness = new DeviceBusinessImpl();
 
 		try {
 			if (deviceNames.contains(Definition.D_PLANE_SW_HOST_NAME)) {

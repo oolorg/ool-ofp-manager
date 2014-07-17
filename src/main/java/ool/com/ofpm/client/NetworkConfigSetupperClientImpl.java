@@ -11,7 +11,7 @@ import ool.com.ofpm.exception.NetworkConfigSetupperException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
-import ool.com.ofpm.validate.NetworkConfigSetupperInValidate;
+import ool.com.ofpm.validate.ncs.NetworkConfigSetupperInValidate;
 import ool.com.util.Definition;
 import ool.com.util.ErrorMessage;
 

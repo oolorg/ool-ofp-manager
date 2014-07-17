@@ -13,11 +13,11 @@ import ool.com.ofpm.json.device.PortInfoCreateJsonIn;
 import ool.com.ofpm.json.device.PortInfoUpdateJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
-import ool.com.ofpm.validate.CommonValidate;
-import ool.com.ofpm.validate.DeviceInfoCreateJsonInValidate;
-import ool.com.ofpm.validate.DeviceInfoUpdateJsonInValidate;
-import ool.com.ofpm.validate.PortInfoCreateJsonInValidate;
-import ool.com.ofpm.validate.PortInfoUpdateJsonInValidate;
+import ool.com.ofpm.validate.common.BaseValidate;
+import ool.com.ofpm.validate.device.DeviceInfoCreateJsonInValidate;
+import ool.com.ofpm.validate.device.DeviceInfoUpdateJsonInValidate;
+import ool.com.ofpm.validate.device.PortInfoCreateJsonInValidate;
+import ool.com.ofpm.validate.device.PortInfoUpdateJsonInValidate;
 import ool.com.orientdb.client.ConnectionUtils;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;
@@ -109,8 +109,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		Dao dao = null;
 
 		try {
-			CommonValidate validator = new CommonValidate();
-			validator.checkStringBlank(deviceName);
+			BaseValidate.checkStringBlank(deviceName);
 
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
@@ -159,11 +158,11 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		return ret;
 	}
 
-	public String updateDevice(String updateDeviceInfoJson) {
+	public String updateDevice(String deviceName, String updateDeviceInfoJson) {
 
 		String fname = "updateDevice";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(newDeviceInfoJson=%s) - start", fname, updateDeviceInfoJson));
+			logger.debug(String.format("%s(deviceName=%s, newDeviceInfoJson=%s) - start", fname, deviceName, updateDeviceInfoJson));
 		}
 
 		BaseResponse res = new BaseResponse();
@@ -172,15 +171,19 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			DeviceInfoUpdateJsonIn newDeviceInfo = DeviceInfoUpdateJsonIn.fromJson(updateDeviceInfoJson);
 
 			DeviceInfoUpdateJsonInValidate validator = new DeviceInfoUpdateJsonInValidate();
-			validator.checkValidation(newDeviceInfo);
+			validator.checkValidation(deviceName, newDeviceInfo);
 
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
 
+//			int status = dao.updateNodeInfo(
+//					newDeviceInfo.getDeviceName(),
+//					newDeviceInfo.getParams().getDeviceName(),
+//					newDeviceInfo.getParams().getOfpFlag());
 			int status = dao.updateNodeInfo(
+					deviceName,
 					newDeviceInfo.getDeviceName(),
-					newDeviceInfo.getParams().getDeviceName(),
-					newDeviceInfo.getParams().getOfpFlag());
+					newDeviceInfo.getOfpFlag());
 			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(Definition.STATUS_NOTFOUND);
 				res.setMessage(String.format(ErrorMessage.NOT_FOUND, newDeviceInfo.getDeviceName()));
@@ -288,18 +291,17 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		return ret;
 	}
 
-	public String deletePort(String portName, String deviceName) {
+	public String deletePort(String deviceName, String portName) {
 		String fname = "deletePort";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(portName=%s, deviceName=%s) - start", fname, portName, deviceName));
+			logger.debug(String.format("%s(deviceName=%s, portName=%s) - start", fname, deviceName, portName));
 		}
 
 		BaseResponse res = new BaseResponse();
 		Dao dao = null;
 		try {
-			CommonValidate validator = new CommonValidate();
-			validator.checkStringBlank(portName);
-			validator.checkStringBlank(deviceName);
+			BaseValidate.checkStringBlank(deviceName);
+			BaseValidate.checkStringBlank(portName);
 
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
@@ -350,10 +352,10 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		return ret;
 	}
 
-	public String updatePort(String updatePortInfoJson) {
+	public String updatePort(String deviceName, String portName, String updatePortInfoJson) {
 		String fname = "updatePort";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(updatePortInfoJson=%s) - start", fname, updatePortInfoJson));
+			logger.debug(String.format("%s(deviceName=%s, portName=%s, updatePortInfoJson=%s) - start", fname, deviceName, portName, updatePortInfoJson));
 		}
 
 		BaseResponse res = new BaseResponse();
@@ -362,17 +364,23 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			PortInfoUpdateJsonIn portInfo = PortInfoUpdateJsonIn.fromJson(updatePortInfoJson);
 
 			PortInfoUpdateJsonInValidate validator = new PortInfoUpdateJsonInValidate();
-			validator.checkValidation(portInfo);
+			validator.checkValidation(deviceName, portName, portInfo);
 
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
 
+//			int status = dao.updatePortInfo(
+//					portInfo.getPortName(),
+//					portInfo.getDeviceName(),
+//					portInfo.getParams().getPortName(),
+//					portInfo.getParams().getPortNumber(),
+//					portInfo.getParams().getType());
 			int status = dao.updatePortInfo(
+					portName,
+					deviceName,
 					portInfo.getPortName(),
-					portInfo.getDeviceName(),
-					portInfo.getParams().getPortName(),
-					portInfo.getParams().getPortNumber(),
-					portInfo.getParams().getType());
+					portInfo.getPortNumber(),
+					portInfo.getType());
 
 			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(Definition.STATUS_NOTFOUND);

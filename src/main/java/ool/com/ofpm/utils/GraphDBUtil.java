@@ -14,7 +14,7 @@ public class GraphDBUtil {
 		return searchNeighborPortExec(deviceName, "", portNumber, links, false);
 	}
 
-	public static GraphDevicePort searchNeighborPortExec(String deviceName, String portName, Integer portNumber, List<GenericsLink<GraphDevicePort>> links, boolean isPortName) {
+	private static GraphDevicePort searchNeighborPortExec(String deviceName, String portName, Integer portNumber, List<GenericsLink<GraphDevicePort>> links, boolean isPortName) {
 		for (GenericsLink<GraphDevicePort> link : links) {
 			List<GraphDevicePort> ports = link.getLink();
 			for (int li = 0; li < ports.size(); li++) {

@@ -6,14 +6,14 @@ public interface DeviceBusiness {
 
 	public String deleteDevice(String deviceName);
 
-	public String updateDevice(String updateDeviceInfoJson);
+	public String updateDevice(String deviceName, String updateDeviceInfoJson);
 
 	/* Port */
 	public String createPort(String newPortInfoJson);
 
-	public String deletePort(String portName, String deviceName);
+	public String deletePort(String deviceName, String portName);
 
-	public String updatePort(String updatePortInfoJson);
+	public String updatePort(String deviceName, String portName, String updatePortInfoJson);
 
 	/* Connect */
 	public String getConnectedPortInfo(String deviceName);

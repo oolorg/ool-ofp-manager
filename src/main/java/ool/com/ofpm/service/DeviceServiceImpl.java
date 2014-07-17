@@ -8,6 +8,7 @@ import ool.com.ofpm.business.DeviceBusinessImpl;
 
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -79,7 +80,7 @@ public class DeviceServiceImpl implements DeviceService {
 			}
 		});
 		DeviceServiceImpl main = injector.getInstance(DeviceServiceImpl.class);
-		String resDeviceBiz = main.deviceBiz.updateDevice(updateDeviceInfoJson);
+		String resDeviceBiz = main.deviceBiz.updateDevice(deviceName, updateDeviceInfoJson);
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
@@ -119,7 +120,7 @@ public class DeviceServiceImpl implements DeviceService {
 	public Response deletePort(String deviceName, String portName) {
 		final String fname = "deletePort";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(portName=%s, deviceName=%s) - start", fname, portName, deviceName));
+			logger.debug(String.format("%s(deviceName=%s, portName=%s) - start", fname, deviceName, portName));
 		}
 
 		this.injector = Guice.createInjector(new AbstractModule() {
@@ -129,7 +130,7 @@ public class DeviceServiceImpl implements DeviceService {
 			}
 		});
 		DeviceServiceImpl main = this.injector.getInstance(DeviceServiceImpl.class);
-		String resDeviceBiz = main.deviceBiz.deletePort(portName, deviceName);
+		String resDeviceBiz = main.deviceBiz.deletePort(deviceName, portName);
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
@@ -154,7 +155,7 @@ public class DeviceServiceImpl implements DeviceService {
 			}
 		});
 		DeviceServiceImpl main = this.injector.getInstance(DeviceServiceImpl.class);
-		String resDeviceBiz = main.deviceBiz.updatePort(updatePortInfoJson);
+		String resDeviceBiz = main.deviceBiz.updatePort(deviceName, portName, updatePortInfoJson);
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));

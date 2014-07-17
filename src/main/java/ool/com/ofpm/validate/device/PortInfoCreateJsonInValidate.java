@@ -1,7 +1,8 @@
-package ool.com.ofpm.validate;
+package ool.com.ofpm.validate.device;
 
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.device.PortInfoCreateJsonIn;
+import ool.com.ofpm.validate.common.BaseValidate;
 import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;

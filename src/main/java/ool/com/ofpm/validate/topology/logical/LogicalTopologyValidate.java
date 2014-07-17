@@ -1,13 +1,14 @@
-package ool.com.ofpm.validate;
+package ool.com.ofpm.validate.topology.logical;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.common.Node;
+import ool.com.ofpm.json.device.Node;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
 import ool.com.ofpm.json.topology.logical.LogicalTopology;
+import ool.com.ofpm.validate.common.BaseValidate;
 import ool.com.util.Definition;
 import ool.com.util.ErrorMessage;
 
@@ -68,19 +69,6 @@ public class LogicalTopologyValidate extends BaseValidate {
 			}
 		}
 
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s() - end", fname));
-		}
-	}
-
-	public void checkStringBlank(String param) throws ValidateException {
-		String fname = "checkStringBlank";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(param=%s) - start", fname, param));
-		}
-		if (StringUtils.isBlank(param)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "parameter"));
-		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s() - end", fname));
 		}
