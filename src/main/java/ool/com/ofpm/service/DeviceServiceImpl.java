@@ -1,6 +1,5 @@
 package ool.com.ofpm.service;
 
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -9,8 +8,6 @@ import ool.com.ofpm.business.DeviceBusinessImpl;
 
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -25,7 +22,7 @@ public class DeviceServiceImpl implements DeviceService {
 	Injector injector;
 
 	@Override
-	public String createDevice(String newDeviceInfoJson) {
+	public Response createDevice(String newDeviceInfoJson) {
 		final String fname = "createDevice";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceInfoJson=%s) - start", fname, newDeviceInfoJson));
@@ -43,11 +40,11 @@ public class DeviceServiceImpl implements DeviceService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
 		}
-		return resDeviceBiz;
+		return Response.ok(resDeviceBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	@Override
-	public String deleteDevice(String deviceName) {
+	public Response deleteDevice(String deviceName) {
 		final String fname = "deleteDevice";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
@@ -65,11 +62,11 @@ public class DeviceServiceImpl implements DeviceService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
 		}
-		return resDeviceBiz;
+		return Response.ok(resDeviceBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	@Override
-	public String updateDevice(String updateDeviceInfoJson) {
+	public Response updateDevice(String deviceName, String updateDeviceInfoJson) {
 		final String fname = "updateDevice";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceInfoJson=%s) - start", fname, updateDeviceInfoJson));
@@ -87,14 +84,14 @@ public class DeviceServiceImpl implements DeviceService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
 		}
-		return resDeviceBiz;
+		return Response.ok(resDeviceBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	/* (non-Javadoc)
 	 * @see ool.com.ofpm.service.DeviceService#createPort(java.lang.String)
 	 */
 	@Override
-	public String createPort(@RequestBody String newPortInfoJson) {
+	public Response createPort(String deviceName, String newPortInfoJson) {
 		final String fname = "createPort";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(portInfoJson=%s) - start", fname, newPortInfoJson));
@@ -112,14 +109,14 @@ public class DeviceServiceImpl implements DeviceService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
 		}
-		return resDeviceBiz;
+		return Response.ok(resDeviceBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	/* (non-Javadoc)
 	 * @see ool.com.ofpm.service.DeviceService#deletePort(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public String deletePort(@QueryParam("portName") String portName, @QueryParam("deviceName") String deviceName) {
+	public Response deletePort(String deviceName, String portName) {
 		final String fname = "deletePort";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(portName=%s, deviceName=%s) - start", fname, portName, deviceName));
@@ -137,14 +134,14 @@ public class DeviceServiceImpl implements DeviceService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
 		}
-		return resDeviceBiz;
+		return Response.ok(resDeviceBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	/* (non-Javadoc)
 	 * @see ool.com.ofpm.service.DeviceService#updatePort(java.lang.String)
 	 */
 	@Override
-	public String updatePort(@RequestBody String updatePortInfoJson) {
+	public Response updatePort(String deviceName, String portName, String updatePortInfoJson) {
 		final String fname = "updatePort";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(updatePortInfoJson=%s) - start", fname, updatePortInfoJson));
@@ -162,14 +159,14 @@ public class DeviceServiceImpl implements DeviceService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
 		}
-		return resDeviceBiz;
+		return Response.ok(resDeviceBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	/* (non-Javadoc)
 	 * @see ool.com.ofpm.service.DeviceService#getConnectedPortInfo(java.lang.String)
 	 */
 	@Override
-	public Response getConnectedPortInfo(@QueryParam("deviceName") String deviceName) {
+	public Response getConnectedPortInfo(String deviceName) {
     	if (logger.isDebugEnabled()) {
     		logger.debug(String.format("getConnectedPortInfo(deviceName=%s) - start ", deviceName));
     	}

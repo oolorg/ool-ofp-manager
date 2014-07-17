@@ -1,5 +1,8 @@
 package ool.com.ofpm.service;
 
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 import ool.com.ofpm.business.LogicalBusiness;
 import ool.com.ofpm.business.LogicalBusinessImpl;
 
@@ -20,7 +23,7 @@ public class LogicalServiceImpl implements LogicalService {
 	Injector injector;
 
 	@Override
-	public String getLogicalTopology(String deviceNamesCSV, String tokenId) {
+	public Response getLogicalTopology(String deviceNamesCSV, String tokenId) {
 		String fname = "getLogicalTopology";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceNamesCSV=%s, tokenId=%s) - start", fname, deviceNamesCSV, tokenId));
@@ -38,11 +41,11 @@ public class LogicalServiceImpl implements LogicalService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));
 		}
-		return resLogiBiz;
+		return Response.ok(resLogiBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 
 	@Override
-	public String updateLogicalTopology(String requestedTopologyJson) {
+	public Response updateLogicalTopology(String requestedTopologyJson) {
 		String fname = "updateLogicalTopology";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(requestedTopologyJson=%s) - start", fname, requestedTopologyJson));
@@ -60,6 +63,6 @@ public class LogicalServiceImpl implements LogicalService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));
 		}
-		return resLogiBiz;
+		return Response.ok(resLogiBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
 }

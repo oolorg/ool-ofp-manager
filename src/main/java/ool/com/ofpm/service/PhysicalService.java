@@ -8,6 +8,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -16,22 +17,22 @@ public interface PhysicalService {
 	@GET
 	@Consumes({ MediaType.APPLICATION_FORM_URLENCODED })
 	@Produces({ MediaType.APPLICATION_JSON })
-	public String getPhysicalTopology(@QueryParam("deviceNames") String deviceNamesCSV, @QueryParam("tokenId") String tokenId);
+	public Response getPhysicalTopology(@QueryParam("deviceNames") String deviceNamesCSV, @QueryParam("tokenId") String tokenId);
 
 	@PUT
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
-	public String updatePhysicalTopology(@RequestBody String requestedTopologyJson);
+	public Response updatePhysicalTopology(@RequestBody String requestedTopologyJson);
 
 	@POST
 	@Path("/connect")
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
-	public String connectPhysicalLink(@RequestBody String physicalLinkJson);
+	public Response connectPhysicalLink(@RequestBody String physicalLinkJson);
 
 	@POST
 	@Path("/disconnect")
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
-	public String disconnectPhysicalLink(@RequestBody String physicalLinkJson);
+	public Response disconnectPhysicalLink(@RequestBody String physicalLinkJson);
 }
