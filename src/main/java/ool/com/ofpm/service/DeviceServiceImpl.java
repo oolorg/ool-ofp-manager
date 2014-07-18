@@ -168,8 +168,9 @@ public class DeviceServiceImpl implements DeviceService {
 	 */
 	@Override
 	public Response getConnectedPortInfo(String deviceName) {
+		final String fname = "getConnectedPortInfo";		
     	if (logger.isDebugEnabled()) {
-    		logger.debug(String.format("getConnectedPortInfo(deviceName=%s) - start ", deviceName));
+    		logger.debug(String.format("%s(deviceName=%s) - start ", fname, deviceName));
     	}
 
         this.injector = Guice.createInjector(new AbstractModule() {
@@ -183,7 +184,7 @@ public class DeviceServiceImpl implements DeviceService {
         String resDeviceBiz = main.deviceBiz.getConnectedPortInfo(deviceName);
 
         if (logger.isDebugEnabled()) {
-    		logger.debug(String.format("getConnectedPortInfo(ret=%s) - end ", resDeviceBiz));
+    		logger.debug(String.format("%s(ret=%s) - end ", fname, resDeviceBiz));
     	}
 		return Response.ok(resDeviceBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
