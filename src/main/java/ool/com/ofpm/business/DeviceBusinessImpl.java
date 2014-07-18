@@ -4,6 +4,10 @@ import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.List;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.OrientDBDefinition.*;
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.device.DeviceInfoCreateJsonIn;
@@ -22,8 +26,6 @@ import ool.com.orientdb.client.ConnectionUtils;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;
 import ool.com.orientdb.client.DaoImpl;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
@@ -55,29 +57,29 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
-			if (dao.createNodeInfo(deviceInfo.getDeviceName(), deviceInfo.getDeviceType(), deviceInfo.getOfpFlag()) == Definition.DB_RESPONSE_STATUS_EXIST) {
-				res.setStatus(Definition.STATUS_BAD_REQUEST);
-				res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, deviceInfo.getDeviceName()));
+			if (dao.createNodeInfo(deviceInfo.getDeviceName(), deviceInfo.getDeviceType(), deviceInfo.getOfpFlag()) == DB_RESPONSE_STATUS_EXIST) {
+				res.setStatus(STATUS_BAD_REQUEST);
+				res.setMessage(String.format(ALREADY_EXIST, deviceInfo.getDeviceName()));
 			} else {
-				res.setStatus(Definition.STATUS_CREATED);
+				res.setStatus(STATUS_CREATED);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
-			res.setMessage(ErrorMessage.INVALID_JSON);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
 
 		} catch (ValidateException ve) {
 			logger.error(ve);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 
 		} catch (SQLException e) {
     		logger.error(e.getMessage());
-    		res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -86,7 +88,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setStatus(STATUS_INTERNAL_ERROR);
 				res.setMessage(e.getMessage());
 			}
 		}
@@ -115,29 +117,29 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			dao = new DaoImpl(utils);
 
 			int status = dao.deleteDeviceInfo(deviceName);
-			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(Definition.DB_RESPONSE_STATUS_NOT_FOUND);
-				res.setMessage(String.format(ErrorMessage.NOT_FOUND, deviceName));
-			} else if (status == Definition.STATUS_FORBIDDEN) {
-				res.setStatus(Definition.STATUS_FORBIDDEN);
-				res.setMessage(String.format(ErrorMessage.IS_PATCHED, deviceName));
+			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
+				res.setMessage(String.format(NOT_FOUND, deviceName));
+			} else if (status == STATUS_FORBIDDEN) {
+				res.setStatus(STATUS_FORBIDDEN);
+				res.setMessage(String.format(IS_PATCHED, deviceName));
 			} else {
-				res.setStatus(Definition.STATUS_SUCCESS);
+				res.setStatus(STATUS_SUCCESS);
 			}
 
 		} catch (ValidateException ve) {
-			String message = String.format(ErrorMessage.IS_BLANK, "deviceName");
+			String message = String.format(IS_BLANK, "deviceName");
 			logger.error(ve.getClass().getName() + ": " + message);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(message);
 
 		} catch (SQLException e) {
     		logger.error(e.getMessage());
-    		res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -146,7 +148,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setStatus(STATUS_INTERNAL_ERROR);
 				res.setMessage(e.getMessage());
 			}
 		}
@@ -184,30 +186,30 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 					deviceName,
 					newDeviceInfo.getDeviceName(),
 					newDeviceInfo.getOfpFlag());
-			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(Definition.STATUS_NOTFOUND);
-				res.setMessage(String.format(ErrorMessage.NOT_FOUND, newDeviceInfo.getDeviceName()));
-			} else if (status == Definition.DB_RESPONSE_STATUS_EXIST) {
-				res.setStatus(Definition.STATUS_CONFLICT);
-				res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, newDeviceInfo.getDeviceName()));
+			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(STATUS_NOTFOUND);
+				res.setMessage(String.format(NOT_FOUND, newDeviceInfo.getDeviceName()));
+			} else if (status == DB_RESPONSE_STATUS_EXIST) {
+				res.setStatus(STATUS_CONFLICT);
+				res.setMessage(String.format(ALREADY_EXIST, newDeviceInfo.getDeviceName()));
 			} else {
-				res.setStatus(Definition.STATUS_CREATED);
+				res.setStatus(STATUS_CREATED);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
-			res.setMessage(ErrorMessage.INVALID_JSON);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
 		} catch (ValidateException ve) {
 			logger.error(ve);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -216,7 +218,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setStatus(STATUS_INTERNAL_ERROR);
 				res.setMessage(e.getMessage());
 			}
 		}
@@ -246,31 +248,31 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			dao = new DaoImpl(utils);
 			int status = dao.createPortInfo(portInfo.getPortName(), portInfo.getPortNumber(), portInfo.getType(), portInfo.getDeviceName());
 
-			if ( status == Definition.DB_RESPONSE_STATUS_EXIST) {
-				res.setStatus(Definition.STATUS_BAD_REQUEST);
-				res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, portInfo.getPortName()));
-			} else if ( status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(Definition.STATUS_NOTFOUND);
-				res.setMessage(String.format(ErrorMessage.NOT_FOUND, portInfo.getDeviceName()));
+			if ( status == DB_RESPONSE_STATUS_EXIST) {
+				res.setStatus(STATUS_BAD_REQUEST);
+				res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));
+			} else if ( status == DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(STATUS_NOTFOUND);
+				res.setMessage(String.format(NOT_FOUND, portInfo.getDeviceName()));
 			}
 			else {
-				res.setStatus(Definition.STATUS_CREATED);
+				res.setStatus(STATUS_CREATED);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
-			res.setMessage(ErrorMessage.INVALID_JSON);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
 		} catch (ValidateException ve) {
 			logger.error(ve);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 		} catch (SQLException e) {
     		logger.error(e.getMessage());
-    		res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -279,7 +281,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setStatus(STATUS_INTERNAL_ERROR);
 				res.setMessage(e.getMessage());
 			}
 		}
@@ -307,31 +309,31 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			dao = new DaoImpl(utils);
 
 			int status = dao.deletePortInfo(portName, deviceName);
-			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(Definition.DB_RESPONSE_STATUS_NOT_FOUND);
-				res.setMessage(String.format(ErrorMessage.NOT_FOUND, portName));
-			} else if (status == Definition.DB_RESPONSE_STATUS_FORBIDDEN) {
-				res.setStatus(Definition.DB_RESPONSE_STATUS_FORBIDDEN);
-				res.setMessage(String.format(ErrorMessage.IS_PATCHED, portName));
+			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
+				res.setMessage(String.format(NOT_FOUND, portName));
+			} else if (status == DB_RESPONSE_STATUS_FORBIDDEN) {
+				res.setStatus(DB_RESPONSE_STATUS_FORBIDDEN);
+				res.setMessage(String.format(IS_PATCHED, portName));
 			} else {
-				res.setStatus(Definition.STATUS_SUCCESS);
+				res.setStatus(STATUS_SUCCESS);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
-			res.setMessage(ErrorMessage.INVALID_JSON);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
 		} catch (ValidateException ve) {
-			String message = String.format(ErrorMessage.IS_BLANK, "portName or deviceName");
+			String message = String.format(IS_BLANK, "portName or deviceName");
 			logger.error(ve.getClass().getName() + ": " + message);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(message);
 		} catch (SQLException e) {
 			logger.error(e.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -340,7 +342,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setStatus(STATUS_INTERNAL_ERROR);
 				res.setMessage(e.getMessage());
 			}
 		}
@@ -382,30 +384,30 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 					portInfo.getPortNumber(),
 					portInfo.getType());
 
-			if (status == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(Definition.STATUS_NOTFOUND);
-				res.setMessage(String.format(ErrorMessage.NOT_FOUND, portInfo.getPortName()));
-			} else if (status == Definition.DB_RESPONSE_STATUS_EXIST) {
-				res.setStatus(Definition.STATUS_CONFLICT);
-				res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, portInfo.getPortName()));
+			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(STATUS_NOTFOUND);
+				res.setMessage(String.format(NOT_FOUND, portInfo.getPortName()));
+			} else if (status == DB_RESPONSE_STATUS_EXIST) {
+				res.setStatus(STATUS_CONFLICT);
+				res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));
 			} else {
-				res.setStatus(Definition.STATUS_CREATED);
+				res.setStatus(STATUS_CREATED);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
-			res.setMessage(ErrorMessage.INVALID_JSON);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
 		} catch (ValidateException ve) {
 			logger.error(ve);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 		} catch (SQLException e) {
     		logger.error(e.getMessage());
-    		res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -414,7 +416,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setStatus(STATUS_INTERNAL_ERROR);
 				res.setMessage(e.getMessage());
 			}
 		}
@@ -492,18 +494,18 @@ public class DeviceBusinessImpl implements DeviceBusiness {
         		}
         		outPara.addResultData(resultData);
         	}
-        	outPara.setStatus(Definition.STATUS_SUCCESS);
+        	outPara.setStatus(STATUS_SUCCESS);
     	} catch (SQLException e) {
     		logger.error(e.getMessage());
 			if (e.getCause() == null) {
-				outPara.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				outPara.setStatus(STATUS_INTERNAL_ERROR);
 			} else {
-				outPara.setStatus(Definition.STATUS_NOTFOUND);
+				outPara.setStatus(STATUS_NOTFOUND);
 			}
     		outPara.setMessage(e.getMessage());
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			outPara.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			outPara.setStatus(STATUS_INTERNAL_ERROR);
 			outPara.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -512,7 +514,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				outPara.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				outPara.setStatus(STATUS_INTERNAL_ERROR);
 				outPara.setMessage(e.getMessage());
 			}
 			Type type = new TypeToken<DeviceManagerGetConnectedPortInfoJsonOut>(){}.getType();

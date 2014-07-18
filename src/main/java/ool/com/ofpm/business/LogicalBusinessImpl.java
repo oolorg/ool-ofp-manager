@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.dmdb.client.DeviceManagerDBClient;
 import ool.com.dmdb.client.DeviceManagerDBClientImpl;
 import ool.com.dmdb.exception.DeviceManagerDBClientException;
@@ -48,8 +51,6 @@ import ool.com.orientdb.client.ConnectionUtils;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;
 import ool.com.orientdb.client.DaoImpl;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
@@ -130,18 +131,18 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				linkList.add(link);
 			}
 
-			ret.setStatus(Definition.STATUS_SUCCESS);
+			ret.setStatus(STATUS_SUCCESS);
     	} catch (SQLException e) {
     		logger.error(e.getMessage());
 			ret.setMessage(e.getMessage());
     		if (e.getCause() != null) {
-    			ret.setStatus(Definition.STATUS_NOTFOUND);
+    			ret.setStatus(STATUS_NOTFOUND);
     		} else {
-    			ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    			ret.setStatus(STATUS_INTERNAL_ERROR);
     		}
 		} catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			ret.setStatus(STATUS_INTERNAL_ERROR);
     		ret.setMessage(re.getMessage());
 		}
     	finally {
@@ -151,7 +152,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				ret.setStatus(STATUS_INTERNAL_ERROR);
 	    		ret.setMessage(e.getMessage());
 			}
 		}
@@ -167,12 +168,12 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		LogicalTopologyGetJsonOut res = new LogicalTopologyGetJsonOut();
 		LogicalTopology resultData = new LogicalTopology();
-		String openamUrl = conf.getString(Definition.OPEN_AM_URL);
+		String openamUrl = conf.getString(OPEN_AM_URL);
 		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
 
 		try {
 			BaseValidate.checkStringBlank(deviceNamesCSV);
-			List<String> deviceNames = Arrays.asList(deviceNamesCSV.split(Definition.CSV_SPLIT_REGEX));
+			List<String> deviceNames = Arrays.asList(deviceNamesCSV.split(CSV_SPLIT_REGEX));
 			BaseValidate.checkArrayStringBlank(deviceNames);
 			BaseValidate.checkArrayOverlapped(deviceNames);
 			BaseValidate.checkStringBlank(tokenId);
@@ -186,7 +187,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				if (logger.isDebugEnabled()) {
 					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
 				}
-				res.setStatus(Definition.STATUS_BAD_REQUEST);
+				res.setStatus(STATUS_BAD_REQUEST);
 				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
 				String ret = res.toJson();
 				if (logger.isDebugEnabled()) {
@@ -204,7 +205,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 			List<LogicalLink> linkList = new ArrayList<LogicalLink>();
 			BaseResponse ret = getLogicalTopologyExec(nodeList, linkList);
-			if (ret.getStatus() != Definition.STATUS_SUCCESS) {
+			if (ret.getStatus() != STATUS_SUCCESS) {
 				nodeList.removeAll(nodeList);
 			}
 
@@ -219,17 +220,17 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		} catch (ValidateException ve) {
 			logger.error(ve);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 
 		} catch (OpenAmClientException oace) {
 			logger.error(oace);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(oace.getMessage());
 
 		} catch (Exception e) {
 			logger.error(e);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
 		}
 
@@ -247,8 +248,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 
 		BaseResponse res = new BaseResponse();
-		res.setStatus(Definition.STATUS_SUCCESS);
-		String openamUrl = conf.getString(Definition.OPEN_AM_URL);
+		res.setStatus(STATUS_SUCCESS);
+		String openamUrl = conf.getString(OPEN_AM_URL);
 		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
 
 		try {
@@ -267,7 +268,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				if (logger.isDebugEnabled()) {
 					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
 				}
-				res.setStatus(Definition.STATUS_BAD_REQUEST);
+				res.setStatus(STATUS_BAD_REQUEST);
 				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
 				String ret = res.toJson();
 				if (logger.isDebugEnabled()) {
@@ -279,7 +280,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			List<Node> requestedNodes = requestedTopology.getNodes();
 			List<LogicalLink> currentLinkList = new ArrayList<LogicalLink>();
 			BaseResponse getltsRet = getLogicalTopologyExec(requestedNodes, currentLinkList);
-			if (getltsRet.getStatus() != Definition.STATUS_SUCCESS) {
+			if (getltsRet.getStatus() != STATUS_SUCCESS) {
 				res.setStatus(getltsRet.getStatus());
 				res.setMessage(getltsRet.getMessage());
 				String ret = res.toJson();
@@ -301,7 +302,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			for (LogicalLink link : decLinkList) {
 
 				GraphDBPatchLinkJsonRes reducedPatches = ofPatchBusiness.disConnectPatch(link.getDeviceName());
-				if (reducedPatches.getStatus() != Definition.STATUS_SUCCESS) {
+				if (reducedPatches.getStatus() != STATUS_SUCCESS) {
 					res.setStatus(reducedPatches.getStatus());
 					res.setMessage(reducedPatches.getMessage());
 					return res.toJson();
@@ -311,7 +312,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			for (LogicalLink link : incLinkList) {
 
 				GraphDBPatchLinkJsonRes augmentedPatches = ofPatchBusiness.connectPatch(link.getDeviceName());
-				if (augmentedPatches.getStatus() != Definition.STATUS_CREATED) {
+				if (augmentedPatches.getStatus() != STATUS_CREATED) {
 					res.setStatus(augmentedPatches.getStatus());
 					res.setMessage(augmentedPatches.getMessage());
 					return res.toJson();
@@ -320,7 +321,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				List<String> deviceNames = link.getDeviceName();
 				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
 				int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
-				if (notifyNcsRet != Definition.STATUS_SUCCESS) {
+				if (notifyNcsRet != STATUS_SUCCESS) {
 					res.setStatus(augmentedPatches.getStatus());
 					res.setMessage(augmentedPatches.getMessage());
 					return res.toJson();
@@ -346,41 +347,41 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 
 				//res = resAgent;
-				if (resAgent.getStatus() != Definition.STATUS_SUCCESS) {
+				if (resAgent.getStatus() != STATUS_SUCCESS) {
 					/* TODO: Implement transaction */
-					res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-					res.setMessage(ErrorMessage.UNEXPECTED_ERROR);
+					res.setStatus(STATUS_INTERNAL_ERROR);
+					res.setMessage(UNEXPECTED_ERROR);
 					break;
 				}
 			}
 			return res.toJson();
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
-			res.setMessage(ErrorMessage.INVALID_JSON);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
 			return res.toJson();
 
 		} catch (ValidateException ve) {
 			logger.error(ve);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 			return res.toJson();
 
 		} catch (AgentClientException ace) {
 			logger.error(ace);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(ace.getMessage());
 			return res.toJson();
 
 		} catch (AgentManagerException ame) {
 			logger.error(ame);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(ErrorMessage.UNEXPECTED_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(UNEXPECTED_ERROR);
 			return res.toJson();
 		} catch (Exception e) {
 			logger.error(e);
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
-			res.setMessage(ErrorMessage.UNEXPECTED_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(UNEXPECTED_ERROR);
 			return res.toJson();
 
 		} finally {
@@ -392,28 +393,28 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	}
 
 	public int notifyNcs(String tokenId, List<String> deviceNames, List<Integer> portNames) {
-		int ret = Definition.STATUS_SUCCESS;
-		String openamUrl = conf.getString(Definition.OPEN_AM_URL);
+		int ret = STATUS_SUCCESS;
+		String openamUrl = conf.getString(OPEN_AM_URL);
 		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
-		String deviceManagerUrl = conf.getString(Definition.DEVICE_MANAGER_URL);
+		String deviceManagerUrl = conf.getString(DEVICE_MANAGER_URL);
 		DeviceManagerDBClient deviceManagerDBClient = new DeviceManagerDBClientImpl(deviceManagerUrl);
-		String networkConfigSetupperUrl = conf.getString(Definition.NETWORK_CONFIG_SETUPPER_URL);
+		String networkConfigSetupperUrl = conf.getString(NETWORK_CONFIG_SETUPPER_URL);
 		NetworkConfigSetupperClient networkConfigSetupperClien = new NetworkConfigSetupperClientImpl(networkConfigSetupperUrl);
 		DeviceBusiness deviceManagerBusiness = new DeviceBusinessImpl();
 
 		try {
-			if (deviceNames.contains(Definition.D_PLANE_SW_HOST_NAME)) {
-				String res = deviceManagerBusiness.getConnectedPortInfo(Definition.OFP_SW_HOST_NAME);
+			if (deviceNames.contains(D_PLANE_SW_HOST_NAME)) {
+				String res = deviceManagerBusiness.getConnectedPortInfo(OFP_SW_HOST_NAME);
 				ConnectedPortGetJsonOut connectedPortGetJsonOut = ConnectedPortGetJsonOut.fromJson(res);
-				if (connectedPortGetJsonOut.getStatus() != Definition.STATUS_SUCCESS) {
+				if (connectedPortGetJsonOut.getStatus() != STATUS_SUCCESS) {
 					return connectedPortGetJsonOut.getStatus();
 				}
 
 				String dPlaneSwPortName = new String();
 				String deviceName = new String();
 				for (Integer portNumber : portNames) {
-					GraphDevicePort graphDevicePort = GraphDBUtil.searchNeighborPort(Definition.OFP_SW_HOST_NAME, portNumber, connectedPortGetJsonOut.getResult());
-					if (graphDevicePort.getDeviceName().equals(Definition.D_PLANE_SW_HOST_NAME)) {
+					GraphDevicePort graphDevicePort = GraphDBUtil.searchNeighborPort(OFP_SW_HOST_NAME, portNumber, connectedPortGetJsonOut.getResult());
+					if (graphDevicePort.getDeviceName().equals(D_PLANE_SW_HOST_NAME)) {
 						dPlaneSwPortName = graphDevicePort.getPortName();
 					} else {
 						deviceName = graphDevicePort.getDeviceName();
@@ -426,7 +427,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				Used used = uses.get(0);
 
 				// Get vlanID from OpenAM with userID and tokenId of administrator.
-				TokenIdOut adminToken = openAmClient.authenticate(Definition.OPEN_AM_ADMIN_USER_ID , Definition.OPEN_AM_ADMIN_USER_PW);
+				TokenIdOut adminToken = openAmClient.authenticate(OPEN_AM_ADMIN_USER_ID , OPEN_AM_ADMIN_USER_PW);
 				OpenAmIdentitiesOut openAmIdentitiesOut = openAmClient.readIdentities(adminToken.getTokenId(), used.getUserName());
 				String dVlan = openAmIdentitiesOut.getdVlan().get(0);
 
@@ -436,19 +437,19 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				List<ool.com.ofpm.json.ncs.NetworkConfigSetupperInData> params = networkConfigSetupperIn.getParams();
 				List<String> portNamesData = new ArrayList<String>();
 				portNamesData.add(dPlaneSwPortName);
-				NetworkConfigSetupperInData param = new NetworkConfigSetupperInData(Definition.D_PLANE_SW_HOST_NAME, dVlan, portNamesData);
+				NetworkConfigSetupperInData param = new NetworkConfigSetupperInData(D_PLANE_SW_HOST_NAME, dVlan, portNamesData);
 				params.add(param);
 				BaseResponse resNcs = networkConfigSetupperClien.sendPlaneSwConfigData(networkConfigSetupperIn);
-				if (resNcs.getStatus() != Definition.STATUS_SUCCESS) {
+				if (resNcs.getStatus() != STATUS_SUCCESS) {
 					return resNcs.getStatus();
 				}
 			}
 		} catch(OpenAmClientException oace) {
 			logger.error(oace);
-			return Definition.STATUS_INTERNAL_ERROR;
+			return STATUS_INTERNAL_ERROR;
 		} catch(DeviceManagerDBClientException dmdce) {
 			logger.error(dmdce);
-			return Definition.STATUS_INTERNAL_ERROR;
+			return STATUS_INTERNAL_ERROR;
 		}
 
 		return ret;

@@ -1,10 +1,11 @@
 package ool.com.ofpm.validate.device;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.device.DeviceInfoUpdateJsonIn;
 import ool.com.ofpm.validate.common.BaseValidate;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -24,22 +25,22 @@ public class DeviceInfoUpdateJsonInValidate extends BaseValidate {
 		}
 
 		if (StringUtils.isBlank(deviceName)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "deviceName"));
+			throw new ValidateException(String.format(IS_BLANK, "deviceName"));
 		}
 
 		if (BaseValidate.checkNull(newDeviceInfo)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "parameter"));
+			throw new ValidateException(String.format(IS_BLANK, "parameter"));
 		}
 		if (!BaseValidate.checkNull(newDeviceInfo.getDeviceType())) {
-			throw new ValidateException(String.format(ErrorMessage.IS_NOT_NULL, "parameter.deviceType"));
+			throw new ValidateException(String.format(IS_NOT_NULL, "parameter.deviceType"));
 		}
 		String ofpFlag = newDeviceInfo.getOfpFlag();
 		if (StringUtils.isBlank(newDeviceInfo.getDeviceName()) && BaseValidate.checkNull(ofpFlag)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_NULL,  "parameter.deviceName and parameter.ofpFlag"));
+			throw new ValidateException(String.format(IS_NULL,  "parameter.deviceName and parameter.ofpFlag"));
 		}
 		if (! StringUtils.isBlank(ofpFlag)) {
-			if (! ArrayUtils.contains(Definition.ENABLE_OFP_FLAGS, ofpFlag)) {
-				throw new ValidateException(String.format(ErrorMessage.INVALID_PARAMETER,  "parameter.ofpFlag=" + ofpFlag));
+			if (! ArrayUtils.contains(ENABLE_OFP_FLAGS, ofpFlag)) {
+				throw new ValidateException(String.format(INVALID_PARAMETER,  "parameter.ofpFlag=" + ofpFlag));
 			}
 		}
 

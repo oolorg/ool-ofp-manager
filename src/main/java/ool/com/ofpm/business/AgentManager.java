@@ -8,6 +8,8 @@ import java.util.Map;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
+import ool.com.constants.OfpmDefinition;
+import ool.com.constants.ErrorMessage;
 import ool.com.ofpm.client.AgentClient;
 import ool.com.ofpm.client.AgentClientImpl;
 import ool.com.ofpm.exception.AgentManagerException;
@@ -16,8 +18,6 @@ import ool.com.ofpm.json.ofc.AgentInfo;
 import ool.com.ofpm.json.ofc.AgentInfoListConfigIn;
 import ool.com.ofpm.json.ofc.AgentInfo.SwitchInfo;
 import ool.com.ofpm.validate.AgentInfoValidate;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -46,7 +46,7 @@ public class AgentManager {
 		try {
 			JAXBContext context = JAXBContext.newInstance(AgentInfoListConfigIn.class);
 			Unmarshaller ums = context.createUnmarshaller();
-			URL url = Thread.currentThread().getContextClassLoader().getResource(Definition.AGENT_CONFIG_FILE);
+			URL url = Thread.currentThread().getContextClassLoader().getResource(OfpmDefinition.AGENT_CONFIG_FILE);
 
 			AgentInfoListConfigIn agentConfig =  (AgentInfoListConfigIn)ums.unmarshal(url);
 			List<AgentInfo> agentInfos = agentConfig.getAgents();

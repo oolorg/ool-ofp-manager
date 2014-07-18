@@ -1,10 +1,11 @@
 package ool.com.ofpm.validate.topology.logical;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
 import ool.com.ofpm.validate.common.BaseValidate;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
@@ -18,13 +19,13 @@ public class LogicalLinkValidate extends BaseValidate {
 		}
 
 		if (BaseValidate.checkNull(link)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "link"));
+			throw new ValidateException(String.format(IS_BLANK, "link"));
 		}
 		if (BaseValidate.checkNull(link.getDeviceName())) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK,  "deviceName:LogicalLink"));
+			throw new ValidateException(String.format(IS_BLANK,  "deviceName:LogicalLink"));
 		}
-		if (link.getDeviceName().size() != Definition.COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK) {
-			throw new ValidateException(String.format(ErrorMessage.INVALID_PARAMETER, "Number of deviceName:LogicalLink"));
+		if (link.getDeviceName().size() != COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK) {
+			throw new ValidateException(String.format(INVALID_PARAMETER, "Number of deviceName:LogicalLink"));
 		}
 
 		if (logger.isDebugEnabled()) {

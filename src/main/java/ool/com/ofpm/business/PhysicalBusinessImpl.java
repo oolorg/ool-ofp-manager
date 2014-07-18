@@ -3,6 +3,10 @@ package ool.com.ofpm.business;
 import java.sql.SQLException;
 import java.util.List;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.OrientDBDefinition.*;
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.device.PortInfo;
@@ -14,8 +18,6 @@ import ool.com.orientdb.client.ConnectionUtils;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;
 import ool.com.orientdb.client.DaoImpl;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
@@ -142,67 +144,67 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 			rid2 = doc.getIdentity().toString();
 
 			if (rid1.isEmpty()) {
-				res.setMessage(String.format(ErrorMessage.NOT_FOUND, portList.get(0).getPortName() + "," + portList.get(0).getDeviceName()));
-				res.setStatus(Definition.STATUS_NOTFOUND);
+				res.setMessage(String.format(NOT_FOUND, portList.get(0).getPortName() + "," + portList.get(0).getDeviceName()));
+				res.setStatus(STATUS_NOTFOUND);
 				String ret = res.toJson();
 				return ret;
 			} else if (rid2.isEmpty()) {
-				res.setMessage(String.format(ErrorMessage.NOT_FOUND, portList.get(1).getPortName() + "," + portList.get(1).getDeviceName()));
-				res.setStatus(Definition.STATUS_NOTFOUND);
+				res.setMessage(String.format(NOT_FOUND, portList.get(1).getPortName() + "," + portList.get(1).getDeviceName()));
+				res.setStatus(STATUS_NOTFOUND);
 				String ret = res.toJson();
 				return ret;
 			}
 
 			if (gdbClientMethodName.equals(PhysicalBusinessImpl.CONNECT)) {
-				if (dao.createLinkInfo(rid1, rid2) == Definition.DB_RESPONSE_STATUS_EXIST) {
-					res.setStatus(Definition.STATUS_CONFLICT);
-					res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
+				if (dao.createLinkInfo(rid1, rid2) == DB_RESPONSE_STATUS_EXIST) {
+					res.setStatus(STATUS_CONFLICT);
+					res.setMessage(String.format(ALREADY_EXIST, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
 					String ret = res.toJson();
 					return ret;
 				}
-				if (dao.createLinkInfo(rid2, rid1) == Definition.DB_RESPONSE_STATUS_EXIST) {
-					res.setStatus(Definition.STATUS_CONFLICT);
-					res.setMessage(String.format(ErrorMessage.ALREADY_EXIST, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
+				if (dao.createLinkInfo(rid2, rid1) == DB_RESPONSE_STATUS_EXIST) {
+					res.setStatus(STATUS_CONFLICT);
+					res.setMessage(String.format(ALREADY_EXIST, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
 					String ret = res.toJson();
 					return ret;
 				}
 			} else if (gdbClientMethodName.equals(PhysicalBusinessImpl.DISCONNECT)) {
-				if (dao.deleteLinkInfo(rid1, rid2) == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
-					res.setStatus(Definition.STATUS_NOTFOUND);
-					res.setMessage(String.format(ErrorMessage.NOT_FOUND, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
+				if (dao.deleteLinkInfo(rid1, rid2) == DB_RESPONSE_STATUS_NOT_FOUND) {
+					res.setStatus(STATUS_NOTFOUND);
+					res.setMessage(String.format(NOT_FOUND, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
 				} else {
-					if (dao.deleteLinkInfo(rid2, rid1) == Definition.DB_RESPONSE_STATUS_NOT_FOUND) {
-						res.setStatus(Definition.STATUS_NOTFOUND);
-						res.setMessage(String.format(ErrorMessage.NOT_FOUND, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
+					if (dao.deleteLinkInfo(rid2, rid1) == DB_RESPONSE_STATUS_NOT_FOUND) {
+						res.setStatus(STATUS_NOTFOUND);
+						res.setMessage(String.format(NOT_FOUND, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
 					} else {
-						res.setStatus(Definition.STATUS_SUCCESS);
+						res.setStatus(STATUS_SUCCESS);
 					}
 				}
 			}
 
-			res.setStatus(Definition.STATUS_CREATED);
+			res.setStatus(STATUS_CREATED);
 
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
-			res.setMessage(ErrorMessage.INVALID_JSON);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
 
 		} catch (ValidateException ve) {
 			logger.error(ve);
-			res.setStatus(Definition.STATUS_BAD_REQUEST);
+			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 
 		} catch (SQLException e) {
     		logger.error(e.getMessage());
     		res.setMessage(e.getMessage());
     		if (e.getCause() == null) {
-    			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    			res.setStatus(STATUS_INTERNAL_ERROR);
     		} else {
-    			res.setStatus(Definition.STATUS_NOTFOUND);
+    			res.setStatus(STATUS_NOTFOUND);
     		}
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -211,7 +213,7 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 				}
 			} catch (final SQLException e) {
 				logger.error(e.getMessage());
-				res.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				res.setStatus(STATUS_INTERNAL_ERROR);
 				res.setMessage(e.getMessage());
 			}
 		}

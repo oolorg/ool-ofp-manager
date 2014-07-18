@@ -2,9 +2,10 @@ package ool.com.orientdb.client;
 
 import java.sql.SQLException;
 
+import static ool.com.constants.OfpmDefinition.*;
+
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
-import ool.com.util.Definition;
 
 import org.apache.log4j.Logger;
 
@@ -33,9 +34,9 @@ public class ConnectionManager {
     		logger.debug(String.format("initialize(config=%s) - start", config));
     	}
 
-        String user = config.getString(Definition.CONFIG_KEY_DB_USER);
-        String password = config.getString(Definition.CONFIG_KEY_DB_PASSWORD);
-        String url = config.getString(Definition.CONFIG_KEY_DB_URL);
+        String user = config.getString(CONFIG_KEY_DB_USER);
+        String password = config.getString(CONFIG_KEY_DB_PASSWORD);
+        String url = config.getString(CONFIG_KEY_DB_URL);
 
         try {
         	database = new ODatabaseDocumentTx(url).open(user, password);

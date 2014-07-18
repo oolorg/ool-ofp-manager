@@ -12,14 +12,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.OrientDBDefinition.*;
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.json.ofc.PatchLink;
 import ool.com.ofpm.json.ofpatch.GraphDBPatchLinkJsonRes;
 import ool.com.orientdb.client.ConnectionUtils;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;
 import ool.com.orientdb.client.DaoImpl;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
@@ -61,7 +63,7 @@ public class OFPatchCommonImpl implements OFPatchCommon {
 
 					int weight1 = dao.getLinkInfo(map.get(i-1).get("RID"), map.get(i).get("RID")).field("weight");
 					int weight2 = dao.getLinkInfo(map.get(i+1).get("RID"), map.get(i).get("RID")).field("weight");
-					if (weight1 == Definition.DIJKSTRA_WEIGHT_NO_ROUTE || weight2 == Definition.DIJKSTRA_WEIGHT_NO_ROUTE) {
+					if (weight1 == DIJKSTRA_WEIGHT_NO_ROUTE || weight2 == DIJKSTRA_WEIGHT_NO_ROUTE) {
 						linkPatchPortList.clear();
 						break;
 					}
@@ -74,8 +76,8 @@ public class OFPatchCommonImpl implements OFPatchCommon {
 					portRidList.add(map.get(i+1).get("RID"));
 					dao.insertPatchWiring(portRidList, map.get(i).get("RID"), deviceNameList);
 
-					dao.updateLinkWeight(Definition.DIJKSTRA_WEIGHT_NO_ROUTE, map.get(i-1).get("RID"), map.get(i).get("RID"));
-					dao.updateLinkWeight(Definition.DIJKSTRA_WEIGHT_NO_ROUTE, map.get(i+1).get("RID"), map.get(i).get("RID"));
+					dao.updateLinkWeight(DIJKSTRA_WEIGHT_NO_ROUTE, map.get(i-1).get("RID"), map.get(i).get("RID"));
+					dao.updateLinkWeight(DIJKSTRA_WEIGHT_NO_ROUTE, map.get(i+1).get("RID"), map.get(i).get("RID"));
 
 					portNameList.add(Integer.valueOf(map.get(i-1).get("number")));
 					portNameList.add(Integer.valueOf(map.get(i+1).get("number")));
@@ -86,19 +88,19 @@ public class OFPatchCommonImpl implements OFPatchCommon {
 			}
 
 			if (linkPatchPortList.isEmpty()) {
-				ret.setMessage(String.format(ErrorMessage.IS_NO_ROUTE, deviceNameList.get(0), deviceNameList.get(1)));
-				ret.setStatus(Definition.STATUS_NOTFOUND);
+				ret.setMessage(String.format(IS_NO_ROUTE, deviceNameList.get(0), deviceNameList.get(1)));
+				ret.setStatus(STATUS_NOTFOUND);
 			} else {
 				ret.setResult(linkPatchPortList);
-				ret.setStatus(Definition.STATUS_CREATED);
+				ret.setStatus(STATUS_CREATED);
 			}
     	} catch (SQLException e) {
     		logger.error(e.getMessage());
-    		ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		ret.setStatus(STATUS_INTERNAL_ERROR);
     		ret.setMessage(e.getMessage());
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			ret.setStatus(STATUS_INTERNAL_ERROR);
     		ret.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -107,7 +109,7 @@ public class OFPatchCommonImpl implements OFPatchCommon {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				ret.setStatus(STATUS_INTERNAL_ERROR);
 	    		ret.setMessage(e.getMessage());
 			}
 		}
@@ -152,7 +154,7 @@ public class OFPatchCommonImpl implements OFPatchCommon {
 				portNameList.add(Integer.valueOf(document.field("number").toString()));
 				deviceName = document.field("deviceName").toString();
 
-				dao.updateLinkWeight(Definition.DIJKSTRA_WEIGHT_AVAILABLE_ROUTE, rid, parentRid);
+				dao.updateLinkWeight(DIJKSTRA_WEIGHT_AVAILABLE_ROUTE, rid, parentRid);
 
 				rid = portRidPair.get("in");
 				document = dao.getPortInfo(rid);
@@ -161,18 +163,18 @@ public class OFPatchCommonImpl implements OFPatchCommon {
 				linkPatchPort.setPortName(portNameList);
 				linkPatchPortList.add(linkPatchPort);
 
-				dao.updateLinkWeight(Definition.DIJKSTRA_WEIGHT_AVAILABLE_ROUTE, rid, parentRid);
+				dao.updateLinkWeight(DIJKSTRA_WEIGHT_AVAILABLE_ROUTE, rid, parentRid);
 			}
 			ret.setResult(linkPatchPortList);
-			ret.setStatus(Definition.STATUS_SUCCESS);
+			ret.setStatus(STATUS_SUCCESS);
 
     	} catch (SQLException e) {
     		logger.error(e.getMessage());
-    		ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+    		ret.setStatus(STATUS_INTERNAL_ERROR);
     		ret.setMessage(e.getMessage());
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
-			ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+			ret.setStatus(STATUS_INTERNAL_ERROR);
     		ret.setMessage(re.getMessage());
 		} finally {
 			try {
@@ -181,7 +183,7 @@ public class OFPatchCommonImpl implements OFPatchCommon {
 				}
 			} catch (SQLException e) {
 				logger.error(e.getMessage());
-				ret.setStatus(Definition.STATUS_INTERNAL_ERROR);
+				ret.setStatus(STATUS_INTERNAL_ERROR);
 	    		ret.setMessage(e.getMessage());
 			}
 		}

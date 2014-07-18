@@ -2,12 +2,13 @@ package ool.com.ofpm.validate.topology.physical;
 
 import java.util.List;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.device.PortInfo;
 import ool.com.ofpm.json.topology.physical.PhysicalLinkJsonIn;
 import ool.com.ofpm.validate.common.BaseValidate;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -22,30 +23,30 @@ public class PhysicalLinkJsonInValidate extends BaseValidate {
 		}
 
 		if (BaseValidate.checkNull(physicalLink)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_NULL, "Input parameter"));
+			throw new ValidateException(String.format(IS_NULL, "Input parameter"));
 		}
 		List<PortInfo> ports = physicalLink.getLink();
 		if (BaseValidate.checkNull(ports)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_NULL, "link"));
+			throw new ValidateException(String.format(IS_NULL, "link"));
 		}
-		if (ports.size() != Definition.COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK) {
-			throw new ValidateException(String.format(ErrorMessage.INVALID_PARAMETER, "Length of link"));
+		if (ports.size() != COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK) {
+			throw new ValidateException(String.format(INVALID_PARAMETER, "Length of link"));
 		}
 		for (int pi = 0; pi < ports.size(); pi++) {
 			PortInfo port = ports.get(pi);
 			if (BaseValidate.checkNull(port)) {
-				throw new ValidateException(String.format(ErrorMessage.IS_NULL,  "link[" + pi + "]"));
+				throw new ValidateException(String.format(IS_NULL,  "link[" + pi + "]"));
 			}
 			if (StringUtils.isBlank(port.getDeviceName())) {
-				throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "link[" + pi + "].deviceName"));
+				throw new ValidateException(String.format(IS_BLANK, "link[" + pi + "].deviceName"));
 			}
 			if (StringUtils.isBlank(port.getPortName())) {
-				throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "link[" + pi + "].portName"));
+				throw new ValidateException(String.format(IS_BLANK, "link[" + pi + "].portName"));
 			}
 		}
 		if (ports.get(0).equals(ports.get(1))) {
 			PortInfo port = ports.get(0);
-			throw new ValidateException(String.format(ErrorMessage.THERE_ARE_OVERLAPPED, port.getDeviceName() + '[' + port.getPortName() + ']'));
+			throw new ValidateException(String.format(THERE_ARE_OVERLAPPED, port.getDeviceName() + '[' + port.getPortName() + ']'));
 		}
 
 		if (logger.isDebugEnabled()) {

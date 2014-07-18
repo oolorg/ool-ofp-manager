@@ -2,11 +2,12 @@ package ool.com.ofpm.validate;
 
 import java.util.List;
 
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.ofc.AgentInfo;
 import ool.com.ofpm.json.ofc.AgentInfo.SwitchInfo;
 import ool.com.ofpm.validate.common.BaseValidate;
-import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -28,10 +29,10 @@ public class AgentInfoValidate extends BaseValidate {
 		}
 
 		if (BaseValidate.checkNull(agentInfo)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_NULL, "Input parameter"));
+			throw new ValidateException(String.format(IS_NULL, "Input parameter"));
 		}
 		if (StringUtils.isBlank(agentInfo.getIp())) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "ip"));
+			throw new ValidateException(String.format(IS_BLANK, "ip"));
 		}
 
 		List<SwitchInfo> switchInfos = agentInfo.getSwitches();
@@ -39,13 +40,13 @@ public class AgentInfoValidate extends BaseValidate {
 			SwitchInfo switchInfo = switchInfos.get(si);
 
 			if (StringUtils.isBlank(switchInfo.getDeviceName())) {
-				throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "switchies[" + si + "].deviceName"));
+				throw new ValidateException(String.format(IS_BLANK, "switchies[" + si + "].deviceName"));
 			}
 			if (StringUtils.isBlank(switchInfo.getIp())) {
-				throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "switchies[" + si + "].ip"));
+				throw new ValidateException(String.format(IS_BLANK, "switchies[" + si + "].ip"));
 			}
 			if (StringUtils.isBlank(switchInfo.getOfcUrl())) {
-				throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "switchies[" + si + "].ofcUrl"));
+				throw new ValidateException(String.format(IS_BLANK, "switchies[" + si + "].ofcUrl"));
 			}
 		}
 

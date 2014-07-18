@@ -8,7 +8,7 @@ package ool.com.ofpm.utils;
 import java.io.StringWriter;
 import java.util.List;
 
-import ool.com.util.Definition;
+import static ool.com.constants.OfpmDefinition.*;
 
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -35,7 +35,7 @@ public class ConfigImpl implements Config {
      * Failed to load config file.
      */
     public ConfigImpl() {
-        this(Definition.DEFAULT_PROPERTIY_FILE);
+        this(DEFAULT_PROPERTIY_FILE);
     }
 
     /**

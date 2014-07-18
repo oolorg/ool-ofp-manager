@@ -2,11 +2,12 @@ package ool.com.ofpm.client;
 
 import javax.ws.rs.core.MediaType;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.exception.AgentClientException;
 import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
@@ -27,7 +28,7 @@ public class AgentClientImpl implements AgentClient {
 			logger.debug(String.format("AgentClientImpl(%s) - start", ip));
 		}
 		this.ip = ip;
-		this.resource = Client.create().resource("http://" + ip + Definition.AGENT_PATH);
+		this.resource = Client.create().resource("http://" + ip + AGENT_PATH);
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("AgentClientImpl() - end"));
 		}
@@ -46,20 +47,20 @@ public class AgentClientImpl implements AgentClient {
 			resBuilder = resBuilder.type(MediaType.APPLICATION_JSON);
 			ClientResponse res = resBuilder.put(ClientResponse.class);
 
-			if (res.getStatus() != Definition.STATUS_SUCCESS) {
+			if (res.getStatus() != STATUS_SUCCESS) {
 				logger.error(res.getEntity(String.class));
-				throw new AgentClientException(String.format(ErrorMessage.WRONG_RESPONSE, "Agent-" + this.ip));
+				throw new AgentClientException(String.format(WRONG_RESPONSE, "Agent-" + this.ip));
 			}
 			ret = BaseResponse.fromJson(res.getEntity(String.class));
 		} catch (UniformInterfaceException uie) {
 			logger.error(uie.getMessage());
-			throw new AgentClientException(String.format(ErrorMessage.CONNECTION_FAIL, "Agent-" + this.ip));
+			throw new AgentClientException(String.format(CONNECTION_FAIL, "Agent-" + this.ip));
 		} catch (ClientHandlerException che) {
 			logger.error(che);
-			throw new AgentClientException(String.format(ErrorMessage.CONNECTION_FAIL, "Agent-" + this.ip));
+			throw new AgentClientException(String.format(CONNECTION_FAIL, "Agent-" + this.ip));
 		} catch (Exception e) {
 			logger.error(e.getMessage());
-			throw new AgentClientException(ErrorMessage.UNEXPECTED_ERROR);
+			throw new AgentClientException(UNEXPECTED_ERROR);
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s (ret=%s) - end", func, ret.toJson()));

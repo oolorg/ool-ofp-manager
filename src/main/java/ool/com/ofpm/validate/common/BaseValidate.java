@@ -7,8 +7,8 @@ package ool.com.ofpm.validate.common;
 
 import java.util.List;
 
+import static ool.com.constants.ErrorMessage.*;
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -63,7 +63,7 @@ public abstract class BaseValidate {
 	public static void checkArrayStringBlank(List<String> params) throws ValidateException {
 		for (String param : params) {
 			if (StringUtils.isBlank(param)) {
-				throw new ValidateException(String.format(ErrorMessage.THERE_IS_BLANK, "parameter"));
+				throw new ValidateException(String.format(THERE_IS_BLANK, "parameter"));
 			}
 		}
 	}
@@ -72,7 +72,7 @@ public abstract class BaseValidate {
 		for (int dni = 0; dni < size; dni++) {
 			for (int ci = dni + 1; ci < size; ci++) {
 				if (params.get(dni).equals(params.get(ci))) {
-					throw new ValidateException(String.format(ErrorMessage.THERE_ARE_OVERLAPPED, params.get(dni)));
+					throw new ValidateException(String.format(THERE_ARE_OVERLAPPED, params.get(dni)));
 				}
 			}
 		}
@@ -80,6 +80,6 @@ public abstract class BaseValidate {
 
 	public static void checkStringBlank(String param) throws ValidateException {
 		if (StringUtils.isBlank(param)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "parameter"));
+			throw new ValidateException(String.format(IS_BLANK, "parameter"));
 		}
 	}}

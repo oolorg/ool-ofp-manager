@@ -1,4 +1,4 @@
-package ool.com.util;
+package ool.com.constants;
 
 public class ErrorMessage {
 	public static final String CONNECTION_FAIL = "Connection failed: %s.";

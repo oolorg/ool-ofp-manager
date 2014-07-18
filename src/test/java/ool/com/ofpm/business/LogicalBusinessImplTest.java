@@ -7,13 +7,13 @@ import java.util.List;
 
 import mockit.Delegate;
 import mockit.NonStrictExpectations;
+import ool.com.constants.OfpmDefinition;
 import ool.com.odbcl.client.OrientDBClientImpl;
 import ool.com.odbcl.exception.GraphDBClientException;
 import ool.com.odbcl.json.BaseResponse;
 import ool.com.odbcl.json.LogicalTopology;
 import ool.com.odbcl.json.LogicalTopologyGetJsonOut;
 import ool.com.odbcl.json.Node;
-import ool.com.util.Definition;
 
 import org.junit.Test;
 
@@ -45,7 +45,7 @@ public class LogicalBusinessImplTest {
 		validNodes = validTopology.getNodes();
 		currentTopology = gson.fromJson(currentTopologyJson, type);
 		currentTopologyInOut.setResult(currentTopology);
-		currentTopologyInOut.setStatus(Definition.STATUS_SUCCESS);
+		currentTopologyInOut.setStatus(OfpmDefinition.STATUS_SUCCESS);
 	}
 
 
@@ -81,35 +81,35 @@ public class LogicalBusinessImplTest {
 
 		resLogiBizJson = logiBiz.getLogicalTopology(null);
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 400 when DeviceName is null.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when DeviceName is null.", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.getLogicalTopology("");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 400 when DeviceName is empty(\"\").", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when DeviceName is empty(\"\").", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.getLogicalTopology("Sample1,,Sample2");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 400 when DeviceNames contains ,,.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when DeviceNames contains ,,.", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.getLogicalTopology("Sample1, ,Sample2");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 400 when DeviceNames contains , ,.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when DeviceNames contains , ,.", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.getLogicalTopology("Sample1,Sample2,Sample1");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 400 when DeviceName is overlapping.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when DeviceName is overlapping.", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.getLogicalTopology("Sample1,Sample2,Sample3");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 500 when catch GraphDBClientException.", Definition.STATUS_INTERNAL_ERROR, resLogiBiz.getStatus());
+		assertEquals("Must be status is 500 when catch GraphDBClientException.", OfpmDefinition.STATUS_INTERNAL_ERROR, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.getLogicalTopology("Sample1,Sample2,Sample3");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 200 when process complete.", Definition.STATUS_SUCCESS, resLogiBiz.getStatus());
+		assertEquals("Must be status is 200 when process complete.", OfpmDefinition.STATUS_SUCCESS, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.getLogicalTopology("Sample1,Sample2,Sample3");
 		resLogiBiz = gson.fromJson(resLogiBizJson, type);
-		assertEquals("Must be status is 200 when process complete.", Definition.STATUS_SUCCESS, resLogiBiz.getStatus());
+		assertEquals("Must be status is 200 when process complete.", OfpmDefinition.STATUS_SUCCESS, resLogiBiz.getStatus());
 
 	}
 
@@ -151,27 +151,27 @@ public class LogicalBusinessImplTest {
 		resLogiBizJson = logiBiz.updateLogicalTopology(null);
 		System.out.println(resLogiBizJson);
 		resLogiBiz = BaseResponse.fromJson(resLogiBizJson);
-		assertEquals("Must be status is 400 when Nodes is null.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when Nodes is null.", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.updateLogicalTopology("");
 		resLogiBiz = BaseResponse.fromJson(resLogiBizJson);
-		assertEquals("Must be status is 400 when Nodes is empty(\"\").", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when Nodes is empty(\"\").", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.updateLogicalTopology("{nodes:[{'deviceName':'Sample1'},{'deviceName':}], links:[]}");
 		resLogiBiz = BaseResponse.fromJson(resLogiBizJson);
-		assertEquals("Must be status is 400 when Node.deviceName is null.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when Node.deviceName is null.", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.updateLogicalTopology("{nodes:[{'deviceName':'Sample1'},{'deviceName':''}], links:[]}");
 		resLogiBiz = BaseResponse.fromJson(resLogiBizJson);
-		assertEquals("Must be status is 400 when Node.deviceName is empty('').", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when Node.deviceName is empty('').", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.updateLogicalTopology("{nodes:[{'deviceName':'Sample1'},{'deviceName':'Sample2'},{'deviceName':'Sample1'}], links:[]}");
 		resLogiBiz = BaseResponse.fromJson(resLogiBizJson);
-		assertEquals("Must be status is 400 when Node is overlapping.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when Node is overlapping.", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 		resLogiBizJson = logiBiz.updateLogicalTopology("{nodes:[{'deviceName':'Sample1'},{'deviceName':'Sample2'}], links:[{'deviceName':['Sample1','Sample3']}]}");
 		resLogiBiz = BaseResponse.fromJson(resLogiBizJson);
-		assertEquals("Must be status is 400 when There is Links that is not contain Node.", Definition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
+		assertEquals("Must be status is 400 when There is Links that is not contain Node.", OfpmDefinition.STATUS_BAD_REQUEST, resLogiBiz.getStatus());
 
 //		resLogiBizJson = logiBiz.updateLogicalTopology("{nodes:[{'deviceName':'Sample1'},{'deviceName':'Sample2'}], links:[{'deviceName':['Sample1',]}]}");
 //		resLogiBiz = gson.fromJson(resLogiBizJson, type);

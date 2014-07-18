@@ -5,11 +5,12 @@
  */
 package ool.com.ofpm.validate.ncs;
 
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
 import ool.com.ofpm.validate.common.BaseValidate;
 import ool.com.ofpm.validate.device.DeviceInfoCreateJsonInValidate;
-import ool.com.util.ErrorMessage;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -28,13 +29,13 @@ public class NetworkConfigSetupperInValidate extends BaseValidate {
 		}
 
 		if (BaseValidate.checkNull(networkConfigSetupperIn)) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "Input parameter"));
+			throw new ValidateException(String.format(IS_BLANK, "Input parameter"));
 		}
 		if (StringUtils.isBlank(networkConfigSetupperIn.getTokenId())) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "tokenId"));
+			throw new ValidateException(String.format(IS_BLANK, "tokenId"));
 		}
 		if (BaseValidate.checkNull(networkConfigSetupperIn.getParams())) {
-			throw new ValidateException(String.format(ErrorMessage.IS_BLANK, "params"));
+			throw new ValidateException(String.format(IS_BLANK, "params"));
 		}
 
 		if (logger.isDebugEnabled()) {

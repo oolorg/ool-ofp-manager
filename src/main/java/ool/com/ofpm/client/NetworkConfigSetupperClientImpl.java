@@ -7,13 +7,14 @@ package ool.com.ofpm.client;
 
 import javax.ws.rs.core.MediaType;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.ErrorMessage.*;
+
 import ool.com.ofpm.exception.NetworkConfigSetupperException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
 import ool.com.ofpm.validate.ncs.NetworkConfigSetupperInValidate;
-import ool.com.util.Definition;
-import ool.com.util.ErrorMessage;
 
 import org.apache.log4j.Logger;
 
@@ -57,8 +58,8 @@ public class NetworkConfigSetupperClientImpl implements NetworkConfigSetupperCli
 		try {
 			NetworkConfigSetupperInValidate.checkValidation(networkConfigSetupperIn);
 
-			String url = this.ncsUrl + Definition.NCS_PLANE_SW_CONFIG;
-			String res = this.sendBodyRequest(url, Definition.HTTP_METHOD_PUT, networkConfigSetupperIn.toJson());
+			String url = this.ncsUrl + NCS_PLANE_SW_CONFIG;
+			String res = this.sendBodyRequest(url, HTTP_METHOD_PUT, networkConfigSetupperIn.toJson());
 			ret = BaseResponse.fromJson(res);
 
 		} catch (NetworkConfigSetupperException ne) {
@@ -97,30 +98,30 @@ public class NetworkConfigSetupperClientImpl implements NetworkConfigSetupperCli
 			resBuilder = resource.entity(reqBody);
 			resBuilder = resBuilder.accept(MediaType.APPLICATION_JSON);
 			resBuilder = resBuilder.type(MediaType.APPLICATION_JSON);
-			if (methodType.equals(Definition.HTTP_METHOD_POST)) {
+			if (methodType.equals(HTTP_METHOD_POST)) {
 				ncsResponse = resBuilder.post(ClientResponse.class);
-			} else if (methodType.equals(Definition.HTTP_METHOD_PUT)) {
+			} else if (methodType.equals(HTTP_METHOD_PUT)) {
 				ncsResponse = resBuilder.put(ClientResponse.class);
 			} else {
 				/* Unreachable */
 			}
 
-			if (ncsResponse.getStatus() != Definition.STATUS_SUCCESS) {
+			if (ncsResponse.getStatus() != STATUS_SUCCESS) {
 				logger.error(ncsResponse.getEntity(String.class));
-				throw new NetworkConfigSetupperException(String.format(ErrorMessage.WRONG_RESPONSE, "NetworkConfigSetupper Server"));
+				throw new NetworkConfigSetupperException(String.format(WRONG_RESPONSE, "NetworkConfigSetupper Server"));
 			}
 
 		} catch (UniformInterfaceException uie) {
 			logger.error(uie);
-			throw new NetworkConfigSetupperException(String.format(ErrorMessage.WRONG_RESPONSE, "NetworkConfigSetupper Server"));
+			throw new NetworkConfigSetupperException(String.format(WRONG_RESPONSE, "NetworkConfigSetupper Server"));
 
 		} catch (ClientHandlerException che) {
 			logger.error(che);
-			throw new NetworkConfigSetupperException(String.format(ErrorMessage.CONNECTION_FAIL, "NetworkConfigSetupper Server"));
+			throw new NetworkConfigSetupperException(String.format(CONNECTION_FAIL, "NetworkConfigSetupper Server"));
 
 		} catch (Exception e) {
 			logger.error(e);
-			throw new NetworkConfigSetupperException(ErrorMessage.UNEXPECTED_ERROR);
+			throw new NetworkConfigSetupperException(UNEXPECTED_ERROR);
 		}
 
 		String ret = ncsResponse.getEntity(String.class);
