@@ -247,4 +247,6 @@ public interface Dao {
 	 */
 	List<ODocument> getDeviceList(String deviceName, String deviceType, String ofpFlag) throws SQLException;
 
+	int createLinkInfo(String outRid, String inRid, int band, int used) throws SQLException;
+
 }

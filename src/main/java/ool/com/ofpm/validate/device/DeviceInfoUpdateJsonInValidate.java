@@ -22,17 +22,11 @@ public class DeviceInfoUpdateJsonInValidate extends BaseValidate {
 		}
 
 		if (StringUtils.isBlank(deviceName)) {
-			throw new ValidateException(String.format(IS_BLANK, "deviceName"));
+			throw new ValidateException(String.format(IS_BLANK, "Target deviceName"));
 		}
 
 		if (BaseValidate.checkNull(newDeviceInfo)) {
 			throw new ValidateException(String.format(IS_BLANK, "parameter"));
-		}
-		if (!BaseValidate.checkNull(newDeviceInfo.getDeviceType())) {
-			throw new ValidateException(String.format(IS_NOT_NULL, "parameter.deviceType"));
-		}
-		if (StringUtils.isBlank(newDeviceInfo.getDeviceName())) {
-			throw new ValidateException(String.format(IS_NULL,  "parameter.deviceName"));
 		}
 
 		if (logger.isDebugEnabled()) {

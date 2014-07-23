@@ -178,10 +178,6 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
 
-//			int status = dao.updateNodeInfo(
-//					newDeviceInfo.getDeviceName(),
-//					newDeviceInfo.getParams().getDeviceName(),
-//					newDeviceInfo.getParams().getOfpFlag());
 			int status = dao.updateNodeInfo(
 					deviceName,
 					newDeviceInfo.getDeviceName(),
@@ -194,7 +190,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				res.setStatus(STATUS_CONFLICT);
 				res.setMessage(String.format(ALREADY_EXIST, newDeviceInfo.getDeviceName()));
 			} else {
-				res.setStatus(STATUS_CREATED);
+				res.setStatus(STATUS_SUCCESS);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
@@ -385,7 +381,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				res.setStatus(STATUS_CONFLICT);
 				res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));
 			} else {
-				res.setStatus(STATUS_CREATED);
+				res.setStatus(STATUS_SUCCESS);
 			}
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);

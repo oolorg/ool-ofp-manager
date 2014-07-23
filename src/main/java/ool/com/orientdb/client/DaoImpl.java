@@ -601,6 +601,37 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 	}
+	/* (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#createLinkInfo(java.lang.String, java.lang.String, int band, int used)
+	 */
+	@Override
+	public int createLinkInfo(String outRid, String inRid, int band, int used) throws SQLException {
+		if (logger.isDebugEnabled()){
+			logger.debug(String.format("createLinkInfo(inRid=%s, outRid=%s, band=%s, used=%s) - start", inRid, outRid, band, used));
+		}
+		try {
+			try {
+				getLinkInfo(outRid, inRid);
+				return DB_RESPONSE_STATUS_EXIST; //duplicate error
+			}
+			catch(SQLException se){
+				if (se.getCause() == null) {
+					throw se;
+				}
+			}
+			String query = String.format(SQL_INSERT_LINK, outRid, inRid, band, used);
+			if (logger.isInfoEnabled()){
+				logger.info(String.format("query=%s", query));
+			}
+			database.command(new OCommandSQL(query)).execute();
+			if (logger.isDebugEnabled()){
+				logger.debug("createLinkInfo() - end");
+			}
+			return DB_RESPONSE_STATUS_OK;
+		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see ool.com.orientdb.client.Dao#deleteLinkInfo(java.lang.String, java.lang.String)
@@ -645,18 +676,10 @@ public class DaoImpl implements Dao {
 		}
 		try {
 			String nodeRid = "";
+			ODocument document = null;
 			try {
-				ODocument document = getDeviceInfo(key);
+				document = getDeviceInfo(key);
 				nodeRid = document.getIdentity().toString();
-				if(StringUtils.isBlank(name)) {
-					name = document.field("name").toString();
-				}
-				if(StringUtils.isBlank(datapathId)) {
-					datapathId = document.field("datapathId");
-				}
-				if(StringUtils.isBlank(ofcIp)) {
-					ofcIp = document.field("ofcIp").toString();
-				}
 			} catch (SQLException se) {
 				if (se.getCause() == null) {
 					throw se;
@@ -665,12 +688,22 @@ public class DaoImpl implements Dao {
 				}
 			}
 			try  {
-				getDeviceInfo(name);
-				return DB_RESPONSE_STATUS_EXIST;
+				if(StringUtils.isBlank(name)) {
+					name = document.field("name").toString();
+				} else {
+					getDeviceInfo(name);
+					return DB_RESPONSE_STATUS_EXIST;
+				}
 			} catch (SQLException se) {
 				if (se.getCause() == null) {
 					throw se;
 				}
+			}
+			if(StringUtils.isBlank(datapathId)) {
+				datapathId = document.field("datapathId");
+			}
+			if(StringUtils.isBlank(ofcIp)) {
+				ofcIp = document.field("ofcIp").toString();
 			}
 			String query = String.format(SQL_UPDATE_NODE, name, datapathId, ofcIp, nodeRid);
 			if (logger.isInfoEnabled()){
@@ -714,8 +747,9 @@ public class DaoImpl implements Dao {
 		}
 		try {
 			String portRid = "";
+			ODocument document = null;
 			try {
-				ODocument document = getPortInfo(keyPortName, keyDeviceName);
+				document = getPortInfo(keyPortName, keyDeviceName);
 				portRid = document.getIdentity().toString();
 			} catch (SQLException se) {
 				if (se.getCause() == null) {
@@ -726,7 +760,6 @@ public class DaoImpl implements Dao {
 			}
 			try {
 				if (StringUtils.isBlank(portName)) {
-					ODocument document = getPortInfo(keyPortName, keyDeviceName);
 					portName = document.field("name");
 				} else {
 					getPortInfo(portName, keyDeviceName);
@@ -740,10 +773,8 @@ public class DaoImpl implements Dao {
 
 			try {
 				if (0 == portNumber) {
-					ODocument document = getPortInfo(keyPortName, keyDeviceName);
 					portNumber = document.field("number");
 				} else {
-					ODocument document = getDeviceInfo(keyDeviceName);
 					String type = document.field("type").toString();
 					if (type.equals(NODE_TYPE_SWITCH) || type.equals(NODE_TYPE_LEAF) || type.equals(NODE_TYPE_SPINE)) {
 						getPortInfo(portNumber, keyDeviceName);

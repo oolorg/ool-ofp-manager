@@ -5,15 +5,17 @@ import static ool.com.constants.OfpmDefinition.*;
 import static ool.com.constants.OrientDBDefinition.*;
 
 import java.sql.SQLException;
-import java.util.List;
 
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.device.PortData;
-import ool.com.ofpm.json.topology.physical.PhysicalLinkJsonIn;
+import ool.com.ofpm.json.topology.physical.ConnectPhysicalLinksJsonIn;
+import ool.com.ofpm.json.topology.physical.DisconnectPhysicalLinksJsonIn;
+import ool.com.ofpm.json.topology.physical.PhysicalLink;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
-import ool.com.ofpm.validate.topology.physical.PhysicalLinkJsonInValidate;
+import ool.com.ofpm.validate.topology.physical.ConnectPhysicalLinksJsonInValidate;
+import ool.com.ofpm.validate.topology.physical.DisconnectPhysicalLinksJsonInValidate;
 import ool.com.orientdb.client.ConnectionUtils;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;
@@ -26,8 +28,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class PhysicalBusinessImpl implements PhysicalBusiness {
 	private static final Logger logger = Logger.getLogger(PhysicalBusinessImpl.class);
-	private static final String CONNECT = "connectPhysicalLink";
-	private static final String DISCONNECT = "disconnectPhysicalLink";
 
 	Config conf = new ConfigImpl();
 
@@ -114,85 +114,76 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 	}
 */
 
-	private String commonLogic(String physicalLinkJson, String gdbClientMethodName) {
-		final String fname = "commonLogic";
+
+	@Override
+	public String connectPhysicalLink(String physicalLinkJson) {
+		final String fname = "connectPhysicalLink";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(physicalLinkJson=%s, gdbClientMethodName=%s) - start", fname, physicalLinkJson, gdbClientMethodName));
+			logger.debug(String.format("%s(physicalLinkJson=%s) - start", fname, physicalLinkJson));
 		}
 
 		BaseResponse res = new BaseResponse();
 		Dao dao = null;
 		try {
-			PhysicalLinkJsonIn physicalLink = PhysicalLinkJsonIn.fromJson(physicalLinkJson);
+			ConnectPhysicalLinksJsonIn inParam = ConnectPhysicalLinksJsonIn.fromJson(physicalLinkJson);
 
-			PhysicalLinkJsonInValidate validator = new PhysicalLinkJsonInValidate();
-			validator.checkValidation(physicalLink);
+			ConnectPhysicalLinksJsonInValidate validator = new ConnectPhysicalLinksJsonInValidate();
+			validator.checkValidation(inParam);
 
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
 
-			List<PortData> portList = physicalLink.getLink();
-			String rid1 = "";
-			String rid2 = "";
-
-			// portList 2つ以上アウト
-
-			// get port rid
-			ODocument doc = dao.getPortInfo(portList.get(0).getPortName(), portList.get(0).getDeviceName());
-			rid1 = doc.getIdentity().toString();
-			doc = dao.getPortInfo(portList.get(1).getPortName(), portList.get(1).getDeviceName());
-			rid2 = doc.getIdentity().toString();
-
-			if (rid1.isEmpty()) {
-				res.setMessage(String.format(NOT_FOUND, portList.get(0).getPortName() + "," + portList.get(0).getDeviceName()));
-				res.setStatus(STATUS_NOTFOUND);
-				String ret = res.toJson();
-				return ret;
-			} else if (rid2.isEmpty()) {
-				res.setMessage(String.format(NOT_FOUND, portList.get(1).getPortName() + "," + portList.get(1).getDeviceName()));
-				res.setStatus(STATUS_NOTFOUND);
-				String ret = res.toJson();
-				return ret;
-			}
-
-			if (gdbClientMethodName.equals(PhysicalBusinessImpl.CONNECT)) {
-				if (dao.createLinkInfo(rid1, rid2) == DB_RESPONSE_STATUS_EXIST) {
-					res.setStatus(STATUS_CONFLICT);
-					res.setMessage(String.format(ALREADY_EXIST, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
-					String ret = res.toJson();
-					return ret;
-				}
-				if (dao.createLinkInfo(rid2, rid1) == DB_RESPONSE_STATUS_EXIST) {
-					res.setStatus(STATUS_CONFLICT);
-					res.setMessage(String.format(ALREADY_EXIST, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
-					String ret = res.toJson();
-					return ret;
-				}
-			} else if (gdbClientMethodName.equals(PhysicalBusinessImpl.DISCONNECT)) {
-				if (dao.deleteLinkInfo(rid1, rid2) == DB_RESPONSE_STATUS_NOT_FOUND) {
+			for (PhysicalLink physicalLink : inParam.getLinks()) {
+				PortData port0 = physicalLink.getLink().get(0);
+				ODocument doc0 = dao.getPortInfo(port0.getPortName(), port0.getDeviceName());
+				String    rid0 = doc0.getIdentity().toString();
+				if (rid0.isEmpty()) {
+					res.setMessage(String.format(NOT_FOUND, port0.getPortName() + "," + port0.getDeviceName()));
 					res.setStatus(STATUS_NOTFOUND);
-					res.setMessage(String.format(NOT_FOUND, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
-				} else {
-					if (dao.deleteLinkInfo(rid2, rid1) == DB_RESPONSE_STATUS_NOT_FOUND) {
-						res.setStatus(STATUS_NOTFOUND);
-						res.setMessage(String.format(NOT_FOUND, portList.get(0).getPortName() + "," + portList.get(1).getPortName()));
-					} else {
-						res.setStatus(STATUS_SUCCESS);
-					}
+					String ret = res.toJson();
+					return ret;
+				}
+
+				PortData port1 = physicalLink.getLink().get(1);
+				ODocument doc1 = dao.getPortInfo(port1.getPortName(), port1.getDeviceName());
+				String    rid1 = doc1.getIdentity().toString();
+				if (rid1.isEmpty()) {
+					res.setMessage(String.format(NOT_FOUND, port1.getPortName() + "," + port1.getDeviceName()));
+					res.setStatus(STATUS_NOTFOUND);
+					String ret = res.toJson();
+					return ret;
+				}
+
+				int band = Integer.parseInt(physicalLink.getBand());
+
+				if (dao.createLinkInfo(rid0, rid1, band, 0) == DB_RESPONSE_STATUS_EXIST) {
+					res.setStatus(STATUS_CONFLICT);
+					res.setMessage(String.format(ALREADY_EXIST, port0.getPortName() + "," + port1.getPortName()));
+					String ret = res.toJson();
+					return ret;
+				}
+				if (dao.createLinkInfo(rid1, rid0, band, 0) == DB_RESPONSE_STATUS_EXIST) {
+					res.setStatus(STATUS_CONFLICT);
+					res.setMessage(String.format(ALREADY_EXIST, port0.getPortName() + "," + port1.getPortName()));
+					String ret = res.toJson();
+					return ret;
 				}
 			}
 
 			res.setStatus(STATUS_CREATED);
+			return res.toJson();
 
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
 			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(INVALID_JSON);
+			return res.toJson();
 
 		} catch (ValidateException ve) {
 			logger.error(ve);
 			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
+			return res.toJson();
 
 		} catch (SQLException e) {
     		logger.error(e.getMessage());
@@ -202,10 +193,14 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
     		} else {
     			res.setStatus(STATUS_NOTFOUND);
     		}
+    		return res.toJson();
+
 		}  catch (RuntimeException re) {
 			logger.error(re.getMessage());
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(re.getMessage());
+			return res.toJson();
+
 		} finally {
 			try {
 				if(dao != null) {
@@ -216,28 +211,10 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 				res.setStatus(STATUS_INTERNAL_ERROR);
 				res.setMessage(e.getMessage());
 			}
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			}
 		}
-
-		String ret = res.toJson();
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-		}
-		return ret;
-	}
-
-	@Override
-	public String connectPhysicalLink(String physicalLinkJson) {
-		final String fname = "connectPhysicalLink";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(physicalLinkJson=%s) - start", fname, physicalLinkJson));
-		}
-
-		String res = null;//this.commonLogic(physicalLinkJson, PhysicalBusinessImpl.CONNECT);
-
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, res));
-		}
-		return res;
 	}
 
 	@Override
@@ -247,12 +224,98 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 			logger.debug(String.format("%s(physicalLinkJson=%s) - start", fname, physicalLinkJson));
 		}
 
-		String res = null;//this.commonLogic(physicalLinkJson, PhysicalBusinessImpl.DISCONNECT);
+		BaseResponse res = new BaseResponse();
+		Dao dao = null;
+		try {
+			DisconnectPhysicalLinksJsonIn disconPhysicalLinks = new DisconnectPhysicalLinksJsonIn();
 
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			DisconnectPhysicalLinksJsonInValidate validator = new DisconnectPhysicalLinksJsonInValidate();
+			validator.checkValidation(disconPhysicalLinks);
+
+			ConnectionUtils utils = new ConnectionUtilsImpl();
+			dao = new DaoImpl(utils);
+
+			for (PhysicalLink physicalLink : disconPhysicalLinks.getLinks()) {
+				PortData port0 = physicalLink.getLink().get(0);
+				ODocument doc0 = dao.getPortInfo(port0.getPortName(), port0.getDeviceName());
+				String    rid0 = doc0.getIdentity().toString();
+				if (rid0.isEmpty()) {
+					res.setMessage(String.format(NOT_FOUND, port0.getPortName() + "," + port0.getDeviceName()));
+					res.setStatus(STATUS_NOTFOUND);
+					String ret = res.toJson();
+					return ret;
+				}
+
+				PortData port1 = physicalLink.getLink().get(1);
+				ODocument doc1 = dao.getPortInfo(port1.getPortName(), port1.getDeviceName());
+				String    rid1 = doc1.getIdentity().toString();
+				if (rid1.isEmpty()) {
+					res.setMessage(String.format(NOT_FOUND, port1.getPortName() + "," + port1.getDeviceName()));
+					res.setStatus(STATUS_NOTFOUND);
+					String ret = res.toJson();
+					return ret;
+				}
+
+				if (dao.deleteLinkInfo(rid0, rid1) == DB_RESPONSE_STATUS_NOT_FOUND) {
+					res.setStatus(STATUS_NOTFOUND);
+					res.setMessage(String.format(NOT_FOUND, port0.getPortName() + "," + port1.getPortName()));
+					String ret = res.toJson();
+					return ret;
+				}
+				if (dao.deleteLinkInfo(rid1, rid0) == DB_RESPONSE_STATUS_NOT_FOUND) {
+					res.setStatus(STATUS_NOTFOUND);
+					res.setMessage(String.format(NOT_FOUND, port0.getPortName() + "," + port1.getPortName()));
+					String ret = res.toJson();
+					return ret;
+				}
+			}
+
+			res.setStatus(STATUS_SUCCESS);
+			return res.toJson();
+
+		} catch (JsonSyntaxException jse) {
+			logger.error(jse);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
+			return res.toJson();
+
+		} catch (ValidateException ve) {
+			logger.error(ve);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(ve.getMessage());
+			return res.toJson();
+
+		} catch (SQLException e) {
+    		logger.error(e.getMessage());
+    		res.setMessage(e.getMessage());
+    		if (e.getCause() == null) {
+    			res.setStatus(STATUS_INTERNAL_ERROR);
+    		} else {
+    			res.setStatus(STATUS_NOTFOUND);
+    		}
+    		return res.toJson();
+
+		}  catch (RuntimeException re) {
+			logger.error(re.getMessage());
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(re.getMessage());
+			return res.toJson();
+
+		} finally {
+			try {
+				if(dao != null) {
+					dao.close();
+				}
+			} catch (final SQLException e) {
+				logger.error(e.getMessage());
+				res.setStatus(STATUS_INTERNAL_ERROR);
+				res.setMessage(e.getMessage());
+			}
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
 		}
-		return res;
 	}
 
 }
