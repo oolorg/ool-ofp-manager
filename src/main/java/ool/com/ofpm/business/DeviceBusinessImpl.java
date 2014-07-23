@@ -247,7 +247,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
-			int status = dao.createPortInfo(portInfo.getPortName(), portInfo.getPortNumber(), portInfo.getType(), deviceName);
+			int status = dao.createPortInfo(portInfo.getPortName(), portInfo.getPortNumber(), deviceName);
 
 			if ( status == DB_RESPONSE_STATUS_EXIST) {
 				res.setStatus(STATUS_BAD_REQUEST);
@@ -376,8 +376,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 					portName,
 					deviceName,
 					portInfo.getPortName(),
-					portInfo.getPortNumber(),
-					portInfo.getType());
+					portInfo.getPortNumber());
 
 			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(STATUS_NOTFOUND);

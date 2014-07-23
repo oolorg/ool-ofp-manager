@@ -26,9 +26,6 @@ public class PortInfoCreateJsonInValidate extends BaseValidate {
 		if (StringUtils.isBlank(portInfoJson.getPortName())) {
 			throw new ValidateException(String.format(IS_BLANK, "portName"));
 		}
-		if (StringUtils.isBlank(portInfoJson.getType())) {
-			throw new ValidateException(String.format(IS_BLANK, "type"));
-		}
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s() - end", fname));

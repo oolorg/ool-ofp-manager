@@ -7,7 +7,6 @@ import com.google.gson.reflect.TypeToken;
 public class PortInfo {
 	private String portName;
 	private int portNumber;
-	private String type;
 
 	public String getPortName() {
 		return portName;
@@ -20,12 +19,6 @@ public class PortInfo {
 	}
 	public void setPortNumber(int portNumber) {
 		this.portNumber = portNumber;
-	}
-	public String getType() {
-		return type;
-	}
-	public void setType(String type) {
-		this.type = type;
 	}
 
 	@Override

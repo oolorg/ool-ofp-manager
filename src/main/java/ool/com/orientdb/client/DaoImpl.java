@@ -492,10 +492,10 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#createPortInfo(java.lang.String, int, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public int createPortInfo(String portName, int portNumber, String type, String deviceName) throws SQLException {
+	public int createPortInfo(String portName, int portNumber, String deviceName) throws SQLException {
 		if (logger.isDebugEnabled()){
-			logger.debug(String.format("createPortInfo(portName=%s, portNumber=%s, type=%s, deviceName=%s) - start",
-					portName, portNumber, deviceName, type));
+			logger.debug(String.format("createPortInfo(portName=%s, portNumber=%s, deviceName=%s) - start",
+					portName, portNumber, deviceName));
 		}
 		try {
 			String nodeRid = "";
@@ -525,7 +525,7 @@ public class DaoImpl implements Dao {
 					throw se2;
 				}
 			}
-			String query = String.format(SQL_INSERT_PORT, portName, portNumber, type, deviceName);
+			String query = String.format(SQL_INSERT_PORT, portName, portNumber, deviceName);
 			if (logger.isInfoEnabled()){
 				logger.info(String.format("query=%s", query));
 			}
@@ -708,18 +708,15 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#updateNodeInfo(java.lang.String, java.lang.String, boolean)
 	 */
 	@Override
-	public int updatePortInfo(String keyPortName, String keyDeviceName, String portName, int portNumber, String type) throws SQLException {
+	public int updatePortInfo(String keyPortName, String keyDeviceName, String portName, int portNumber) throws SQLException {
 		if (logger.isDebugEnabled()){
-			logger.debug(String.format("updatePortInfo(keyPortName=%s, keyDeviceName=%s, portName=%s, portNumber=%s, type=%s) - start", keyPortName, keyDeviceName, portName, portNumber, type));
+			logger.debug(String.format("updatePortInfo(keyPortName=%s, keyDeviceName=%s, portName=%s, portNumber=%s) - start", keyPortName, keyDeviceName, portName, portNumber));
 		}
 		try {
 			String portRid = "";
 			try {
 				ODocument document = getPortInfo(keyPortName, keyDeviceName);
 				portRid = document.getIdentity().toString();
-				if (StringUtils.isBlank(type)) {
-					type = document.field("type");
-				}
 			} catch (SQLException se) {
 				if (se.getCause() == null) {
 					throw se;
@@ -740,15 +737,26 @@ public class DaoImpl implements Dao {
 					throw se;
 				}
 			}
+
 			try {
-				getPortInfo(portNumber, keyDeviceName);
-				return DB_RESPONSE_STATUS_EXIST;
+				if (0 == portNumber) {
+					ODocument document = getPortInfo(keyPortName, keyDeviceName);
+					portNumber = document.field("number");
+				} else {
+					ODocument document = getDeviceInfo(keyDeviceName);
+					String type = document.field("type").toString();
+					if (type.equals(NODE_TYPE_SWITCH) || type.equals(NODE_TYPE_LEAF) || type.equals(NODE_TYPE_SPINE)) {
+						getPortInfo(portNumber, keyDeviceName);
+						return DB_RESPONSE_STATUS_EXIST;
+					}
+				}
 			} catch (SQLException se) {
 				if (se.getCause() == null) {
 					throw se;
 				}
 			}
-			String query = String.format(SQL_UPDATE_PORT, portName, portNumber, type, portRid);
+
+			String query = String.format(SQL_UPDATE_PORT, portName, portNumber, portRid);
 			if (logger.isInfoEnabled()){
 				logger.info(String.format("query=%s", query));
 			}
@@ -797,10 +805,10 @@ public class DaoImpl implements Dao {
 		}
 		try {
 			String portRid = "";
-			boolean ofpFlag = false;
+			String type = "";
 			try {
 				ODocument document = getDeviceInfo(deviceName);
-				ofpFlag = (document.field("ofpFlag").toString().equals(OFP_FLAG_TRUE))? true: false;
+				type = document.field("type").toString();
 			} catch(SQLException se) {
 				if (se.getCause() == null) {
 					throw se;
@@ -818,7 +826,7 @@ public class DaoImpl implements Dao {
 					return DB_RESPONSE_STATUS_NOT_FOUND;
 				}
 			}
-			if (ofpFlag) {
+			if (type.equals(NODE_TYPE_LEAF) || type.equals(NODE_TYPE_SPINE)) {
 				if (isConnectedPatchWiring(portRid)) {
 					return DB_RESPONSE_STATUS_FORBIDDEN;
 				}

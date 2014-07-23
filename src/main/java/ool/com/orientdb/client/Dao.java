@@ -152,7 +152,7 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	int createPortInfo(String portName, int portNumber, String deviceName, String type) throws SQLException;
+	int createPortInfo(String portName, int portNumber, String deviceName) throws SQLException;
 
 	/**
 	 * @param key
@@ -163,7 +163,7 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	int updatePortInfo(String keyPortName, String keyDeviceName, String portName, int portNumber, String type) throws SQLException;
+	int updatePortInfo(String keyPortName, String keyDeviceName, String portName, int portNumber) throws SQLException;
 
 	/**
 	 * @param inRid
