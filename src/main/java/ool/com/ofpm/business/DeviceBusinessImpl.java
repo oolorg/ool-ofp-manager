@@ -231,7 +231,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		return ret;
 	}
 
-	public String createPort(String newPortInfoJson) {
+	public String createPort(String deviceName, String newPortInfoJson) {
 		String fname = "createPort";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(newPortInfoJson=%s) - start", fname, newPortInfoJson));
@@ -243,18 +243,18 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			PortInfoCreateJsonIn portInfo = PortInfoCreateJsonIn.fromJson(newPortInfoJson);
 
 			PortInfoCreateJsonInValidate validator = new PortInfoCreateJsonInValidate();
-			validator.checkValidation(portInfo);
+			validator.checkValidation(deviceName ,portInfo);
 
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
-			int status = dao.createPortInfo(portInfo.getPortName(), portInfo.getPortNumber(), portInfo.getType(), portInfo.getDeviceName());
+			int status = dao.createPortInfo(portInfo.getPortName(), portInfo.getPortNumber(), portInfo.getType(), deviceName);
 
 			if ( status == DB_RESPONSE_STATUS_EXIST) {
 				res.setStatus(STATUS_BAD_REQUEST);
 				res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));
 			} else if ( status == DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(STATUS_NOTFOUND);
-				res.setMessage(String.format(NOT_FOUND, portInfo.getDeviceName()));
+				res.setMessage(String.format(NOT_FOUND, deviceName));
 			}
 			else {
 				res.setStatus(STATUS_CREATED);
@@ -372,12 +372,6 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
 
-//			int status = dao.updatePortInfo(
-//					portInfo.getPortName(),
-//					portInfo.getDeviceName(),
-//					portInfo.getParams().getPortName(),
-//					portInfo.getParams().getPortNumber(),
-//					portInfo.getParams().getType());
 			int status = dao.updatePortInfo(
 					portName,
 					deviceName,

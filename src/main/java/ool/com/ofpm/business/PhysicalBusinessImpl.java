@@ -1,15 +1,15 @@
 package ool.com.ofpm.business;
 
+import static ool.com.constants.ErrorMessage.*;
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.OrientDBDefinition.*;
+
 import java.sql.SQLException;
 import java.util.List;
 
-import static ool.com.constants.OfpmDefinition.*;
-import static ool.com.constants.OrientDBDefinition.*;
-import static ool.com.constants.ErrorMessage.*;
-
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
-import ool.com.ofpm.json.device.PortInfo;
+import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.topology.physical.PhysicalLinkJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
@@ -131,7 +131,7 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
 
-			List<PortInfo> portList = physicalLink.getLink();
+			List<PortData> portList = physicalLink.getLink();
 			String rid1 = "";
 			String rid2 = "";
 

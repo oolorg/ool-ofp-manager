@@ -11,17 +11,17 @@ import org.apache.log4j.Logger;
 public class PortInfoCreateJsonInValidate extends BaseValidate {
 	private static Logger logger = Logger.getLogger(PortInfoCreateJsonInValidate.class);
 
-	public void checkValidation(PortInfoCreateJsonIn portInfoJson) throws ValidateException {
+	public void checkValidation(String deviceName, PortInfoCreateJsonIn portInfoJson) throws ValidateException {
 		String fname = "checkValidateion";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(portInfoJson=%s) - start", fname, portInfoJson));
 		}
 
+		if (StringUtils.isBlank(deviceName)) {
+			throw new ValidateException(String.format(IS_BLANK, "deviceName"));
+		}
 		if (BaseValidate.checkNull(portInfoJson)) {
 			throw new ValidateException(String.format(IS_BLANK, "Input parameter"));
-		}
-		if (!StringUtils.isBlank(portInfoJson.getDeviceName())) {
-			throw new ValidateException(String.format(IS_NOT_BLANK, "deviceName"));
 		}
 		if (StringUtils.isBlank(portInfoJson.getPortName())) {
 			throw new ValidateException(String.format(IS_BLANK, "portName"));

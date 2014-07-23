@@ -4,18 +4,18 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-import ool.com.ofpm.json.device.PortInfo;
+import ool.com.ofpm.json.device.PortData;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 public class PhysicalLinkJsonIn {
-	private List<PortInfo> link = new ArrayList<PortInfo>();
+	private List<PortData> link = new ArrayList<PortData>();
 
-	public List<PortInfo> getLink() {
+	public List<PortData> getLink() {
 		return link;
 	}
-	public void setLink(List<PortInfo> link) {
+	public void setLink(List<PortData> link) {
 		this.link = link;
 	}
 

@@ -105,7 +105,7 @@ public class DeviceServiceImpl implements DeviceService {
 			}
 		});
 		DeviceServiceImpl main = this.injector.getInstance(DeviceServiceImpl.class);
-		String resDeviceBiz = main.deviceBiz.createPort(newPortInfoJson);
+		String resDeviceBiz = main.deviceBiz.createPort(deviceName, newPortInfoJson);
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));

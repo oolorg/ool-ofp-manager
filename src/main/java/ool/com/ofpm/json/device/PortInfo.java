@@ -7,7 +7,6 @@ import com.google.gson.reflect.TypeToken;
 public class PortInfo {
 	private String portName;
 	private int portNumber;
-	private String deviceName;
 	private String type;
 
 	public String getPortName() {
@@ -22,12 +21,6 @@ public class PortInfo {
 	public void setPortNumber(int portNumber) {
 		this.portNumber = portNumber;
 	}
-	public String getDeviceName() {
-		return deviceName;
-	}
-	public void setDeviceName(String deviceName) {
-		this.deviceName = deviceName;
-	}
 	public String getType() {
 		return type;
 	}
@@ -41,12 +34,7 @@ public class PortInfo {
 		if (obj == null) return false;
 		if (this.getClass() != obj.getClass()) return false;
 		PortInfo other = (PortInfo)obj;
-		if (! this.deviceName.equals(other.deviceName)) return false;
 		return (this.portName.equals(other.portName));
-	}
-	@Override
-	public int hashCode() {
-		return this.deviceName.hashCode();
 	}
 	@Override
 	public String toString() {

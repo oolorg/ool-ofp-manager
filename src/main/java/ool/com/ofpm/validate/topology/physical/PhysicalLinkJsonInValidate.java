@@ -1,12 +1,12 @@
 package ool.com.ofpm.validate.topology.physical;
 
+import static ool.com.constants.ErrorMessage.*;
+import static ool.com.constants.OfpmDefinition.*;
+
 import java.util.List;
 
-import static ool.com.constants.OfpmDefinition.*;
-import static ool.com.constants.ErrorMessage.*;
-
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.device.PortInfo;
+import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.topology.physical.PhysicalLinkJsonIn;
 import ool.com.ofpm.validate.common.BaseValidate;
 
@@ -25,7 +25,7 @@ public class PhysicalLinkJsonInValidate extends BaseValidate {
 		if (BaseValidate.checkNull(physicalLink)) {
 			throw new ValidateException(String.format(IS_NULL, "Input parameter"));
 		}
-		List<PortInfo> ports = physicalLink.getLink();
+		List<PortData> ports = physicalLink.getLink();
 		if (BaseValidate.checkNull(ports)) {
 			throw new ValidateException(String.format(IS_NULL, "link"));
 		}
@@ -33,7 +33,7 @@ public class PhysicalLinkJsonInValidate extends BaseValidate {
 			throw new ValidateException(String.format(INVALID_PARAMETER, "Length of link"));
 		}
 		for (int pi = 0; pi < ports.size(); pi++) {
-			PortInfo port = ports.get(pi);
+			PortData port = ports.get(pi);
 			if (BaseValidate.checkNull(port)) {
 				throw new ValidateException(String.format(IS_NULL,  "link[" + pi + "]"));
 			}
@@ -45,7 +45,7 @@ public class PhysicalLinkJsonInValidate extends BaseValidate {
 			}
 		}
 		if (ports.get(0).equals(ports.get(1))) {
-			PortInfo port = ports.get(0);
+			PortData port = ports.get(0);
 			throw new ValidateException(String.format(THERE_ARE_OVERLAPPED, port.getDeviceName() + '[' + port.getPortName() + ']'));
 		}
 

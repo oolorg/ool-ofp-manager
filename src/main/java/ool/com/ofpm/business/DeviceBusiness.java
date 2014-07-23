@@ -30,7 +30,7 @@ public interface DeviceBusiness {
 	 * @param newPortInfoJson String
 	 * @return response entity Json String
 	 */
-	public String createPort(String newPortInfoJson);
+	public String createPort(String deviceName, String newPortInfoJson);
 
 	/**
 	 * delete Port business Logic
