@@ -57,4 +57,6 @@ public class OfpmDefinition {
 	public static final String[] ENABLE_OFP_FLAGS    = {"true", "false"};
 	public static final String[] ENABLE_DEVICE_TYPES = {"Server", "Switch", "Leaf", "Spine"};
 	public static final String CSV_SPLIT_REGEX = ",";
+	public static final String REGEX_NUMBER = "[0-9]+";
+	public static final String REGEX_DATAPATH_ID = "[0-9a-fA-F]{1,16}";
 }

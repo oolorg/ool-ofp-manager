@@ -32,35 +32,41 @@ public class ConnectPhysicalLinksJsonInValidate extends BaseValidate {
 			throw new ValidateException(String.format(IS_NULL, "links"));
 		}
 		for (int i = 0; i < links.size(); i++) {
+			String msgLinks = "links[" + i + "]";
 			PhysicalLink physicalLink = links.get(i);
 			if (BaseValidate.checkNull(physicalLink)) {
-				throw new ValidateException(String.format(IS_NULL, "links[" + i + "]"));
+				throw new ValidateException(String.format(IS_NULL, msgLinks));
 			}
+			String band = physicalLink.getBand();
 			if (StringUtils.isBlank(physicalLink.getBand())) {
-				throw new ValidateException(String.format(IS_BLANK, "links[" + i + "].band"));
+				throw new ValidateException(String.format(IS_BLANK, msgLinks + ".band:" + band));
+			}
+			if (!band.matches(REGEX_NUMBER)) {
+				throw new ValidateException(String.format(IS_NOT_NUMBER, msgLinks + ".band:" + band));
 			}
 			List<PortData> ports = physicalLink.getLink();
 			if (BaseValidate.checkNull(ports)) {
-				throw new ValidateException(String.format(IS_NULL, "links[" + i + "].link"));
+				throw new ValidateException(String.format(IS_NULL, msgLinks + ".link"));
 			}
 			if (ports.size() != COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK) {
-				throw new ValidateException(String.format(INVALID_PARAMETER, "Length of links[" + i + "].link"));
+				throw new ValidateException(String.format(INVALID_PARAMETER, "Length of " + msgLinks + ".link"));
 			}
 			for (int pi = 0; pi < ports.size(); pi++) {
+				String msgLink = msgLinks + ".link[" + pi + "]";
 				PortData port = ports.get(pi);
 				if (BaseValidate.checkNull(port)) {
-					throw new ValidateException(String.format(IS_NULL,  "links[" + i + "].link[" + pi + "]"));
+					throw new ValidateException(String.format(IS_NULL,  msgLink));
 				}
 				if (StringUtils.isBlank(port.getDeviceName())) {
-					throw new ValidateException(String.format(IS_BLANK, "links[" + i + "].link[" + pi + "].deviceName"));
+					throw new ValidateException(String.format(IS_BLANK, msgLink + ".deviceName:" + port.getDeviceName()));
 				}
 				if (StringUtils.isBlank(port.getPortName())) {
-					throw new ValidateException(String.format(IS_BLANK, "links[" + i + "].link[" + pi + "].portName"));
+					throw new ValidateException(String.format(IS_BLANK, msgLink + ".portName:" + port.getPortName()));
 				}
 			}
 			if (ports.get(0).equals(ports.get(1))) {
 				PortData port = ports.get(0);
-				throw new ValidateException(String.format(THERE_ARE_OVERLAPPED, port.getDeviceName() + ',' + port.getPortName() + " in links[" + i + "]"));
+				throw new ValidateException(String.format(THERE_ARE_OVERLAPPED, port.getDeviceName() + '.' + port.getPortName() + " in " + msgLinks));
 			};
 		}
 

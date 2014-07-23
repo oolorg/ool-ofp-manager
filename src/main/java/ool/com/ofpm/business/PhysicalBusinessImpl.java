@@ -227,7 +227,7 @@ public class PhysicalBusinessImpl implements PhysicalBusiness {
 		BaseResponse res = new BaseResponse();
 		Dao dao = null;
 		try {
-			DisconnectPhysicalLinksJsonIn disconPhysicalLinks = new DisconnectPhysicalLinksJsonIn();
+			DisconnectPhysicalLinksJsonIn disconPhysicalLinks = DisconnectPhysicalLinksJsonIn.fromJson(physicalLinkJson);
 
 			DisconnectPhysicalLinksJsonInValidate validator = new DisconnectPhysicalLinksJsonInValidate();
 			validator.checkValidation(disconPhysicalLinks);

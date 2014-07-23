@@ -1,6 +1,7 @@
 package ool.com.ofpm.validate.device;
 
 import static ool.com.constants.ErrorMessage.*;
+import static ool.com.constants.OfpmDefinition.*;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.device.DeviceInfoUpdateJsonIn;
 import ool.com.ofpm.validate.common.BaseValidate;
@@ -27,6 +28,13 @@ public class DeviceInfoUpdateJsonInValidate extends BaseValidate {
 
 		if (BaseValidate.checkNull(newDeviceInfo)) {
 			throw new ValidateException(String.format(IS_BLANK, "parameter"));
+		}
+
+		String datapathId = newDeviceInfo.getDatapathId();
+		if (!StringUtils.isBlank(datapathId)) {
+			if (!datapathId.matches(REGEX_DATAPATH_ID)) {
+				throw new ValidateException(String.format(INVALID_PARAMETER, "datapathId:" + datapathId));
+			}
 		}
 
 		if (logger.isDebugEnabled()) {

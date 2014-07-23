@@ -30,7 +30,13 @@ public class DeviceInfoCreateJsonInValidate extends BaseValidate {
 			throw new ValidateException(String.format(IS_BLANK, "deviceType"));
 		}
 		if (! ArrayUtils.contains(ENABLE_DEVICE_TYPES, deviceType)) {
-			throw new ValidateException(String.format(INVALID_PARAMETER, "deviceType=" + deviceType));
+			throw new ValidateException(String.format(INVALID_PARAMETER, "deviceType:" + deviceType));
+		}
+		String datapathId = deviceInfo.getDatapathId();
+		if (StringUtils.isBlank(datapathId)) {
+			if (datapathId.matches(REGEX_DATAPATH_ID)) {
+				throw new ValidateException(String.format(INVALID_PARAMETER, "datapathId:" + datapathId));
+			}
 		}
 
 		if (logger.isDebugEnabled()) {
