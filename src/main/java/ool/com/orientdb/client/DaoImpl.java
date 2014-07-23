@@ -5,14 +5,14 @@
  */
 package ool.com.orientdb.client;
 
+import static ool.com.constants.ErrorMessage.*;
+import static ool.com.constants.OrientDBDefinition.*;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static ool.com.constants.OrientDBDefinition.*;
-import static ool.com.constants.ErrorMessage.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -461,9 +461,9 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#createNodeInfo(java.lang.String, java.lang.String, boolean)
 	 */
 	@Override
-	public int createNodeInfo(String name, String type, String ofpFlag) throws SQLException {
+	public int createNodeInfo(String name, String type, String datapathId, String ofcIp) throws SQLException {
 		if (logger.isDebugEnabled()){
-			logger.debug(String.format("createNodeInfo(name=%s, type=%s, ofpFlag=%s) - start", name, type, ofpFlag));
+			logger.debug(String.format("createNodeInfo(name=%s, type=%s, datapathId=%s, ofcIp=%s) - start", name, type, datapathId, ofcIp));
 		}
 		try {
 			try {
@@ -474,10 +474,7 @@ public class DaoImpl implements Dao {
 					throw se;
 				}
 			}
-			if (StringUtils.isBlank(ofpFlag)) {
-				ofpFlag = "false";
-			}
-			String query = String.format(SQL_INSERT_NODE, name, type, ofpFlag);
+			String query = String.format(SQL_INSERT_NODE, name, type, datapathId, ofcIp);
 			if (logger.isInfoEnabled()){
 				logger.info(String.format("query=%s", query));
 			}
@@ -642,9 +639,9 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#updateNodeInfo(java.lang.String, java.lang.String, boolean)
 	 */
 	@Override
-	public int updateNodeInfo(String key, String name, String ofpFlag) throws SQLException {
+	public int updateNodeInfo(String key, String name, String datapathId, String ofcIp) throws SQLException {
 		if (logger.isDebugEnabled()){
-			logger.debug(String.format("updateNodeInfo(key=%s, name=%s, ofpFlag=%s) - start", key, name, ofpFlag));
+			logger.debug(String.format("updateNodeInfo(key=%s, name=%s, ofpFlag=%s, ofcIp=%s) - start", key, name, datapathId, ofcIp));
 		}
 		try {
 			String nodeRid = "";
@@ -654,8 +651,11 @@ public class DaoImpl implements Dao {
 				if(StringUtils.isBlank(name)) {
 					name = document.field("name").toString();
 				}
-				if(StringUtils.isBlank(ofpFlag)) {
-					ofpFlag = document.field("ofpFlag").toString();
+				if(StringUtils.isBlank(datapathId)) {
+					datapathId = document.field("datapathId");
+				}
+				if(StringUtils.isBlank(ofcIp)) {
+					ofcIp = document.field("ofcIp").toString();
 				}
 			} catch (SQLException se) {
 				if (se.getCause() == null) {
@@ -672,7 +672,7 @@ public class DaoImpl implements Dao {
 					throw se;
 				}
 			}
-			String query = String.format(SQL_UPDATE_NODE, name, ofpFlag, nodeRid);
+			String query = String.format(SQL_UPDATE_NODE, name, datapathId, ofcIp, nodeRid);
 			if (logger.isInfoEnabled()){
 				logger.info(String.format("query=%s", query));
 			}
@@ -891,10 +891,10 @@ public class DaoImpl implements Dao {
 		}
 		try {
 			String nodeRid = "";
-			boolean ofpFlag = false;
+			String type = "";
 			try {
 				ODocument document = getDeviceInfo(deviceName);
-				ofpFlag = (document.field("ofpFlag").toString().equals(OFP_FLAG_TRUE))? true: false;
+				type = document.field("type").toString();
 				nodeRid = document.getIdentity().toString();
 			} catch (SQLException sqle) {
 				if (sqle.getCause() == null) {
@@ -903,7 +903,7 @@ public class DaoImpl implements Dao {
 					return DB_RESPONSE_STATUS_NOT_FOUND;
 				}
 			}
-			if (ofpFlag) {
+			if (type.equals(NODE_TYPE_LEAF) || type.equals(NODE_TYPE_SPINE)) {
 				if (isPatched(nodeRid)) {
 					return DB_RESPONSE_STATUS_FORBIDDEN;
 				}

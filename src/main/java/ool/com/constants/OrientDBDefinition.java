@@ -13,6 +13,8 @@ public class OrientDBDefinition {
 	/* Node Type */
 	public static final String NODE_TYPE_SERVER = "Server";
 	public static final String NODE_TYPE_SWITCH = "Switch";
+	public static final String NODE_TYPE_LEAF = "Leaf";
+	public static final String NODE_TYPE_SPINE = "Spine";
 
 	/* DB Response */
 	public static final int DB_RESPONSE_STATUS_OK = 200;
@@ -50,7 +52,7 @@ public class OrientDBDefinition {
 
 	/* insert */
 	public static final String SQL_INSERT_PATCH_WIRING = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";
-	public static final String SQL_INSERT_NODE = "create vertex node set name = '%s', type = '%s', ofpFlag = %s";
+	public static final String SQL_INSERT_NODE = "create vertex node set name = '%s', type = '%s', datapathId = '%s', ofcIp = '%s'";
 	public static final String SQL_INSERT_PORT = "create vertex port set name = '%s', number = %s, type = '%s', deviceName = '%s'";
 	public static final String SQL_INSERT_LINK = "create edge link from %s to %s set weight = 1";
 
@@ -64,7 +66,7 @@ public class OrientDBDefinition {
 
 	/* update */
 	public static final String SQL_UPDATE_WEIGHT_TO_LINK = "update link set weight = %s where out = %s and in = %s";
-	public static final String SQL_UPDATE_NODE = "update node set name = '%s', ofpFlag = %s where @RID = %s";
+	public static final String SQL_UPDATE_NODE = "update node set name = '%s', datapathId = '%s', ofcIp = '%s' where @RID = %s";
 	public static final String SQL_UPDATE_PORT_DEVICE_NAME = "update port set deviceName = '%s' where deviceName = '%s'";
 	public static final String SQL_UPDATE_PATCH_WIRING_IN_DEVICE  = "update patchWiring set  inDeviceName = '%s' where  inDeviceName = '%s'";
 	public static final String SQL_UPDATE_PATCH_WIRING_OUT_DEVICE = "update patchWiring set outDeviceName = '%s' where outDeviceName = '%s'";

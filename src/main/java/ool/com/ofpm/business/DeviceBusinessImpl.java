@@ -1,12 +1,12 @@
 package ool.com.ofpm.business;
 
+import static ool.com.constants.ErrorMessage.*;
+import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.OrientDBDefinition.*;
+
 import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.List;
-
-import static ool.com.constants.OfpmDefinition.*;
-import static ool.com.constants.OrientDBDefinition.*;
-import static ool.com.constants.ErrorMessage.*;
 
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
@@ -57,7 +57,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 			ConnectionUtils utils = new ConnectionUtilsImpl();
 			dao = new DaoImpl(utils);
-			if (dao.createNodeInfo(deviceInfo.getDeviceName(), deviceInfo.getDeviceType(), deviceInfo.getOfpFlag()) == DB_RESPONSE_STATUS_EXIST) {
+			if (dao.createNodeInfo(deviceInfo.getDeviceName(), deviceInfo.getDeviceType(), deviceInfo.getDatapathId(), deviceInfo.getOfcIp()) == DB_RESPONSE_STATUS_EXIST) {
 				res.setStatus(STATUS_BAD_REQUEST);
 				res.setMessage(String.format(ALREADY_EXIST, deviceInfo.getDeviceName()));
 			} else {
@@ -185,7 +185,8 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			int status = dao.updateNodeInfo(
 					deviceName,
 					newDeviceInfo.getDeviceName(),
-					newDeviceInfo.getOfpFlag());
+					newDeviceInfo.getDatapathId(),
+					newDeviceInfo.getOfcIp());
 			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(STATUS_NOTFOUND);
 				res.setMessage(String.format(NOT_FOUND, newDeviceInfo.getDeviceName()));

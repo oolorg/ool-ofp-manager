@@ -1,8 +1,7 @@
 package ool.com.ofpm.validate.device;
 
-import static ool.com.constants.OfpmDefinition.*;
 import static ool.com.constants.ErrorMessage.*;
-
+import static ool.com.constants.OfpmDefinition.*;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.device.DeviceInfoCreateJsonIn;
 import ool.com.ofpm.validate.common.BaseValidate;
@@ -32,12 +31,6 @@ public class DeviceInfoCreateJsonInValidate extends BaseValidate {
 		}
 		if (! ArrayUtils.contains(ENABLE_DEVICE_TYPES, deviceType)) {
 			throw new ValidateException(String.format(INVALID_PARAMETER, "deviceType=" + deviceType));
-		}
-		String ofpFlag = deviceInfo.getOfpFlag();
-		if (! StringUtils.isBlank(ofpFlag)) {
-			if (! ArrayUtils.contains(ENABLE_OFP_FLAGS, ofpFlag)) {
-				throw new ValidateException(String.format(INVALID_PARAMETER, "ofpFlag=" + ofpFlag));
-			}
 		}
 
 		if (logger.isDebugEnabled()) {

@@ -133,7 +133,7 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	int createNodeInfo(String name, String type, String ofpFlag) throws SQLException;
+	int createNodeInfo(String name, String type, String datapathId, String ofcIp) throws SQLException;
 
 	/**
 	 * @param key
@@ -142,7 +142,7 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	int updateNodeInfo(String key, String name, String ofpFlag) throws SQLException;
+	int updateNodeInfo(String key, String name, String datapathId, String ofcIp) throws SQLException;
 
 	/**
 	 * @param portName
@@ -230,14 +230,14 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	List<List<String>> getPatchConnectedDevice(String deviceName) throws SQLException;
-	
+
 	/**
 	 * @param deviceName
 	 * @return portRID List
 	 * @throws SQLException
 	 */
 	List<ODocument> getPortList(String deviceName) throws SQLException;
-	
+
 	/**
 	 * @param deviceName
 	 * @param deviceType

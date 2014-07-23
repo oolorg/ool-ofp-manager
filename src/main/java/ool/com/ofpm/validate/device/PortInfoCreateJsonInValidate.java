@@ -1,7 +1,6 @@
 package ool.com.ofpm.validate.device;
 
 import static ool.com.constants.ErrorMessage.*;
-
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.device.PortInfoCreateJsonIn;
 import ool.com.ofpm.validate.common.BaseValidate;
@@ -21,8 +20,8 @@ public class PortInfoCreateJsonInValidate extends BaseValidate {
 		if (BaseValidate.checkNull(portInfoJson)) {
 			throw new ValidateException(String.format(IS_BLANK, "Input parameter"));
 		}
-		if (StringUtils.isBlank(portInfoJson.getDeviceName())) {
-			throw new ValidateException(String.format(IS_BLANK, "deviceName"));
+		if (!StringUtils.isBlank(portInfoJson.getDeviceName())) {
+			throw new ValidateException(String.format(IS_NOT_BLANK, "deviceName"));
 		}
 		if (StringUtils.isBlank(portInfoJson.getPortName())) {
 			throw new ValidateException(String.format(IS_BLANK, "portName"));

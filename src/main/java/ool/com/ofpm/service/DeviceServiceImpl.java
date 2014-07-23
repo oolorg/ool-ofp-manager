@@ -168,7 +168,7 @@ public class DeviceServiceImpl implements DeviceService {
 	 */
 	@Override
 	public Response getConnectedPortInfo(String deviceName) {
-		final String fname = "getConnectedPortInfo";		
+		final String fname = "getConnectedPortInfo";
     	if (logger.isDebugEnabled()) {
     		logger.debug(String.format("%s(deviceName=%s) - start ", fname, deviceName));
     	}

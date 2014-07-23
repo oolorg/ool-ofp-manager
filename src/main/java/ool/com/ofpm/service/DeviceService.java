@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Path("/device_mng")
 public interface DeviceService {
-	
+
 	// device service
 	/**
 	 * Create Device
@@ -86,7 +86,7 @@ public interface DeviceService {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	public Response updatePort(@PathParam("deviceName") String deviceName, @PathParam("portName") String portName, @RequestBody String updatePortInfoJson);
-	
+
 	// other service
 	/**
 	 * get Port which connected device

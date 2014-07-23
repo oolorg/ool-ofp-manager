@@ -55,6 +55,6 @@ public class OfpmDefinition {
 	/* Define validation parameters */
 	public static final int COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK = 2;
 	public static final String[] ENABLE_OFP_FLAGS    = {"true", "false"};
-	public static final String[] ENABLE_DEVICE_TYPES = {"Server", "Switch"};
+	public static final String[] ENABLE_DEVICE_TYPES = {"Server", "Switch", "Leaf", "Spine"};
 	public static final String CSV_SPLIT_REGEX = ",";
 }
