@@ -775,6 +775,7 @@ public class DaoImpl implements Dao {
 				if (0 == portNumber) {
 					portNumber = document.field("number");
 				} else {
+					document = getDeviceInfo(keyDeviceName);
 					String type = document.field("type").toString();
 					if (type.equals(NODE_TYPE_SWITCH) || type.equals(NODE_TYPE_LEAF) || type.equals(NODE_TYPE_SPINE)) {
 						getPortInfo(portNumber, keyDeviceName);
