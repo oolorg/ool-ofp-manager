@@ -2,6 +2,8 @@ package ool.com.ofpm.json.device;
 
 import java.lang.reflect.Type;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -25,9 +27,18 @@ public class Node implements Cloneable {
 
 	@Override
 	public Node clone() {
-		Node newNode = new Node();
-		newNode.deviceName = this.deviceName;
-		newNode.deviceType = this.deviceType;
+		Node newNode = null;
+		try {
+			newNode = (Node)super.clone();
+		} catch (CloneNotSupportedException e) {
+			return null;
+		}
+		if (this.deviceName != null) {
+			newNode.deviceName = new String(this.deviceName);
+		}
+		if (this.deviceType != null) {
+			newNode.deviceType = new String(this.deviceType);
+		}
 		return newNode;
 	}
 	@Override
@@ -36,12 +47,17 @@ public class Node implements Cloneable {
 		if(obj == null) return false;
 		if(this.getClass() != obj.getClass()) return false;
 		Node other = (Node)obj;
-		return (this.deviceName.equals(other.deviceName));
+		if (!StringUtils.equals(other.deviceName, this.deviceName)) return false;
+//		if (!StringUtils.equals(other.deviceType, this.deviceType)) return false;
+		return true;
 	}
 	@Override
 	public int hashCode() {
-		if(this.deviceName == null) return 0;
-		return this.deviceName.hashCode();
+		int hash = 0;
+		if(this.deviceName != null) {
+			hash = this.deviceName.hashCode();
+		}
+		return hash;
 	}
 	@Override
 	public String toString() {
