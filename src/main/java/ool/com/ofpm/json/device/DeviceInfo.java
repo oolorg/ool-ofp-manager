@@ -46,9 +46,12 @@ public class DeviceInfo extends Node implements Cloneable {
 	}
 	@Override
 	public int hashCode() {
-		int hash = 0;
+		int hash = super.hashCode();
 		if (this.datapathId != null) {
-			hash = this.datapathId.hashCode();
+			hash += this.datapathId.hashCode();
+		}
+		if (this.ofcIp != null) {
+			hash += this.ofcIp.hashCode();
 		}
 		return hash;
 	}

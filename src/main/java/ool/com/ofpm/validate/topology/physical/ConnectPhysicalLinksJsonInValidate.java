@@ -37,6 +37,7 @@ public class ConnectPhysicalLinksJsonInValidate extends BaseValidate {
 			if (BaseValidate.checkNull(physicalLink)) {
 				throw new ValidateException(String.format(IS_NULL, msgLinks));
 			}
+
 			String band = physicalLink.getBand();
 			if (StringUtils.isBlank(physicalLink.getBand())) {
 				throw new ValidateException(String.format(IS_BLANK, msgLinks + ".band:" + band));
@@ -44,6 +45,7 @@ public class ConnectPhysicalLinksJsonInValidate extends BaseValidate {
 			if (!band.matches(REGEX_NUMBER)) {
 				throw new ValidateException(String.format(IS_NOT_NUMBER, msgLinks + ".band:" + band));
 			}
+
 			List<PortData> ports = physicalLink.getLink();
 			if (BaseValidate.checkNull(ports)) {
 				throw new ValidateException(String.format(IS_NULL, msgLinks + ".link"));

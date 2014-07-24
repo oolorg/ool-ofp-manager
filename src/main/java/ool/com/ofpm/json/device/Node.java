@@ -54,8 +54,11 @@ public class Node implements Cloneable {
 	@Override
 	public int hashCode() {
 		int hash = 0;
-		if(this.deviceName != null) {
-			hash = this.deviceName.hashCode();
+		if (this.deviceName != null) {
+			hash += this.deviceName.hashCode();
+		}
+		if (this.deviceType != null) {
+			hash += this.deviceType.hashCode();
 		}
 		return hash;
 	}

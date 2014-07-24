@@ -4,18 +4,22 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+import ool.com.ofpm.json.device.PortData;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 public class LogicalLink implements Cloneable {
-	private List<String> deviceName = new ArrayList<String>();
+	private List<PortData> link;
 
-	public List<String> getDeviceName() {
-		return deviceName;
+	/* Setters and Getters */
+	public List<PortData> getLink() {
+		return link;
 	}
-	public void setDeviceName(List<String> deviceName) {
-		this.deviceName = deviceName;
+	public void setLink(List<PortData> link) {
+		this.link = link;
 	}
+
 
 	@Override
 	public boolean equals(Object obj) {
@@ -23,25 +27,29 @@ public class LogicalLink implements Cloneable {
 		if(obj == null) return false;
 		if(this.getClass() != obj.getClass()) return false;
 		LogicalLink other = (LogicalLink)obj;
-		if(this.deviceName.size() != other.deviceName.size()) return false;
-		return this.deviceName.containsAll(other.deviceName);
+		if (other.link == this.link) return true;
+		if (other.link == null) return false;
+		if (this.link  == null) return false;
+		if (!other.link.containsAll(this.link)) return false;
+		if (!this.link.containsAll(other.link)) return false;
+		return true;
 	}
 	@Override
 	public int hashCode() {
 		int hash = 0;
-		if(this.deviceName == null) return hash;
-		for(String device : this.deviceName) {
-			if(device != null) hash += device.hashCode();
+		if (this.link != null) {
+			hash += this.link.hashCode();
 		}
 		return hash;
 	}
 	@Override
 	public LogicalLink clone() {
-		LogicalLink newLogicalLink = new LogicalLink();
-		for(String dName : deviceName) {
-			newLogicalLink.deviceName.add(dName);
+		LogicalLink newObj = new LogicalLink();
+		newObj.link = new ArrayList<PortData>();
+		for (PortData port : this.link) {
+			newObj.link.add(port);
 		}
-		return newLogicalLink;
+		return newObj;
 	}
 	public String toJson() {
 		Gson gson = new Gson();

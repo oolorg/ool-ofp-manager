@@ -5,85 +5,71 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 public class DeviceInfoTest {
-	String deviceName = "TEST";
-	String deviceType = "SERVER";
 	String datapathId = "0123456789abcdef";
 	String ofcIp      = "123.123.123.123";
 
 	@Test
 	public void checkEquals() {
-		DeviceInfo dev1 = new DeviceInfo();
-		dev1.setDeviceName(deviceName);
-		dev1.setDeviceType(deviceType);
-		dev1.setDatapathId(datapathId);
-		dev1.setOfcIp(ofcIp);
-
-		DeviceInfo dev2 = new DeviceInfo();
-		if (dev1.equals(dev2)) {
+		this.checkEquals(new DeviceInfo(), new DeviceInfo());
+	}
+	public void checkEquals(DeviceInfo dev1, DeviceInfo dev2) {
+		if (dev1.equals(null)) {
 			fail();
 		}
 
-		dev2.setDeviceName(deviceName);
+		dev1.setDatapathId(new String(datapathId));
+		dev1.setOfcIp(null);
+		dev2.setDatapathId(null);
+		dev2.setOfcIp(null);
 		if (dev1.equals(dev2)) {
 			fail();
 		}
-//		dev2.setDeviceType(deviceType);
-//		if (dev1.equals(dev2)) {
-//			fail();
-//		}
-
-		dev2.setDatapathId(datapathId);
-		if (dev1.equals(dev2)) {
-			fail();
-		}
-
-		dev2.setOfcIp(ofcIp);
+		dev2.setDatapathId(new String(datapathId));
 		if (!dev1.equals(dev2)) {
 			fail();
 		}
+
+		dev1.setOfcIp(new String(ofcIp));
+		if (dev1.equals(dev2)) {
+			fail();
+		}
+		dev2.setOfcIp(new String(ofcIp));
+		if (!dev1.equals(dev2)) {
+			fail();
+		}
+
+		new NodeTest().checkEquals(dev1, dev2);
 	}
 
 	@Test
 	public void checkClone() {
-		DeviceInfo base = new DeviceInfo();
+		this.checkClone(new DeviceInfo());
+	}
+	public void checkClone(DeviceInfo base) {
+		new DeviceInfo().clone();
+
+		base.setDatapathId(new String(datapathId));
+		base.setOfcIp(new String(ofcIp));
+
 		DeviceInfo copy = base.clone();
-
-		base.setDeviceName(deviceName);
-		base.setDeviceType(deviceType);
-		base.setDatapathId(datapathId);
-		base.setOfcIp(ofcIp);
-		copy = base.clone();
-
-		if (base == copy) {
-			fail();
-		}
-		if (copy.getDeviceName() == base.getDeviceName()) {
-			fail();
-		}
-		if (copy.getDeviceType() == base.getDeviceType()) {
-			fail();
-		}
-		if (copy.getOfcIp() == base.getOfcIp()) {
-			fail();
-		}
-		if (copy.getDatapathId() == base.getDatapathId()) {
+		if (!base.equals(copy)) {
 			fail();
 		}
 
-		if (!copy.equals(base)) {
+		if (base.getDatapathId() == copy.getDatapathId()) {
 			fail();
 		}
-		if (!copy.getDeviceName().equals(base.getDeviceName())) {
+		if (!base.getDatapathId().equals(copy.getDatapathId())) {
 			fail();
 		}
-		if (!copy.getDeviceType().equals(base.getDeviceType())) {
+
+		if (base.getOfcIp() == copy.getOfcIp()) {
 			fail();
 		}
-		if (!copy.getDatapathId().equals(base.getDatapathId())) {
+		if (!base.getOfcIp().equals(copy.getOfcIp())) {
 			fail();
 		}
-		if (!copy.getOfcIp().equals(base.getOfcIp())) {
-			fail();
-		}
+
+		new NodeTest().checkClone(base);
 	}
 }

@@ -1,16 +1,20 @@
 package ool.com.ofpm.validate.topology.logical;
 
+import static ool.com.constants.ErrorMessage.*;
+import static ool.com.constants.OfpmDefinition.*;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static ool.com.constants.OfpmDefinition.*;
-import static ool.com.constants.ErrorMessage.*;
-
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.device.Node;
+import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
 import ool.com.ofpm.json.topology.logical.LogicalTopology;
+import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConDeviceInfo;
+import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConPortInfo;
+import ool.com.ofpm.utils.OFPMUtils;
 import ool.com.ofpm.validate.common.BaseValidate;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +33,7 @@ public class LogicalTopologyValidate extends BaseValidate {
 			throw new ValidateException(String.format(IS_NULL, "LogicalTopology"));
 		}
 
-		List<Node> nodes = logicalTopology.getNodes();
+		List<OfpConDeviceInfo> nodes = logicalTopology.getNodes();
 		List<LogicalLink> links = logicalTopology.getLinks();
 		if (BaseValidate.checkNull(nodes)) {
 			throw new ValidateException(String.format(IS_NULL, "nodes"));
@@ -47,25 +51,54 @@ public class LogicalTopologyValidate extends BaseValidate {
 			throw new ValidateException(String.format(THERE_ARE_OVERLAPPED, "link"));
 		}
 
-		for (Node node : nodes) {
-			if (StringUtils.isBlank(node.getDeviceName())) {
-				throw new ValidateException(String.format(FIND_NULL, "node", "deviceName"));
+		for (int ni = 0; ni < nodes.size(); ni++) {
+			OfpConDeviceInfo device = nodes.get(ni);
+			if (BaseValidate.checkNull(device)) {
+				throw new ValidateException(String.format(IS_NULL, "nodes[" + ni + "]"));
 			}
-		}
-		Node searchingNode = new Node();
-		for (LogicalLink link : links) {
-			List<String> deviceNames = link.getDeviceName();
-			if (BaseValidate.checkNull(link.getDeviceName())) {
-				throw new ValidateException(String.format(IS_NULL, "deviceName in link"));
-			}
-			if (deviceNames.size() != COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK) {
-				throw new ValidateException(String.format(INVALID_PARAMETER, "number of deviceName in link"));
+			if (StringUtils.isBlank(device.getDeviceName())) {
+				throw new ValidateException(String.format(IS_NULL, "nodes[" + ni + "].deviceName"));
 			}
 
-			for (String deviceName : deviceNames) {
-				searchingNode.setDeviceName(deviceName);
-				if (!nodes.contains(searchingNode)) {
-					throw new ValidateException(String.format(IS_NOT_INCLUDED, deviceName, "nodes"));
+			List<OfpConPortInfo> ports = device.getPorts();
+			if (BaseValidate.checkNull(ports) || ports.isEmpty()) {
+				throw new ValidateException(String.format(IS_NULL, "nodes[" + device.getDeviceName() + "].ports"));
+			}
+			for (int pi = 0; pi < ports.size(); pi++) {
+				OfpConPortInfo port = ports.get(pi);
+				if (BaseValidate.checkNull(port)) {
+					throw new ValidateException(String.format(IS_NULL, "nodes[" + device.getDeviceName() + "].ports[" + pi + "]"));
+				}
+				if (StringUtils.isBlank(port.getPortName())) {
+					throw new ValidateException(String.format(IS_NULL, "nodes[" + device.getDeviceName() + "].ports[" + pi + "].portName"));
+				}
+			}
+		}
+		String nowParamStr = null;
+		for (int i = 0; i < links.size(); i++) {
+			nowParamStr = "links[" + i + "]";
+			LogicalLink link = links.get(i);
+			List<PortData> ports = link.getLink();
+			if (BaseValidate.checkNull(ports)) {
+				throw new ValidateException(String.format(IS_NULL, nowParamStr + ".link"));
+			}
+			if (ports.size() != COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK) {
+				throw new ValidateException(String.format(INVALID_PARAMETER, nowParamStr + ".link"));
+			}
+
+			for (int pi = 0; pi < ports.size(); pi++) {
+				PortData port = ports.get(pi);
+				nowParamStr ="links[" + i + "].link[" + pi + "]";
+
+				if (StringUtils.isBlank(port.getDeviceName())) {
+					throw new ValidateException(String.format(IS_BLANK, nowParamStr + ".deviceName"));
+				}
+				if (StringUtils.isBlank(port.getPortName())) {
+					throw new ValidateException(String.format(IS_BLANK, nowParamStr + ".portName"));
+				}
+
+				if (!OFPMUtils.nodesContainsPort(nodes, port)) {
+					throw new ValidateException(String.format(NOT_FOUND, nowParamStr + " in nodes"));
 				}
 			}
 		}
@@ -74,4 +107,5 @@ public class LogicalTopologyValidate extends BaseValidate {
 			logger.debug(String.format("%s() - end", fname));
 		}
 	}
+
 }

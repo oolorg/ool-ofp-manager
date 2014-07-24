@@ -5,67 +5,57 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ool.com.ofpm.json.device.Node;
+import ool.com.ofpm.json.device.PortData;
+import ool.com.ofpm.json.device.PortInfo;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-public 	class LogicalTopology implements Cloneable {
-	private List<Node> nodes = new ArrayList<Node>();
-	private List<LogicalLink> links = new ArrayList<LogicalLink>();
+public class LogicalTopology implements Cloneable {
+	private List<OfpConDeviceInfo> nodes;
+	private List<LogicalLink> links;
+
+	/* Setters and Getters */
+	public List<OfpConDeviceInfo> getNodes() {
+		return nodes;
+	}
+	public List<LogicalLink> getLinks() {
+		return links;
+	}
+	public void setNodes(List<OfpConDeviceInfo> nodes) {
+		this.nodes = nodes;
+	}
+	public void setLinks(List<LogicalLink> links) {
+		this.links = links;
+	}
+
+
+	public LogicalTopology sub(LogicalTopology other) {
+		LogicalTopology newObj = this.clone();
+		newObj.nodes.removeAll(other.nodes);
+		newObj.links.removeAll(other.links);
+		return newObj;
+	}
+
 
 	@Override
 	public LogicalTopology clone() {
-		LogicalTopology newTopo = new LogicalTopology();
-		for(Node node: nodes) {
-			newTopo.nodes.add(node.clone());
+		LogicalTopology newObj = null;
+		try {
+			newObj = (LogicalTopology)super.clone();
+		} catch (CloneNotSupportedException e) {
+			return null;
 		}
-		for(LogicalLink link: links) {
-			newTopo.links.add(link.clone());
-		}
-		return newTopo;
-	}
-	public LogicalTopology sub(LogicalTopology otherTopo) {
-		LogicalTopology cloneTopo = clone();
-		cloneTopo.nodes.removeAll(otherTopo.nodes);
-		cloneTopo.links.removeAll(otherTopo.links);
-		return cloneTopo;
-	}
-	public static LogicalTopology fromJson(String json) {
-		Gson gson = new Gson();
-		Type type = new TypeToken<LogicalTopology>(){}.getType();
-		return gson.fromJson(json, type);
-	}
+		newObj.nodes = new ArrayList<OfpConDeviceInfo>();
+		newObj.links = new ArrayList<LogicalLink>();
 
-	@Override
-	public boolean equals(Object obj) {
-		if(this == obj) return true;
-		if(obj == null) return false;
-		if(this.getClass() != obj.getClass()) return false;
-		LogicalTopology other = (LogicalTopology)obj;
-		if(this.nodes.size() != other.nodes.size()) return false;
-		if(this.links.size() != other.links.size()) return false;
-		for(Node node : other.nodes) {
-			if(! this.nodes.contains(node)) return false;
+		for (OfpConDeviceInfo node : this.nodes) {
+			newObj.nodes.add(node.clone());
 		}
-		for(LogicalLink link : other.links) {
-			if(! this.links.contains(link)) return false;
+		for (LogicalLink link : links) {
+			newObj.links.add(link.clone());
 		}
-		return true;
-	}
-	@Override
-	public int hashCode() {
-		int hash = 0;
-		if(this.nodes != null) {
-			for(Node node : this.nodes) {
-				if(node != null) hash += node.hashCode();
-			}
-		}
-		if(this.links != null) {
-			for(LogicalLink link : this.links) {
-				if(link != null) hash += link.hashCode();
-			}
-		}
-		return hash;
+		return newObj;
 	}
 	@Override
 	public String toString() {
@@ -74,17 +64,95 @@ public 	class LogicalTopology implements Cloneable {
 		return gson.toJson(this, type);
 	}
 
-	public List<Node> getNodes() {
-		return nodes;
-	}
-	public void setNodes(List<Node> nodes) {
-		this.nodes = nodes;
-	}
 
-	public List<LogicalLink> getLinks() {
-		return links;
+
+
+
+
+	public class OfpConDeviceInfo extends Node implements Cloneable {
+		private List<OfpConPortInfo> ports;
+
+		/* Setters and Getters */
+		public List<OfpConPortInfo> getPorts() {
+			return ports;
+		}
+		public void setPorts(List<OfpConPortInfo> ports) {
+			this.ports = ports;
+		}
+
+		@Override
+		public OfpConDeviceInfo clone() {
+			OfpConDeviceInfo newObj = (OfpConDeviceInfo)super.clone();
+			return newObj;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this) return true;
+			if (obj == null) return false;
+			if (obj.getClass() != this.getClass()) return false;
+			OfpConDeviceInfo other = (OfpConDeviceInfo)obj;
+			if (other.ports == this.ports) return true;
+			if (other.ports == null) return false;
+			if (this.ports  == null) return false;
+			if (!other.ports.containsAll(this.ports)) return false;
+			if (!this.ports.containsAll(other.ports)) return false;
+			return true;
+		}
+		@Override
+		public int hashCode() {
+			int hash = super.hashCode();
+			if (this.ports != null) {
+				for (OfpConPortInfo port : ports) {
+					hash += port.hashCode();
+				}
+			}
+			return hash;
+		}
+		@Override
+		public String toString() {
+			Gson gson = new Gson();
+			Type type = new TypeToken<OfpConDeviceInfo>() {}.getType();
+			return gson.toJson(this, type);
+		}
 	}
-	public void setLinks(List<LogicalLink> links) {
-		this.links = links;
+	public class OfpConPortInfo extends PortInfo implements Cloneable {
+		private PortData ofpPortLink;
+
+		/* Setters and Getters */
+		public PortData getOfpPortLink() {
+			return ofpPortLink;
+		}
+		public void setOfpPortLink(PortData ofpPortLink) {
+			this.ofpPortLink = ofpPortLink;
+		}
+
+		@Override
+		public OfpConPortInfo clone() {
+			OfpConPortInfo newObj = (OfpConPortInfo)super.clone();
+			newObj.ofpPortLink = this.ofpPortLink.clone();
+			return newObj;
+		}
+		@Override
+		public boolean equals(Object obj) {
+			if (obj == this) return true;
+			if (obj == null) return false;
+			if (obj.getClass() != this.getClass()) return false;
+			OfpConPortInfo other = (OfpConPortInfo)obj;
+			if (!other.ofpPortLink.equals(other.ofpPortLink)) return false;
+			return super.equals(obj);
+		}
+		@Override
+		public int hashCode() {
+			int hash = super.hashCode();
+			if (this.ofpPortLink != null) {
+				hash += this.ofpPortLink.hashCode();
+			}
+			return hash;
+		}
+		@Override
+		public String toString() {
+			Gson gson = new Gson();
+			return gson.toJson(this);
+		}
 	}
 }
