@@ -59,4 +59,8 @@ public class OfpmDefinition {
 	public static final String CSV_SPLIT_REGEX = ",";
 	public static final String REGEX_NUMBER = "[0-9]+";
 	public static final String REGEX_DATAPATH_ID = "[0-9a-fA-F]{1,16}";
+	
+	/* Define max macaddress value */
+	public static final int MIN_MACADDRESS_VALUE = 1;
+	public static final long MAX_MACADDRESS_VALUE = 281474976710655L;
 }
