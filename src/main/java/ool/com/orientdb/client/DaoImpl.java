@@ -1181,7 +1181,7 @@ public class DaoImpl implements Dao {
 			Properties userInfo = new Properties();
 			userInfo.put("user", "admin");
 			userInfo.put("password", "admin");
-			Connection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:172.16.1.177/of-patch", userInfo);
+			Connection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:172.16.1.177:2480/of-patch", userInfo);
 			PreparedStatement pstmt = conn.prepareStatement(SQL_GET_DEVICENAME_FROM_DATAPATHID);
 			pstmt.setString(1, datapathId);
 
