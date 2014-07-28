@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
@@ -40,6 +41,9 @@ public class DaoImpl implements Dao {
 	protected ConnectionUtils utils = null;
 	protected ODatabaseDocumentTx database = null;
 	protected List<ODocument> documents = null;
+	
+	// jdbc
+	protected ConnectionUtilsJdbc utilsJdbc = null;
 
 	public DaoImpl(ConnectionUtils utils) throws SQLException {
 		if (logger.isDebugEnabled()){
@@ -47,6 +51,17 @@ public class DaoImpl implements Dao {
 		}
 		this.utils = utils;
 		init();
+		if (logger.isDebugEnabled()){
+			logger.debug("DaoImpl() - end");
+		}
+	}
+	
+	// jdbc
+	public DaoImpl(ConnectionUtilsJdbc utils) throws SQLException {
+		if (logger.isDebugEnabled()){
+			logger.debug(String.format("DaoImpl(utils=%s) - start", utils));
+		}
+		this.utilsJdbc = utils;
 		if (logger.isDebugEnabled()){
 			logger.debug("DaoImpl() - end");
 		}
@@ -1179,19 +1194,16 @@ public class DaoImpl implements Dao {
 			logger.debug(String.format("%s(datapathId=%s) - start", fname, datapathId));
 		}
 		try {
-			DriverManager.registerDriver(new OrientJdbcDriver());
-			Properties userInfo = new Properties();
-			userInfo.put("user", "admin");
-			userInfo.put("password", "admin");
-			Connection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:172.16.1.177:2424/of-patch", userInfo);
-			PreparedStatement pstmt = conn.prepareStatement(SQL_GET_DEVICENAME_FROM_DATAPATHID);
-			pstmt.setString(1, datapathId);
-
-			ResultSet rs = pstmt.executeQuery();
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", rs.toString()));
+			Connection conn = utilsJdbc.getConnection(false);
+			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_DEVICENAME_FROM_DATAPATHID,
+                    new MapListHandler(), datapathId);
+			if (records.size() <= 0) {
+                // error
 			}
-			return rs.getString("@rid");
+			if (logger.isDebugEnabled()) {
+			//	logger.debug(String.format("%s(ret=%s) - end", rs.toString()));
+			}
+			return records.get(0).get("name").toString();
 		} catch (IndexOutOfBoundsException ioobe) {
 			throw new SQLException(String.format(NOT_FOUND, datapathId), ioobe);
 		}  catch (Exception e){

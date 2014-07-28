@@ -52,6 +52,7 @@ import ool.com.openam.json.OpenAmIdentitiesOut;
 import ool.com.openam.json.TokenIdOut;
 import ool.com.openam.json.TokenValidChkOut;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
+import ool.com.orientdb.client.ConnectionUtilsJdbcImpl;
 import ool.com.orientdb.client.Dao;
 import ool.com.orientdb.client.DaoImpl;
 
@@ -652,7 +653,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		String rid = "";
 		try {
-			dao = new DaoImpl(new ConnectionUtilsImpl());
+			dao = new DaoImpl(new ConnectionUtilsJdbcImpl());
 			rid = dao.getDeviceNameFromDatapathId(requestedData);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
