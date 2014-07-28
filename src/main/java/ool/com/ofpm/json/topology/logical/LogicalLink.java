@@ -45,9 +45,11 @@ public class LogicalLink implements Cloneable {
 	@Override
 	public LogicalLink clone() {
 		LogicalLink newObj = new LogicalLink();
-		newObj.link = new ArrayList<PortData>();
-		for (PortData port : this.link) {
-			newObj.link.add(port);
+		if (this.link != null) {
+			newObj.link = new ArrayList<PortData>();
+			for (PortData port : this.link) {
+				newObj.link.add(port.clone());
+			}
 		}
 		return newObj;
 	}

@@ -246,7 +246,7 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	List<ODocument> getDeviceList(String deviceName, String deviceType, String ofpFlag) throws SQLException;
-	
+
 	/**
 	 * get device name from datapathid
 	 * @param datapathId
@@ -271,8 +271,9 @@ public interface Dao {
 	 * The link is correspond to LAN-cable or SPF-cable.
 	 * @param devName
 	 * @return
+	 * @throws SQLException
 	 */
-	List<ODocument> getCableLinks(String devName);
+	List<ODocument> getCableLinks(String devName) throws SQLException;
 
 	/**
 	 * Get patchWiring-list that is connected to other devices.

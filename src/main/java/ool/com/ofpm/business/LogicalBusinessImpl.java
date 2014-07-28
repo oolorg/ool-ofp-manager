@@ -50,7 +50,6 @@ import ool.com.openam.client.OpenAmClientException;
 import ool.com.openam.client.OpenAmClientImpl;
 import ool.com.openam.json.OpenAmIdentitiesOut;
 import ool.com.openam.json.TokenIdOut;
-
 import ool.com.openam.json.TokenValidChkOut;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;
@@ -130,6 +129,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 */
 	private OfpConDeviceInfo getLogicalNode(String devName) throws SQLException {
 		ODocument devDoc = dao.getDeviceInfo(devName);
+		if (devDoc == null) {
+			return null;
+		}
 		String   devType = devDoc.field("type");
 		OfpConDeviceInfo node = new OfpConDeviceInfo();
 		node.setDeviceName(devName);
@@ -137,6 +139,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		List<OfpConPortInfo> portList = new ArrayList<OfpConPortInfo>();
 		List<ODocument> linkDocList = dao.getCableLinks(devName);
+		if (linkDocList == null) {
+			return null;
+		}
 		for (ODocument linkDoc : linkDocList) {
 			String outDevName = linkDoc.field("outDeviceName");
 
@@ -241,7 +246,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			String openamUrl = conf.getString(OPEN_AM_URL);
 			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
 			boolean isTokenValid = false;
-			if (openAmClient != null) {
+			if (!StringUtils.isBlank(tokenId) && openAmClient != null) {
 				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
 				isTokenValid = tokenValidchkOut.getIsTokenValid();
 			}
