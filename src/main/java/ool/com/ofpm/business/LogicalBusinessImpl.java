@@ -438,8 +438,17 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			List<PatchLink> reducedLinks = new ArrayList<PatchLink>();
 			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
 			for (LogicalLink link : decLinkList) {
-//				dao.getPatchWirings(link);
-//				dao.deleteRecordPatchWiring(link);
+				PortData inPort  = link.getLink().get(0);
+				PortData outPort = link.getLink().get(1);
+//				List<ODocumnet> patchDocList = dao.getPatchWirings(inPort.getDeviceName(), inPort.getPortName(), outPort.getDeviceName(), outPort.getPortName());
+//				dao.deleteRecordPatchWiring(inPort.getDeviceName(), inPort.getPortName(), outPort.getDeviceName(), outPort.getPortName());
+//				dao.getCableLink(devName, portName);
+//				for (ODocument patchDoc : patchDocList) {
+//					dao.getDeviceInfo()
+//					ODocument link = dao.getCableLink(patchDoc.field("in"));
+//
+//				}
+//				dao.getCableLink()
 //				dao.updateLinkWeight(weight, portRid, patchRid);
 //				List<PatchLink> reducedPatches = null;
 //				reducedLinks.addAll(reducedPatches);

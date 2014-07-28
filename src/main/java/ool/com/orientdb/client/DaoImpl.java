@@ -542,8 +542,8 @@ public class DaoImpl implements Dao {
 			// get rid
 			ODocument document = getPortInfo(portName, deviceName);
 			String portRid = document.getIdentity().toString();
-			createLinkInfo(nodeRid, portRid);
-			createLinkInfo(portRid, nodeRid);
+			createLinkInfo(nodeRid, portRid, Integer.MAX_VALUE, Integer.MAX_VALUE);
+			createLinkInfo(portRid, nodeRid, Integer.MAX_VALUE, Integer.MAX_VALUE);
 			if (logger.isDebugEnabled()){
 				logger.debug("createPortInfo() - end");
 			}
@@ -609,8 +609,9 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 	}
+
 	/* (non-Javadoc)
-	 * @see ool.com.orientdb.client.Dao#createLinkInfo(java.lang.String, java.lang.String, int band, int used)
+	 * @see ool.com.orientdb.client.Dao#createLinkInfo(java.lang.String, java.lang.String, int, int)
 	 */
 	@Override
 	public int createLinkInfo(String outRid, String inRid, int band, int used) throws SQLException {

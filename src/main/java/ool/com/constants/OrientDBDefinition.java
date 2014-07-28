@@ -34,7 +34,7 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_CONNECTED_NODE = "select from (traverse * from %s) where @class='node' and $depth=6";
 	public static final String SQL_GET_PATCHPORT_RID = "select from (traverse * from %s) where @class='port' and $depth=4";
 	public static final String SQL_GET_PATCH_WIRING = "select from patchWiring where out = %s and in = %s";
-	public static final String SQL_GET_DIJKSTRA_PATH = "select dijkstra(%s,%s,'weight').asString() from V limit 1";
+	public static final String SQL_GET_DIJKSTRA_PATH = "select dijkstra(%s,%s,'band').asString() from V limit 1";
 	public static final String SQL_GET_PATCH_WIRING2 = "select from patchWiring where outDeviceName = '%s' and inDeviceName = '%s'";
 	public static final String SQL_GET_PATCH_CONNECTED_NODE = "select from patchWiring";
 	public static final String SQL_GET_PORT = "select from port where @RID = %s";
@@ -44,7 +44,7 @@ public class OrientDBDefinition {
 
 	public static final String SQL_GET_CABLE_LINKS    = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inNumber, "
 			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outNumber, @rid "
-			+ "from link where in.deviceName='%s' and out.@class='port'";
+			+ "from link where in.deviceName = '%s' and out.@class = 'port'";
 	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME  = "select from patchWiring where inDeviceName='%s'";
 	public static final String SQL_GET_CONNECTED_LINK = "select from link where in = %s";
 	public static final String SQL_IS_HAD_PATCH_WIRING = "select from patchWiring where parent = %s";
@@ -59,7 +59,7 @@ public class OrientDBDefinition {
 	public static final String SQL_INSERT_PATCH_WIRING = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";
 	public static final String SQL_INSERT_NODE = "create vertex node set name = '%s', type = '%s', datapathId = '%s', ofcIp = '%s'";
 	public static final String SQL_INSERT_PORT = "create vertex port set name = '%s', number = %s, deviceName = '%s'";
-	public static final String SQL_INSERT_LINK = "create edge link from %s to %s set weight = 1";
+	public static final String SQL_INSERT_LINK = "create edge link from %s to %s set band = %s, used = %s";
 
 	/* delete */
 	public static final String SQL_DELETE_PATCH_WIRING = "delete from patchWiring where outDeviceName = '%s' and inDeviceName = '%s'";
@@ -70,7 +70,7 @@ public class OrientDBDefinition {
 	public static final String SQL_DELETE_NODE = "delete vertex node where name = '%s'";
 
 	/* update */
-	public static final String SQL_UPDATE_WEIGHT_TO_LINK = "update link set weight = %s where out = %s and in = %s";
+	public static final String SQL_UPDATE_WEIGHT_TO_LINK = "update link set band = %s where out = %s and in = %s";
 	public static final String SQL_UPDATE_NODE = "update node set name = '%s', datapathId = '%s', ofcIp = '%s' where @RID = %s";
 	public static final String SQL_UPDATE_PORT_DEVICE_NAME = "update port set deviceName = '%s' where deviceName = '%s'";
 	public static final String SQL_UPDATE_PATCH_WIRING_IN_DEVICE  = "update patchWiring set  inDeviceName = '%s' where  inDeviceName = '%s'";
