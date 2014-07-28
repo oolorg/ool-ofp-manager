@@ -198,18 +198,22 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * Make list of link for LogicalTopology from deviceName, and return it.
 	 * @param devName
 	 * @return list of link for LogicalTopology.
+	 * @throws SQLException
 	 */
-	private Set<LogicalLink> getLogicalLink(String devName) {
+	private Set<LogicalLink> getLogicalLink(String devName) throws SQLException {
 		Set<LogicalLink> linkSet = new HashSet<LogicalLink>();
 		List<ODocument> patchDocList = dao.getPatchWirings(devName);
+		if (patchDocList == null) {
+			return null;
+		}
 		for (ODocument patchDoc : patchDocList) {
-			String inDevName  = patchDoc.field("inDevName");
+			String inDevName  = patchDoc.field("inDeviceName");
 			String inPortName = patchDoc.field("inPortName");
 			PortData inPort = new PortData();
 			inPort.setDeviceName(inDevName);
 			inPort.setPortName(inPortName);
 
-			String outDevName  = patchDoc.field("outDevName");
+			String outDevName  = patchDoc.field("outDeviceName");
 			String outPortName = patchDoc.field("outPortName");
 			PortData outPort = new PortData();
 			outPort.setDeviceName(outDevName);
@@ -495,6 +499,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 //			res.setMessage(UNEXPECTED_ERROR);
 //			return res.toJson();
 
+		} catch (SQLException e) {
+			return res.toJson();
 		} finally {
 			if (logger.isDebugEnabled()) {
 				logger.debug(String.format("%s(ret=%s) - end", fname, res.toJson()));
