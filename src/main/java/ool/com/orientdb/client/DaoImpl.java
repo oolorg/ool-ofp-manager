@@ -13,7 +13,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,8 +25,8 @@ import org.apache.log4j.Logger;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-//import com.orientechnologies.orient.jdbc.OrientJdbcConnection;
 import com.orientechnologies.orient.jdbc.OrientJdbcConnection;
+//import com.orientechnologies.orient.jdbc.OrientJdbcConnection;
 
 /**
  * @author 1131080355959
@@ -1202,9 +1201,26 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getCableLinks(java.lang.String)
 	 */
 	@Override
-	public List<ODocument> getCableLinks(String devName) {
-		/* not implemented yet */
-		return null;
+	public List<ODocument> getCableLinks(String deviceName) throws SQLException {
+		final String fname = "getCableLinks";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
+		}
+		try {
+			String query = String.format(SQL_GET_CABLE_LINKS, deviceName);
+			if (logger.isInfoEnabled()) {
+				logger.info("query=" + query);
+			}
+			List<ODocument> documents = utils.query(database, query);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, documents));;
+			}
+			return documents;
+		} catch (IndexOutOfBoundsException e) {
+			return null;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
 	}
 
 	/*

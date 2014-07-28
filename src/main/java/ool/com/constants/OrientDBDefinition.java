@@ -42,6 +42,9 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PORT_INFO2 = "select from port where number = %s and deviceName = '%s'";
 	public static final String SQL_GET_LINK = "select from link where out = %s and in = %s";
 
+	public static final String SQL_GET_CABLE_LINKS    = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inNumber, "
+			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outNumber, @rid "
+			+ "from link where in.deviceName='%s' and out.@class='port'";
 	public static final String SQL_GET_CONNECTED_LINK = "select from link where in = %s";
 	public static final String SQL_IS_HAD_PATCH_WIRING = "select from patchWiring where parent = %s";
 	public static final String SQL_IS_CONNECTED_PATCH_WIRING = "select from patchWiring where out = %s or in = %s";
