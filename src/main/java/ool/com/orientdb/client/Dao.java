@@ -247,6 +247,30 @@ public interface Dao {
 	 */
 	List<ODocument> getDeviceList(String deviceName, String deviceType, String ofpFlag) throws SQLException;
 
+	/**
+	 *
+	 * @param outRid
+	 * @param inRid
+	 * @param band
+	 * @param used
+	 * @return
+	 * @throws SQLException
+	 */
 	int createLinkInfo(String outRid, String inRid, int band, int used) throws SQLException;
+
+	/**
+	 * Get link-list that  is connected to other devices port.
+	 * The link is correspond to LAN-cable or SPF-cable.
+	 * @param devName
+	 * @return
+	 */
+	List<ODocument> getCableLinks(String devName);
+
+	/**
+	 * Get patchWiring-list that is connected to other devices.
+	 * @param devName
+	 * @return
+	 */
+	List<ODocument> getPatchWirings(String devName);
 
 }

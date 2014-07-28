@@ -1159,4 +1159,25 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getCableLinks(java.lang.String)
+	 */
+	@Override
+	public List<ODocument> getCableLinks(String devName) {
+		/* not implemented yet */
+		return null;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getPatchWiring(java.lang.String)
+	 */
+	@Override
+	public List<ODocument> getPatchWirings(String devName) {
+		/* not implemented yet */
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
