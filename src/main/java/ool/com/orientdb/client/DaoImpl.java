@@ -1202,10 +1202,36 @@ public class DaoImpl implements Dao {
 			if (logger.isDebugEnabled()) {
 			//	logger.debug(String.format("%s(ret=%s) - end", rs.toString()));
 			}
+			return records.get(0).get("rid").toString();
+		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getPortRidFromDeviceNamePortNumber(java.lang.String, int)
+	 */
+	@Override
+	public String getPortRidFromDeviceNamePortNumber(String deviceName, int portNumber) throws SQLException {
+		final String fname = "getPortRidFromDeviceNamePortNumber";
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(deviceName=%s, portNumber=%s) - start", fname, deviceName, portNumber));
+		}
+		try {
+			List<Object> params = new ArrayList<Object>();
+			params.add(deviceName);
+			params.add(portNumber);
+			Connection conn = utilsJdbc.getConnection(false);
+			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_PORTRID_FROM_DEVICENAME_PORTNUMBER,
+                    new MapListHandler(), params);
+			if (records.size() <= 0) {
+                // error
+			}
+			if (logger.isTraceEnabled()) {
+			//	logger.debug(String.format("%s(ret=%s) - end", rs.toString()));
+			}
 			return records.get(0).get("name").toString();
-		} catch (IndexOutOfBoundsException ioobe) {
-			throw new SQLException(String.format(NOT_FOUND, datapathId), ioobe);
-		}  catch (Exception e){
+		} catch (Exception e){
 			throw new SQLException(e.getMessage());
 		}
 	}
