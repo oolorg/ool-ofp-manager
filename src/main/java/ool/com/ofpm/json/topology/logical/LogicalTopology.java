@@ -69,7 +69,7 @@ public class LogicalTopology implements Cloneable {
 
 
 
-	public class OfpConDeviceInfo extends Node implements Cloneable {
+	public static class OfpConDeviceInfo extends Node implements Cloneable {
 		private List<OfpConPortInfo> ports;
 
 		/* Setters and Getters */
@@ -115,7 +115,7 @@ public class LogicalTopology implements Cloneable {
 			return gson.toJson(this, type);
 		}
 	}
-	public class OfpConPortInfo extends PortInfo implements Cloneable {
+	public static class OfpConPortInfo extends PortInfo implements Cloneable {
 		private PortData ofpPortLink;
 
 		/* Setters and Getters */

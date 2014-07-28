@@ -10,6 +10,7 @@ public class OfpmDefinition {
 	public static final int STATUS_SUCCESS        = 200;
 	public static final int STATUS_CREATED        = 201;
 	public static final int STATUS_BAD_REQUEST    = 400;
+	public static final int STATUS_UNAUTHORIZED   = 401;
 	public static final int STATUS_FORBIDDEN      = 403;
 	public static final int STATUS_NOTFOUND       = 404;
 	public static final int STATUS_CONFLICT       = 409;
@@ -59,7 +60,7 @@ public class OfpmDefinition {
 	public static final String CSV_SPLIT_REGEX = ",";
 	public static final String REGEX_NUMBER = "[0-9]+";
 	public static final String REGEX_DATAPATH_ID = "[0-9a-fA-F]{1,16}";
-	
+
 	/* Define max macaddress value */
 	public static final int MIN_MACADDRESS_VALUE = 1;
 	public static final long MAX_MACADDRESS_VALUE = 281474976710655L;

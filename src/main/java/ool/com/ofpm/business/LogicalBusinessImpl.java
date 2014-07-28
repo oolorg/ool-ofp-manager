@@ -1,12 +1,17 @@
 package ool.com.ofpm.business;
 
+import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.OrientDBDefinition.*;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import ool.com.dmdb.client.DeviceManagerDBClient;
 import ool.com.dmdb.client.DeviceManagerDBClientImpl;
@@ -18,10 +23,11 @@ import ool.com.ofpm.client.AgentClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
 import ool.com.ofpm.exception.AgentManagerException;
+import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.common.GraphDevicePort;
 import ool.com.ofpm.json.device.ConnectedPortGetJsonOut;
-import ool.com.ofpm.json.device.Node;
+import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperInData;
 import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq;
@@ -30,22 +36,31 @@ import ool.com.ofpm.json.ofc.PatchLink;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
 import ool.com.ofpm.json.topology.logical.LogicalTopology;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConDeviceInfo;
+import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConPortInfo;
 import ool.com.ofpm.json.topology.logical.LogicalTopologyGetJsonOut;
+import ool.com.ofpm.json.topology.logical.LogicalTopologyUpdateJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.GraphDBUtil;
 import ool.com.ofpm.utils.OFPMUtils;
+import ool.com.ofpm.validate.common.BaseValidate;
+import ool.com.ofpm.validate.topology.logical.LogicalTopologyValidate;
 import ool.com.openam.client.OpenAmClient;
 import ool.com.openam.client.OpenAmClientException;
 import ool.com.openam.client.OpenAmClientImpl;
 import ool.com.openam.json.OpenAmIdentitiesOut;
 import ool.com.openam.json.TokenIdOut;
-import ool.com.orientdb.client.ConnectionUtils;
+
+import ool.com.openam.json.TokenValidChkOut;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.Dao;
 import ool.com.orientdb.client.DaoImpl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+
+import com.google.gson.JsonSyntaxException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class LogicalBusinessImpl implements LogicalBusiness {
 	private static final Logger logger = Logger.getLogger(LogicalBusinessImpl.class);
@@ -56,6 +71,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	Config conf = new ConfigImpl();
 
 	OFPatchCommon ofPatchBusiness = new OFPatchCommonImpl();
+	Dao dao = null;
 
 	public LogicalBusinessImpl() {
 		if (logger.isDebugEnabled()) {
@@ -63,98 +79,155 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 	}
 
-	private void filterTopology(List<OfpConDeviceInfo> nodes, List<LogicalLink> linkList) {
-		String fname = "filterTopology";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(nodes=%s, linkList=%s) - start", fname, nodes, linkList));
+	/**
+	 * Normalize nodes for update/get LogicalTopology.
+	 * Remove node that deviceType is not SERVER or SWITCH and remove node that have no ports.
+	 * and remove node that have no ports.
+	 * @param nodes
+	 * @throws SQLException
+	 */
+	private void normalizeLogicalNode(List<OfpConDeviceInfo> nodes) throws SQLException {
+		Map<String, Boolean> devTypeMap = new HashMap<String, Boolean>();
+		List<OfpConDeviceInfo> removalNodeList = new ArrayList<OfpConDeviceInfo>();
+		for (OfpConDeviceInfo node : nodes) {
+			String devType = node.getDeviceType();
+			if (!devType.equals(NODE_TYPE_SERVER) && !devType.equals(NODE_TYPE_SWITCH)) {
+				removalNodeList.add(node);
+				continue;
+			}
+
+			List<OfpConPortInfo> ports = node.getPorts();
+			List<OfpConPortInfo> removalPortList = new ArrayList<OfpConPortInfo>();
+			for (OfpConPortInfo port : ports) {
+				String neiDevName = port.getOfpPortLink().getDeviceName();
+				/* check outDevice is LEAF, other wise don't append port */
+				Boolean isOfpSw = devTypeMap.get(neiDevName);
+				if (isOfpSw == null) {
+					ODocument outDevDoc = dao.getDeviceInfo(neiDevName);
+					String outDevType = outDevDoc.field("type");
+					isOfpSw = StringUtils.equals(outDevType, NODE_TYPE_LEAF);
+					devTypeMap.put(neiDevName, isOfpSw);
+				}
+				if (!isOfpSw) {
+					removalPortList.add(port);
+				}
+			}
+			ports.removeAll(removalPortList);
+
+			/* if node don't has port that connect to leaf-switch, node remove from nodeList */
+			if (ports.isEmpty()) {
+				removalNodeList.add(node);
+			}
+		}
+		nodes.removeAll(removalNodeList);
+	}
+
+	/**
+	 * Make node for update/get-LogicalTopology from deviceName, and return it.
+	 * @param devName
+	 * @return node for Logicaltopology.
+	 * @throws SQLException
+	 */
+	private OfpConDeviceInfo getLogicalNode(String devName) throws SQLException {
+		ODocument devDoc = dao.getDeviceInfo(devName);
+		String   devType = devDoc.field("type");
+		OfpConDeviceInfo node = new OfpConDeviceInfo();
+		node.setDeviceName(devName);
+		node.setDeviceType(devType);
+
+		List<OfpConPortInfo> portList = new ArrayList<OfpConPortInfo>();
+		List<ODocument> linkDocList = dao.getCableLinks(devName);
+		for (ODocument linkDoc : linkDocList) {
+			String outDevName = linkDoc.field("outDeviceName");
+
+			PortData ofpPort = new PortData();
+			String outPortName = linkDoc.field("outPortName");
+			String outPortNmbr = linkDoc.field("outPortNmbr");
+			ofpPort.setDeviceName(outDevName);
+			ofpPort.setPortName(outPortName);
+			ofpPort.setPortNumber(Integer.parseInt(outPortNmbr));
+
+			String inPortName = linkDoc.field("inPortName");
+			String inPortNmbr = linkDoc.field("inPortNo");
+			OfpConPortInfo port = new OfpConPortInfo();
+			port.setPortName(inPortName);
+			port.setPortNumber(Integer.parseInt(inPortNmbr));
+			port.setOfpPortLink(ofpPort);
+
+			portList.add(port);
 		}
 
-		List<String> deviceNames = new ArrayList<String>();
-		for (Node node : nodes) {
-			deviceNames.add(node.getDeviceName());
+		node.setPorts(portList);
+
+		return node;
+	}
+
+
+	/**
+	 * Normalize links for update/get LogicalTopology.
+	 * Remove list that does not contains nodes.
+	 * @param nodes
+	 * @param links
+	 */
+	private void normalizeLogicalLink(List<OfpConDeviceInfo> nodes, List<LogicalLink> links) {
+		String fname = "normalizeLogicalLink";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(nodes=%s, links=%s) - start", fname, nodes, links));
 		}
+
 		List<LogicalLink> removalLinks = new ArrayList<LogicalLink>();
-		for (LogicalLink link : linkList) {
+		for (LogicalLink link : links) {
 			if (!OFPMUtils.nodesContainsPort(nodes, link.getLink().get(0))) {
 				removalLinks.add(link);
 			} else if (!OFPMUtils.nodesContainsPort(nodes, link.getLink().get(1))) {
 				removalLinks.add(link);
 			}
 		}
-		linkList.removeAll(removalLinks);
-
+		links.removeAll(removalLinks);
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s() - end", fname));
 		}
 	}
 
-	public BaseResponse getLogicalTopologyExec(List<Node> nodeList,List<LogicalLink> linkList) {
-		BaseResponse ret = new BaseResponse();
-//		ConnectionUtils utils = new ConnectionUtilsImpl();
-//		ODocument document = null;
-//		Dao dao = null;
-//		LogicalLink link = null;
-//		List<List<String>> connectNodeList = new ArrayList<List<String>>();
-//		List<List<String>> connectedDeviceNameList = new ArrayList<List<String>>();
-//
-//		try {
-//			dao = new DaoImpl(utils);
-//
-//			for (int i=0; i < nodeList.size(); i++) {
-//				Node node = nodeList.get(i);
-//				document = dao.getDeviceInfo(node.getDeviceName());
-//				node.setDeviceName(document.field("name").toString());
-//				node.setDeviceType(document.field("type").toString());
-//
-//
-//				// TODO: add ports and check DeviceType
-//			}
-//
-//			for (Node node : nodeList) {
-//				connectedDeviceNameList.addAll(dao.getPatchConnectedDevice(node.getDeviceName()));
-//			}
-//			for(List<String> connectNode : connectedDeviceNameList) {
-//				if (isOverlap(connectNodeList, connectNode)) {
-//					continue;
-//				}
-//				connectNodeList.add(connectNode);
-//			}
-//
-//			for (List<String> cn : connectNodeList) {
-//				link = new LogicalLink();
-//				link.setDeviceName(cn);
-//				linkList.add(link);
-//			}
-//
-//			ret.setStatus(STATUS_SUCCESS);
-//    	} catch (SQLException e) {
-//    		logger.error(e.getMessage());
-//			ret.setMessage(e.getMessage());
-//    		if (e.getCause() != null) {
-//    			ret.setStatus(STATUS_NOTFOUND);
-//    		} else {
-//    			ret.setStatus(STATUS_INTERNAL_ERROR);
-//    		}
-//		} catch (RuntimeException re) {
-//			logger.error(re.getMessage());
-//			ret.setStatus(STATUS_INTERNAL_ERROR);
-//    		ret.setMessage(re.getMessage());
-//		}
-//    	finally {
-//			try {
-//				if(dao != null) {
-//					dao.close();
-//				}
-//			} catch (SQLException e) {
-//				logger.error(e.getMessage());
-//				ret.setStatus(STATUS_INTERNAL_ERROR);
-//	    		ret.setMessage(e.getMessage());
-//			}
-//		}
+	/**
+	 * Make list of link for LogicalTopology from deviceName, and return it.
+	 * @param devName
+	 * @return list of link for LogicalTopology.
+	 */
+	private Set<LogicalLink> getLogicalLink(String devName) {
+		Set<LogicalLink> linkSet = new HashSet<LogicalLink>();
+		List<ODocument> patchDocList = dao.getPatchWirings(devName);
+		for (ODocument patchDoc : patchDocList) {
+			String inDevName  = patchDoc.field("inDevName");
+			String inPortName = patchDoc.field("inPortName");
+			PortData inPort = new PortData();
+			inPort.setDeviceName(inDevName);
+			inPort.setPortName(inPortName);
 
-		return ret;
+			String outDevName  = patchDoc.field("outDevName");
+			String outPortName = patchDoc.field("outPortName");
+			PortData outPort = new PortData();
+			outPort.setDeviceName(outDevName);
+			outPort.setPortName(outPortName);
+
+			List<PortData> ports = new ArrayList<PortData>();
+			ports.add(inPort);
+			ports.add(outPort);
+
+			LogicalLink link = new LogicalLink();
+			link.setLink(ports);
+
+			linkSet.add(link);
+		}
+		if (linkSet.isEmpty()) {
+			return null;
+		}
+		return linkSet;
 	}
 
+	/**
+	 *
+	 */
 	public String getLogicalTopology(String deviceNamesCSV, String tokenId) {
 		String fname = "getLogicalTopology";
 		if (logger.isDebugEnabled()) {
@@ -162,72 +235,89 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 
 		LogicalTopologyGetJsonOut res = new LogicalTopologyGetJsonOut();
-		LogicalTopology resultData = new LogicalTopology();
-		String openamUrl = conf.getString(OPEN_AM_URL);
-		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
 
-//		try {
-//			BaseValidate.checkStringBlank(deviceNamesCSV);
-//			List<String> deviceNames = Arrays.asList(deviceNamesCSV.split(CSV_SPLIT_REGEX));
-//			BaseValidate.checkArrayStringBlank(deviceNames);
-//			BaseValidate.checkArrayOverlapped(deviceNames);
-//			BaseValidate.checkStringBlank(tokenId);
-//
-//			boolean isTokenValid = false;
-//			if (openAmClient != null) {
-//				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
-//				isTokenValid = tokenValidchkOut.getIsTokenValid();
-//			}
-//			if (isTokenValid != true) {
-//				if (logger.isDebugEnabled()) {
-//					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
-//				}
-//				res.setStatus(STATUS_BAD_REQUEST);
-//				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
-//				String ret = res.toJson();
-//				if (logger.isDebugEnabled()) {
-//					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-//				}
-//				return ret;
-//			}
-//
-//			List<Node> nodeList = new ArrayList<Node>();
-//			for (String deviceName : deviceNames) {
-//				Node node = new Node();
-//				node.setDeviceName(deviceName);
-//				nodeList.add(node);
-//			}
-//
-//			List<LogicalLink> linkList = new ArrayList<LogicalLink>();
-//			BaseResponse ret = getLogicalTopologyExec(nodeList, linkList);
-//			if (ret.getStatus() != STATUS_SUCCESS) {
-//				nodeList.removeAll(nodeList);
-//			}
-//
-//			this.filterTopology(nodeList, linkList);
-//
-//			// create response data
-//			resultData.setNodes(nodeList);
-//			resultData.setLinks(linkList);
-//			res.setResult(resultData);
-//			res.setStatus(ret.getStatus());
-//			res.setMessage(ret.getMessage());
-//
-//		} catch (ValidateException ve) {
-//			logger.error(ve);
-//			res.setStatus(STATUS_BAD_REQUEST);
-//			res.setMessage(ve.getMessage());
-//
-//		} catch (OpenAmClientException oace) {
-//			logger.error(oace);
-//			res.setStatus(STATUS_INTERNAL_ERROR);
-//			res.setMessage(oace.getMessage());
-//
-//		} catch (Exception e) {
-//			logger.error(e);
-//			res.setStatus(STATUS_INTERNAL_ERROR);
-//			res.setMessage(e.getMessage());
-//		}
+		/* PHASE 1: Authentication */
+		try {
+			String openamUrl = conf.getString(OPEN_AM_URL);
+			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
+			boolean isTokenValid = false;
+			if (openAmClient != null) {
+				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
+				isTokenValid = tokenValidchkOut.getIsTokenValid();
+			}
+			if (isTokenValid != true) {
+				logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				res.setStatus(STATUS_UNAUTHORIZED);
+				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				String ret = res.toJson();
+				if (logger.isDebugEnabled()) {
+					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				}
+				return ret;
+			}
+		} catch (OpenAmClientException e) {
+			logger.error(e);
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
+
+		/* PHASE 2: Validation */
+		List<String> deviceNames = null;
+		try {
+			BaseValidate.checkStringBlank(deviceNamesCSV);
+			deviceNames = Arrays.asList(deviceNamesCSV.split(CSV_SPLIT_REGEX));
+			BaseValidate.checkArrayStringBlank(deviceNames);
+			BaseValidate.checkArrayOverlapped(deviceNames);
+			BaseValidate.checkStringBlank(tokenId);
+		} catch (ValidateException e) {
+			logger.error(e.getMessage());
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(e.getMessage());
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
+
+		/* PHASE 3: Get logical topology */
+		try {
+			dao = new DaoImpl(new ConnectionUtilsImpl());
+			List<OfpConDeviceInfo> nodeList = new ArrayList<OfpConDeviceInfo>();
+			List<LogicalLink> linkList = new ArrayList<LogicalLink>();
+			for (String devName : deviceNames) {
+				OfpConDeviceInfo node = this.getLogicalNode(devName);
+				if (node == null) {
+					continue;
+				}
+				nodeList.add(node);
+
+				Set<LogicalLink> linkSet = this.getLogicalLink(devName);
+				if (linkSet == null) {
+					continue;
+				}
+				linkList.addAll(linkSet);
+			}
+			this.normalizeLogicalNode(nodeList);
+			this.normalizeLogicalLink(nodeList, linkList);
+
+			LogicalTopology topology = new LogicalTopology();
+			topology.setNodes(nodeList);
+			topology.setLinks(linkList);
+
+			// create response data
+			res.setResult(topology);
+			res.setStatus(STATUS_SUCCESS);
+		} catch (Exception e) {
+			logger.error(e);
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+		}
 
 		String ret = res.toJson();
 		if (logger.isDebugEnabled()) {
@@ -244,75 +334,115 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		BaseResponse res = new BaseResponse();
 		res.setStatus(STATUS_SUCCESS);
-		String openamUrl = conf.getString(OPEN_AM_URL);
-		OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
 
+		LogicalTopologyUpdateJsonIn requestedTopology = null;
 		try {
-//			LogicalTopologyUpdateJsonIn requestedTopology = LogicalTopologyUpdateJsonIn.fromJson(requestedTopologyJson);
-//
-//			LogicalTopologyValidate validator = new LogicalTopologyValidate();
-//			validator.checkValidationRequestIn(requestedTopology);
-//
-//			String tokenId = requestedTopology.getTokenId();
-//			boolean isTokenValid = false;
-//			if (openAmClient != null) {
-//				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
-//				isTokenValid = tokenValidchkOut.getIsTokenValid();
-//			}
-//			if (isTokenValid != true) {
-//				if (logger.isDebugEnabled()) {
-//					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
-//				}
-//				res.setStatus(STATUS_BAD_REQUEST);
-//				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
-//				String ret = res.toJson();
-//				if (logger.isDebugEnabled()) {
-//					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-//				}
-//				return ret;
-//			}
-//
-//			List<Node> requestedNodes = requestedTopology.getNodes();
-//			List<LogicalLink> currentLinkList = new ArrayList<LogicalLink>();
-//			BaseResponse getltsRet = getLogicalTopologyExec(requestedNodes, currentLinkList);
-//			if (getltsRet.getStatus() != STATUS_SUCCESS) {
-//				res.setStatus(getltsRet.getStatus());
-//				res.setMessage(getltsRet.getMessage());
-//				String ret = res.toJson();
-//				if (logger.isDebugEnabled()) {
-//					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-//				}
-//				return ret;
-//			}
-//
-//			this.filterTopology(requestedNodes, currentLinkList);
-//
-//			requestedTopology.getLinks().removeAll(currentLinkList);
-//			List<LogicalLink> incLinkList = requestedTopology.getLinks();
-//			currentLinkList.removeAll(incLinkList);
-//			List<LogicalLink> decLinkList = currentLinkList;
-//
-//			List<PatchLink> reducedLinks = new ArrayList<PatchLink>();
-//			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
-//			for (LogicalLink link : decLinkList) {
-//
-//				GraphDBPatchLinkJsonRes reducedPatches = ofPatchBusiness.disConnectPatch(link.getDeviceName());
-//				if (reducedPatches.getStatus() != STATUS_SUCCESS) {
-//					res.setStatus(reducedPatches.getStatus());
-//					res.setMessage(reducedPatches.getMessage());
-//					return res.toJson();
-//				}
-//				reducedLinks.addAll(reducedPatches.getResult());
-//			}
-//			for (LogicalLink link : incLinkList) {
-//
-//				GraphDBPatchLinkJsonRes augmentedPatches = ofPatchBusiness.connectPatch(link.getDeviceName());
-//				if (augmentedPatches.getStatus() != STATUS_CREATED) {
-//					res.setStatus(augmentedPatches.getStatus());
-//					res.setMessage(augmentedPatches.getMessage());
-//					return res.toJson();
-//				}
-//
+			requestedTopology = LogicalTopologyUpdateJsonIn.fromJson(requestedTopologyJson);
+			if (requestedTopology == null) {
+
+			}
+		} catch (JsonSyntaxException jse) {
+			logger.error(jse);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
+			String ret = res.toString();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
+
+		/* PHASE 1: Authenticate */
+		try {
+			String openamUrl = conf.getString(OPEN_AM_URL);
+			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
+			String tokenId = requestedTopology.getTokenId();
+			boolean isTokenValid = false;
+			if (openAmClient != null) {
+				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
+				isTokenValid = tokenValidchkOut.getIsTokenValid();
+			}
+			if (isTokenValid != true) {
+				if (logger.isDebugEnabled()) {
+					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				}
+				res.setStatus(STATUS_BAD_REQUEST);
+				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				String ret = res.toJson();
+				if (logger.isDebugEnabled()) {
+					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				}
+				return ret;
+			}
+		} catch (OpenAmClientException e) {
+			logger.error(e);
+			res.setStatus(STATUS_UNAUTHORIZED);
+			res.setMessage(e.getMessage());
+			String ret = res.toString();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
+
+		/* PHASE 2: Validation */
+		try {
+			LogicalTopologyValidate validator = new LogicalTopologyValidate();
+			validator.checkValidationRequestIn(requestedTopology);
+		} catch (ValidateException ve) {
+			logger.error(ve);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(ve.getMessage());
+			String ret = res.toString();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
+
+		/* PHASE 3: Update topology */
+		try {
+			List<OfpConDeviceInfo> requestedNodes = requestedTopology.getNodes();
+			List<LogicalLink> requestedLinkList = requestedTopology.getLinks();
+			List<LogicalLink> currentLinkList = new ArrayList<LogicalLink>();
+
+			/* Create current links */
+			for (OfpConDeviceInfo requestedNode : requestedNodes) {
+				String devName = requestedNode.getDeviceName();
+
+				Set<LogicalLink> linkSet = this.getLogicalLink(devName);
+				if (linkSet != null) {
+					currentLinkList.addAll(linkSet);
+				}
+			}
+			this.normalizeLogicalLink(requestedNodes, currentLinkList);
+
+			/* Compute inclemented/declemented LogicalLink */
+			List<LogicalLink> incLinkList = new ArrayList<LogicalLink>();
+			incLinkList.addAll(requestedLinkList);
+			incLinkList.removeAll(currentLinkList);
+
+			List<LogicalLink> decLinkList = new ArrayList<LogicalLink>();
+			decLinkList.addAll(currentLinkList);
+			decLinkList.removeAll(requestedLinkList);
+
+			List<PatchLink> reducedLinks = new ArrayList<PatchLink>();
+			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
+			for (LogicalLink link : decLinkList) {
+//				dao.getPatchWirings(link);
+//				dao.deleteRecordPatchWiring(link);
+//				dao.updateLinkWeight(weight, portRid, patchRid);
+//				List<PatchLink> reducedPatches = null;
+//				reducedLinks.addAll(reducedPatches);
+			}
+			for (LogicalLink link : incLinkList) {
+//				dao.getShortestPath(link);
+//				dao.getLinkInfo(outRid, inRid);
+//				dao.updateLinkWeight(weight, portRid, patchRid);
+//				List<patchLink> augumentedPatches = null;
+//				augumentedLinks.addAll(autumentedPatches);
+
+				/* Notify NCS */
 //				List<String> deviceNames = link.getDeviceName();
 //				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
 //				int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
@@ -321,10 +451,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 //					res.setMessage(augmentedPatches.getMessage());
 //					return res.toJson();
 //				}
-//
-//				augmentedLinks.addAll(augmentedPatches.getResult());
-//			}
-//
+			}
+
 //			agentManager = AgentManager.getInstance();
 //			Map<AgentClient, List<AgentUpdateFlowData>> agentUpdateFlowDataList = this.makeAgentUpdateFlowList(reducedLinks, "delete");
 //			Map<AgentClient, List<AgentUpdateFlowData>> bufAgentUpdateReqList = this.makeAgentUpdateFlowList(augmentedLinks, "create");
@@ -350,24 +478,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 //				}
 //			}
 			return res.toJson();
-//		} catch (JsonSyntaxException jse) {
-//			logger.error(jse);
-//			res.setStatus(STATUS_BAD_REQUEST);
-//			res.setMessage(INVALID_JSON);
-//			return res.toJson();
-//
-//		} catch (ValidateException ve) {
-//			logger.error(ve);
-//			res.setStatus(STATUS_BAD_REQUEST);
-//			res.setMessage(ve.getMessage());
-//			return res.toJson();
-//
-//		} catch (AgentClientException ace) {
-//			logger.error(ace);
-//			res.setStatus(STATUS_INTERNAL_ERROR);
-//			res.setMessage(ace.getMessage());
-//			return res.toJson();
-//
+
 //		} catch (AgentManagerException ame) {
 //			logger.error(ame);
 //			res.setStatus(STATUS_INTERNAL_ERROR);
@@ -518,11 +629,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(requestedData=%s) - start", fname, requestedData));
 		}
-		ConnectionUtils utils = new ConnectionUtilsImpl();
-		Dao dao;
+
 		String rid = "";
 		try {
-			dao = new DaoImpl(utils);
+			dao = new DaoImpl(new ConnectionUtilsImpl());
 			rid = dao.getDeviceNameFromDatapathId(requestedData);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
