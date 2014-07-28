@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.jdbc.OrientJdbcConnection;
+import com.orientechnologies.orient.jdbc.OrientJdbcDriver;
 //import com.orientechnologies.orient.jdbc.OrientJdbcConnection;
 
 /**
@@ -1177,10 +1178,11 @@ public class DaoImpl implements Dao {
 			logger.debug(String.format("%s(datapathId=%s) - start", fname, datapathId));
 		}
 		try {
+			DriverManager.registerDriver(new OrientJdbcDriver());
 			Properties userInfo = new Properties();
 			userInfo.put("user", "admin");
 			userInfo.put("password", "admin");
-			Connection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:172.16.1.177:2480/of-patch", userInfo);
+			Connection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:172.16.1.177:2424/of-patch", userInfo);
 			PreparedStatement pstmt = conn.prepareStatement(SQL_GET_DEVICENAME_FROM_DATAPATHID);
 			pstmt.setString(1, datapathId);
 
