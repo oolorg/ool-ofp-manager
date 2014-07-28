@@ -41,7 +41,8 @@ public class OfpmDefinition {
 
 	/* Define Database url */
 	public static final String CONFIG_KEY_DB_URL = "db.url";
-	public static final String CONFIG_KEY_DB_USER= "db.user";
+	public static final String CONFIG_KEY_DB_USER = "db.user";
+	public static final String CONFIG_KEY_DB_DRIVER = "db.driver";
 	public static final String CONFIG_KEY_DB_PASSWORD = "db.password";
 	public static final String DB_DEFAULT = "admin";
 
