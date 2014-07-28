@@ -2,6 +2,7 @@ package ool.com.ofpm.business;
 
 import static ool.com.constants.OfpmDefinition.*;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +40,10 @@ import ool.com.openam.client.OpenAmClientException;
 import ool.com.openam.client.OpenAmClientImpl;
 import ool.com.openam.json.OpenAmIdentitiesOut;
 import ool.com.openam.json.TokenIdOut;
+import ool.com.orientdb.client.ConnectionUtils;
+import ool.com.orientdb.client.ConnectionUtilsImpl;
+import ool.com.orientdb.client.Dao;
+import ool.com.orientdb.client.DaoImpl;
 
 import org.apache.log4j.Logger;
 
@@ -502,5 +507,27 @@ public class LogicalBusinessImpl implements LogicalBusiness {
     		logger.debug(String.format("isOverlap(ret=%s) - end ", false));
     	}
 		return false;
+	}
+
+	/* (non-Javadoc)
+	 * @see ool.com.ofpm.business.LogicalBusiness#setFlow(java.lang.String)
+	 */
+	@Override
+	public String setFlow(String requestedData) {
+		final String fname = "setFlow";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(requestedData=%s) - start", fname, requestedData));
+		}
+		ConnectionUtils utils = new ConnectionUtilsImpl();
+		Dao dao;
+		String rid = "";
+		try {
+			dao = new DaoImpl(utils);
+			rid = dao.getDeviceNameFromDatapathId(requestedData);
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.getMessage();
+		}
+		return rid;
 	}
 }

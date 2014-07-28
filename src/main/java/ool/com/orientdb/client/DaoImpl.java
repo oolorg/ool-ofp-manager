@@ -8,11 +8,17 @@ package ool.com.orientdb.client;
 import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OrientDBDefinition.*;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -20,6 +26,8 @@ import org.apache.log4j.Logger;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+//import com.orientechnologies.orient.jdbc.OrientJdbcConnection;
+import com.orientechnologies.orient.jdbc.OrientJdbcConnection;
 
 /**
  * @author 1131080355959
@@ -1155,6 +1163,35 @@ public class DaoImpl implements Dao {
 			return documents;
 		} catch (IndexOutOfBoundsException ioobe) {
 			throw new SQLException(String.format(NOT_FOUND, deviceName), ioobe);
+		}  catch (Exception e){
+			throw new SQLException(e.getMessage());
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getDeviceNameFromDatapathId(java.lang.String)
+	 */
+	@Override
+	public String getDeviceNameFromDatapathId(String datapathId) throws SQLException {
+		final String fname = "getDeviceNameFromDatapathId";
+		if (logger.isDebugEnabled()){
+			logger.debug(String.format("%s(datapathId=%s) - start", fname, datapathId));
+		}
+		try {
+			Properties userInfo = new Properties();
+			userInfo.put("user", "admin");
+			userInfo.put("password", "admin");
+			Connection conn = (OrientJdbcConnection) DriverManager.getConnection("jdbc:orient:remote:172.16.1.177/of-patch", userInfo);
+			PreparedStatement pstmt = conn.prepareStatement(SQL_GET_DEVICENAME_FROM_DATAPATHID);
+			pstmt.setString(1, datapathId);
+
+			ResultSet rs = pstmt.executeQuery();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", rs.toString()));
+			}
+			return rs.getString("@rid");
+		} catch (IndexOutOfBoundsException ioobe) {
+			throw new SQLException(String.format(NOT_FOUND, datapathId), ioobe);
 		}  catch (Exception e){
 			throw new SQLException(e.getMessage());
 		}

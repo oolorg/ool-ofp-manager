@@ -49,6 +49,7 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PATCH_CONNECTED_DEVICE_NAME = "select from patchWiring where inDeviceName = '%s'";
 
 	public static final String SQL_GET_PORT_LIST = "select from port where deviceName = '%s'";
+	public static final String SQL_GET_DEVICENAME_FROM_DATAPATHID = "select name from node where datapathId = ?";
 
 	/* insert */
 	public static final String SQL_INSERT_PATCH_WIRING = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";

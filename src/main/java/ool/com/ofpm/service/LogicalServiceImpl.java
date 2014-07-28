@@ -27,7 +27,7 @@ public class LogicalServiceImpl implements LogicalService {
 
 	@Override
 	public Response getLogicalTopology(String deviceNamesCSV, String tokenId) {
-		String fname = "getLogicalTopology";
+		final String fname = "getLogicalTopology";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceNamesCSV=%s, tokenId=%s) - start", fname, deviceNamesCSV, tokenId));
 		}
@@ -49,7 +49,7 @@ public class LogicalServiceImpl implements LogicalService {
 
 	@Override
 	public Response updateLogicalTopology(String requestedTopologyJson) {
-		String fname = "updateLogicalTopology";
+		final String fname = "updateLogicalTopology";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(requestedTopologyJson=%s) - start", fname, requestedTopologyJson));
 		}
@@ -74,24 +74,28 @@ public class LogicalServiceImpl implements LogicalService {
 	 */
 	@Override
 	public Response setFlow(String requestedData) {
-		String fname = "setFlow";
-		Client c = Client.create();
-		WebResource r = c.resource("http://172.16.1.85:28080/ofc/ryu/ctrl/test");
-		String html = r.post(String.class, "{}");
-		return Response.ok(html).type(MediaType.APPLICATION_JSON_TYPE).build();
-/*
+		final String fname = "setFlow";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(requestedTopologyJson=%s) - start", fname, requestedData));
+			logger.debug(String.format("%s(requestedData=%s) - start", fname, requestedData));
 		}
+		
+		//Client c = Client.create();
+		//WebResource r = c.resource("http://172.16.1.85:28080/ofc/ryu/ctrl/test");
+		//String html = r.post(String.class, "{}");
+
 		this.injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
 				bind(LogicalBusiness.class).to(LogicalBusinessImpl.class);
 			}
 		});
+		LogicalServiceImpl main = this.injector.getInstance(LogicalServiceImpl.class);
+		String resLogiBiz = main.logiBiz.setFlow(requestedData);
+		
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));
 		}
-*/
+		return Response.ok(resLogiBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
+
 	}
 }

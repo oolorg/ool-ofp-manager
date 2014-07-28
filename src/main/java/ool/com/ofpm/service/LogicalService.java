@@ -33,5 +33,6 @@ public interface LogicalService {
 	@POST
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
+	@Path("/setFlow")
 	public Response setFlow(@RequestBody String requestedData);
 }

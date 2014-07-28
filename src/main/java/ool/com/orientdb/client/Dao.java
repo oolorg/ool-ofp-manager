@@ -246,6 +246,14 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	List<ODocument> getDeviceList(String deviceName, String deviceType, String ofpFlag) throws SQLException;
+	
+	/**
+	 * get device name from datapathid
+	 * @param datapathId
+	 * @return device name
+	 * @throws SQLException failed sql
+	 */
+	String getDeviceNameFromDatapathId(String datapathId) throws SQLException;
 
 	int createLinkInfo(String outRid, String inRid, int band, int used) throws SQLException;
 
