@@ -279,7 +279,8 @@ public interface Dao {
 	 * Get patchWiring-list that is connected to other devices.
 	 * @param devName
 	 * @return
+	 * @throws SQLException
 	 */
-	List<ODocument> getPatchWirings(String devName);
+	List<ODocument> getPatchWirings(String devName) throws SQLException;
 
 }

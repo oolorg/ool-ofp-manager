@@ -1242,9 +1242,25 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getPatchWiring(java.lang.String)
 	 */
 	@Override
-	public List<ODocument> getPatchWirings(String devName) {
-		/* not implemented yet */
-		// TODO Auto-generated method stub
-		return null;
+	public List<ODocument> getPatchWirings(String deviceName) throws SQLException {
+		final String fname = "getPatchWirings";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
+		}
+		try {
+			String query = String.format(SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME, deviceName);
+			if (logger.isInfoEnabled()) {
+				logger.info("query=" + query);
+			}
+			List<ODocument> documents = utils.query(database, query);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, documents));;
+			}
+			return documents;
+		} catch (IndexOutOfBoundsException e) {
+			return null;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
 	}
 }
