@@ -283,4 +283,61 @@ public interface Dao {
 	 */
 	List<ODocument> getPatchWirings(String devName) throws SQLException;
 
+	/**
+	 * Get patchWiring-list from devices port.
+	 * @param deviceName
+	 * @param portName
+	 * @return
+	 */
+	List<Map<String, Object>> getPatchWirings(String deviceName, String portName);
+
+	/**
+	 * Delete patchWiring-list from devices port.
+	 * @param deviceName
+	 * @param portName
+	 */
+	void deletePatchWiring(String deviceName, String portName);
+
+	/**
+	 * Get DeviceInfo from devices rid.
+	 * @param ofpRid
+	 * @return
+	 */
+	Map<String, Object> getDeviceInfoFromDeviceRid(String ofpRid);
+
+	/**
+	 * Get link-list that is connected to other devices port from ports rid.
+	 * The link is correspond to LAN-cable or SPF-cable.
+	 * @param inPortRid
+	 * @return
+	 */
+	Map<String, Object> getCableLinkFromPortRid(String inPortRid);
+
+	/**
+	 * Modify used-value of cable-link that include ports-rid.
+	 * Calbe-link represent LAN-Cable, SFP-Cable.
+	 * @param inPortRid
+	 * @param newUsed
+	 */
+	void updateCableLinkUsedFromPortRid(String inPortRid, int newUsed);
+
+	/**
+	 * Get port-to-port path that computed by dijkstra.
+	 * @param txPortRid Start port.
+	 * @param rxPortRid End port.
+	 * @return
+	 */
+	List<Map<String, Object>> getShortestPath(String txPortRid, String rxPortRid);
+
+	/**
+	 * Insert patch-wiring infromation into db.
+	 * @param ofpRid RID of of-patch switch.
+	 * @param inPortRid RID of of-patchs in port.
+	 * @param outPortRid RID of of-patchs out port.
+	 * @param inDeviceName
+	 * @param inPortName
+	 * @param outDeviceName
+	 * @param outPortName
+	 */
+	void insertPatchWiring(String ofpRid, String inPortRid, String outPortRid, String inDeviceName, String inPortName, String outDeviceName, String outPortName);
 }
