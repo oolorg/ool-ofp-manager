@@ -254,6 +254,15 @@ public interface Dao {
 	 * @throws SQLException failed sql
 	 */
 	String getDeviceNameFromDatapathId(String datapathId) throws SQLException;
+	
+	/**
+	 * get port RID from deviceName and portNumber
+	 * @param deviceName
+	 * @param portNumber
+	 * @return port Rid
+	 * @throws SQLException
+	 */
+	String getPortRidFromDeviceNamePortNumber(String deviceName, int portNumber) throws SQLException;
 
 	/**
 	 *
