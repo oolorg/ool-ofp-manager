@@ -5,6 +5,7 @@
  */
 package ool.com.orientdb.client;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -282,7 +283,7 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	List<Map<String, Object>> getCableLinksFromDeviceName(String devName) throws SQLException;
+	List<Map<String, Object>> getCableLinksFromDeviceName(Connection conn, String deviceName) throws SQLException;
 
 	/**
 	 * Get patchWiring-list that is connected to other devices.
@@ -290,7 +291,7 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	List<Map<String, Object>> getPatchWiringsFromDeviceName(String devName) throws SQLException;
+	List<Map<String, Object>> getPatchWiringsFromDeviceName(Connection conn, String deviceName) throws SQLException;
 
 	/**
 	 * Get patchWiring-list from devices port.
@@ -299,48 +300,55 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(String deviceName, String portName) throws SQLException;
+	List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(Connection conn, String deviceName, String portName) throws SQLException;
 
 	/**
 	 * Delete patchWiring-list from devices port.
+	 * @param conn
 	 * @param deviceName
 	 * @param portName
 	 */
-	void deletePatchWiring(String deviceName, String portName);
+	void deletePatchWiring(Connection conn, String deviceName, String portName);
 
 	/**
 	 * Get DeviceInfo from devices rid.
+	 * @param conn
 	 * @param ofpRid
 	 * @return
+	 * @throws SQLException
 	 */
-	Map<String, Object> getDeviceInfoFromDeviceRid(String ofpRid);
+	Map<String, Object> getDeviceInfoFromDeviceRid(Connection conn, String ofpRid) throws SQLException;
 
 	/**
 	 * Get link-list that is connected to other devices port from ports rid.
 	 * The link is correspond to LAN-cable or SPF-cable.
+	 * @param conn
 	 * @param inPortRid
 	 * @return
 	 */
-	Map<String, Object> getCableLinkFromPortRid(String inPortRid);
+	Map<String, Object> getCableLinkFromPortRid(Connection conn, String inPortRid);
 
 	/**
 	 * Modify used-value of cable-link that include ports-rid.
 	 * Calbe-link represent LAN-Cable, SFP-Cable.
+	 * @param conn
 	 * @param inPortRid
 	 * @param newUsed
 	 */
-	void updateCableLinkUsedFromPortRid(String inPortRid, int newUsed);
+	void updateCableLinkUsedFromPortRid(Connection conn, String inPortRid, int newUsed);
 
 	/**
 	 * Get port-to-port path that computed by dijkstra.
-	 * @param txPortRid Start port.
-	 * @param rxPortRid End port.
+	 * @param conn
+	 * @param ridA
+	 * @param ridZ
 	 * @return
 	 */
-	List<Map<String, Object>> getShortestPath(String txPortRid, String rxPortRid);
+	List<Map<String, Object>> getShortestPath(Connection conn, String ridA, String ridZ);
 
 	/**
 	 * Insert patch-wiring infromation into db.
+	 * @param Connection conn
 	 * @param ofpRid RID of of-patch switch.
 	 * @param inPortRid RID of of-patchs in port.
 	 * @param outPortRid RID of of-patchs out port.
@@ -349,13 +357,14 @@ public interface Dao {
 	 * @param outDeviceName
 	 * @param outPortName
 	 */
-	void insertPatchWiring(String ofpRid, String inPortRid, String outPortRid, String inDeviceName, String inPortName, String outDeviceName, String outPortName);
+	void insertPatchWiring(Connection conn, String ofpRid, String inPortRid, String outPortRid, String inDeviceName, String inPortName, String outDeviceName, String outPortName);
 
 	/**
 	 * Get DeviceInfo from device name.
+	 * @param conn
 	 * @param deviceName
 	 * @return
 	 * @throws SQLException
 	 */
-	Map<String, Object> getDeviceInfoFromDeviceName(String deviceName) throws SQLException;
+	Map<String, Object> getDeviceInfoFromDeviceName(Connection conn, String deviceName) throws SQLException;
 }

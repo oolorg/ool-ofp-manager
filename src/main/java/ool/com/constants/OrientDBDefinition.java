@@ -30,7 +30,8 @@ public class OrientDBDefinition {
 
 	/* select */
 	public static final String SQL_GET_DEVICE = "select from node where name='%s'";
-	public static final String SQL_GET_DEVICE_FROM_NAME = "select from node where name=?";
+	public static final String SQL_GET_DEVICE_FROM_DEVICE_NAME = "select from node where name=?";
+	public static final String SQL_GET_DEVICE_INFO_FROM_DEVICE_RID = "select from node where @rid=?";
 	public static final String SQL_GET_DEVICE_LIST = "select from node %s";
 	public static final String SQL_GET_CONNECTED_NODE = "select from (traverse * from %s) where @class='node' and $depth=6";
 	public static final String SQL_GET_PATCHPORT_RID = "select from (traverse * from %s) where @class='port' and $depth=4";
