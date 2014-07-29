@@ -46,7 +46,8 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_CABLE_LINKS    = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
 			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @rid "
 			+ "from link where in.deviceName = ? and out.@class = 'port'";
-	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME  = "select from patchWiring where inDeviceName=?";
+	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME           = "select from patchWiring where inDeviceName=?";
+	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME_PORT_NAME = "select from patchWiring where inDeviceName=? and inPortName=?";
 	public static final String SQL_GET_CONNECTED_LINK = "select from link where in = %s";
 	public static final String SQL_IS_HAD_PATCH_WIRING = "select from patchWiring where parent = %s";
 	public static final String SQL_IS_CONNECTED_PATCH_WIRING = "select from patchWiring where out = %s or in = %s";

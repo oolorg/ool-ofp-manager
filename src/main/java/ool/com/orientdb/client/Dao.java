@@ -297,8 +297,9 @@ public interface Dao {
 	 * @param deviceName
 	 * @param portName
 	 * @return
+	 * @throws SQLException
 	 */
-	List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(String deviceName, String portName);
+	List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(String deviceName, String portName) throws SQLException;
 
 	/**
 	 * Delete patchWiring-list from devices port.

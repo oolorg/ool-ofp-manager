@@ -1262,7 +1262,7 @@ public class DaoImpl implements Dao {
 
 	/*
 	 * (non-Javadoc)
-	 * @see ool.com.orientdb.client.Dao#getPatchWiring(java.lang.String)
+	 * @see ool.com.orientdb.client.Dao#getPatchWiringsFromDeviceName(java.lang.String)
 	 */
 	@Override
 	public List<Map<String, Object>> getPatchWiringsFromDeviceName(String deviceName) throws SQLException {
@@ -1278,8 +1278,6 @@ public class DaoImpl implements Dao {
 				logger.debug(String.format("%s(ret=%s) - end", fname, maps));;
 			}
 			return maps;
-		} catch (IndexOutOfBoundsException e) {
-			return null;
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		} finally {
@@ -1291,20 +1289,30 @@ public class DaoImpl implements Dao {
 
 	/*
 	 * (non-Javadoc)
-	 * @see ool.com.orientdb.client.Dao#getPatchWirings(java.lang.String, java.lang.String)
+	 * @see ool.com.orientdb.client.Dao#getPatchWiringsFromDeviceNamePortName(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(String deviceName, String portName) {
+	public List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(String deviceName, String portName) throws SQLException {
 		final String fname = "getPatchWirings";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(devicename=%s, portName=%s) - start", fname, deviceName, portName));
 		}
-		List<Map<String, Object>> ret = null;
-		/* TODO : not implement*/
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+		Connection conn = null;
+		try {
+			conn = utilsJdbc.getConnection(false);
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME_PORT_NAME, new MapListHandler(), deviceName, portName);
+			/* TODO : not implement*/
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - start", fname, maps));
+			}
+			return maps;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (conn != null && !conn.isClosed()) {
+				conn.close();
+			}
 		}
-		return ret;
 	}
 
 	/*
