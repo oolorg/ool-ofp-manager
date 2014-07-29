@@ -1301,12 +1301,17 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#deletePatchWiring(java.sql.Connection, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public void deletePatchWiring(Connection conn, String deviceName, String portName) {
+	public void deletePatchWiring(Connection conn, String deviceName, String portName) throws SQLException {
 		final String fname = "deletePatchWiring";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
-		/* TODO : not implement*/
+		try {
+			Object[] params = {deviceName, portName, deviceName, portName};
+			utilsJdbc.update(conn, SQL_DELETE_PATCH_WIRING_FROM_DEVICE_NAME_PORT_NAME, params);
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s() - start", fname));
 		}
@@ -1317,13 +1322,20 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getCableLinkFromPortRid(java.sql.Connection, java.lang.String)
 	 */
 	@Override
-	public Map<String, Object> getCableLinkFromPortRid(Connection conn, String inPortRid) {
+	public Map<String, Object> getCableLinkFromPortRid(Connection conn, String portRid) throws SQLException {
 		final String fname = "getCableLinkFromPortRid";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, inPortRid=%s) - start", fname, conn, inPortRid));
+			logger.debug(String.format("%s(conn=%s, inPortRid=%s) - start", fname, conn, portRid));
 		}
 		Map<String, Object> ret = null;
-		/* TODO : not implement*/
+		try {
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_CABLE_LINK_FROM_PORT_RID, new MapListHandler(), portRid);
+			if (!maps.isEmpty()) {
+				ret = maps.get(0);
+			}
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
 		}
@@ -1335,12 +1347,20 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#updateCableLinkUsedFromPortRid(java.sql.Connection, java.lang.String, int)
 	 */
 	@Override
-	public void updateCableLinkUsedFromPortRid(Connection conn, String inPortRid, int newUsed) {
+	public void updateCableLinkUsedFromPortRid(Connection conn, String portRid, int newUsed) throws SQLException {
 		final String fname = "updateCableLinkUsedFromPortRid";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, inPortRid=%s, newUsed=%s) - start", fname, conn, inPortRid, newUsed));
+			logger.debug(String.format("%s(conn=%s, portRid=%s, newUsed=%s) - start", fname, conn, portRid, newUsed));
 		}
-		/* TODO : not implement*/
+		try {
+			Object[] params = {newUsed, portRid, portRid};
+			int result = utilsJdbc.update(conn, SQL_UPDATE_CALBE_LINK_USED_VALUE_FROM_PORT_RID, params);
+			if (result != 2) {
+				// TODO:error
+			}
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - start", fname));
 		}
@@ -1351,13 +1371,17 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getShortestPath(java.sql.Connection, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<Map<String, Object>> getShortestPath(Connection conn, String ridA, String ridZ) {
+	public List<Map<String, Object>> getShortestPath(Connection conn, String ridA, String ridZ) throws SQLException {
 		final String fname = "getShortestPath";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(conn=%s, ridA=%s, ridZ=%s) - start", fname, conn, ridA, ridZ));
 		}
 		List<Map<String, Object>> ret = null;
-		/* TODO : not implement*/
+		try {
+			ret = utilsJdbc.query(conn, SQL_GET_DIJKSTRA_PATH_FLATTEN, new MapListHandler(), ridA, ridZ);
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
 		}
@@ -1369,16 +1393,38 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#insertPatchWiring(java.sql.Connection, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public void insertPatchWiring(Connection conn, String ofpRid, String inPortRid, String outPortRid, String inDeviceName, String inPortName, String outDeviceName, String outPortName) {
+	public int insertPatchWiring(Connection conn, String ofpRid, String in, String out, String inDeviceName, String inPortName, String outDeviceName, String outPortName) throws SQLException {
 		final String fname = "insertPatchWiring";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(conn=%s, ofpRid=%s, inPortRid=%s, outPortRid=%s, inDeviceName=%s, inPortName=%s, outDeviceName=%s, outPortName=%s) - start",
-					conn, ofpRid, inPortRid, outPortRid, inDeviceName, inPortName, outDeviceName, outPortName));
+					conn, ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName));
 		}
-		/* TODO : not implement*/
+		int ret = DB_RESPONSE_STATUS_OK;
+		try {
+			if (this.getPatchWiringsFromDeviceNamePortName(conn, inDeviceName, inPortName).size() > 0) {
+				ret = DB_RESPONSE_STATUS_EXIST;
+			}
+			if (this.getPatchWiringsFromDeviceNamePortName(conn, outDeviceName, outPortName).size() > 0) {
+				ret = DB_RESPONSE_STATUS_EXIST;
+			}
+
+			Object[] forwardParams = {ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName};
+			int result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, forwardParams);
+			if (result != 1) {
+				//TODO:error
+			}
+			Object[] reverseParams = {ofpRid, out, in, outDeviceName, outPortName, inDeviceName, inPortName};
+			result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, reverseParams);
+			if (result != 1) {
+				//TODO:error
+			}
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s() - start", fname));
+			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
 		}
+		return ret;
 	}
 
 	/*
@@ -1386,18 +1432,19 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getDeviceInfoFromDeviceName(java.sql.Connection, java.lang.String)
 	 */
 	@Override
-	public Map<String, Object> getDeviceInfoFromDeviceName(Connection conn, String deviceName) throws SQLException {
+	public Map<String, Object> getNodeInfoFromDeviceName(Connection conn, String deviceName) throws SQLException {
+		final String fname = "getDeviceInfo";
 		if (logger.isDebugEnabled()){
-			logger.debug(String.format("getDeviceInfo(deviceName=%s) - start", deviceName));
+			logger.debug(String.format("%s(conn=%s, deviceName=%s) - start", fname, conn, deviceName));
 		}
 		Map<String, Object> map = null;
 		try {
-			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_DEVICE_FROM_DEVICE_NAME, new MapListHandler(), deviceName);
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_NODE_INFO_FROM_DEVICE_NAME, new MapListHandler(), deviceName);
 			if (!maps.isEmpty()) {
 				map = maps.get(0);
 			}
 			if (logger.isDebugEnabled()){
-				logger.debug(String.format("getDeviceInfo(ret=%s) - end", map));
+				logger.debug(String.format("%s(ret=%s) - end", fname, map));
 			}
 			return map;
 		} catch (Exception e){
@@ -1410,14 +1457,14 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getDeviceInfoFromDeviceRid(java.sql.Connection, java.lang.String)
 	 */
 	@Override
-	public Map<String, Object> getDeviceInfoFromDeviceRid(Connection conn, String nodeRid) throws SQLException {
+	public Map<String, Object> getNodeInfoFromDeviceRid(Connection conn, String nodeRid) throws SQLException {
 		final String fname = "getDeviceInfoFromDeviceRid";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(conn=%s, nodeRid=%s) - start", fname, conn, nodeRid));
 		}
 		Map<String, Object> map = null;
 		try {
-			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_DEVICE_INFO_FROM_DEVICE_RID, new MapListHandler(), nodeRid);
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_NODE_INFO_FROM_DEVICE_RID, new MapListHandler(), nodeRid);
 			if (!maps.isEmpty()) {
 				map = maps.get(0);
 			}
@@ -1426,6 +1473,138 @@ public class DaoImpl implements Dao {
 			}
 			return map;
 		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#createNodeInfo(java.sql.Connection, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public int createNodeInfo(Connection conn, String deviceName, String deviceType, String datapathId, String ofcIp) throws SQLException {
+		final String fname = "createNodeInfo";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(conn=%s, deviceName=%s, deviceType=%s, datapathId=%s, ofcIp=%s) - start", fname, conn, deviceName, deviceType, datapathId, ofcIp));
+		}
+		int ret = DB_RESPONSE_STATUS_OK;
+		try {
+			Object[] params = {deviceName, deviceType, datapathId, ofcIp};
+			int nRecords = utilsJdbc.update(conn, SQL_INSERT_NODE_INFO, params);
+			if (nRecords == 0) {
+				return DB_RESPONSE_STATUS_EXIST;
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+			}
+			return ret;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#createPortInfo(java.sql.Connection, java.lang.String, int, java.lang.String)
+	 */
+	@Override
+	public int createPortInfo(Connection conn, String portName, int portNumber, String deviceName) throws SQLException {
+		final String fname = "createPortInfo";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(conn=%s, portName=%s, portNumber=%s, deviceName=%s) - start", fname, conn, portName, portNumber, deviceName));
+		}
+		int ret = DB_RESPONSE_STATUS_OK;
+		try {
+			Map<String, Object> map = this.getNodeInfoFromDeviceName(conn, deviceName);
+			if (map == null) {
+				return DB_RESPONSE_STATUS_NOT_FOUND;
+			}
+
+			Object[] params = {portName, portNumber, deviceName};
+			int nRecords = utilsJdbc.update(conn, SQL_INSERT_PORT_INFO, params);
+			if (nRecords == 0) {
+				return DB_RESPONSE_STATUS_EXIST;
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+			}
+			return ret;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#updateNodeInfo(java.sql.Connection, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public int updateNodeInfo(Connection conn, String keyDeviceName, String deviceName, String datapathId, String ofcIp) throws SQLException {
+		final String fname = "updateNodeInfo";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(conn=%s, keyDeviceName=%s, newDeviceName=%s, datapathId=%s, ofcIp=%s) - start", fname, conn, keyDeviceName, deviceName, datapathId, ofcIp));
+		}
+		int ret = DB_RESPONSE_STATUS_OK;
+		try {
+			Map<String, Object> current = this.getNodeInfoFromDeviceName(conn, keyDeviceName);
+			if (current == null) {
+				ret = DB_RESPONSE_STATUS_NOT_FOUND;
+				if (logger.isDebugEnabled()){
+					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				}
+			}
+
+			String nodeRid = (String)current.get("@RID");
+			if (StringUtils.isBlank(deviceName)) {
+				deviceName = (String)current.get("name");
+			}
+			if (StringUtils.isBlank(datapathId)) {
+				datapathId = (String)current.get("datapathId");
+			}
+			if (StringUtils.isBlank(ofcIp)) {
+				ofcIp = (String)current.get("ofcIp");
+			}
+
+			Object[] params = {deviceName, datapathId, ofcIp, nodeRid};
+			int result = utilsJdbc.update(conn, SQL_UPDATE_NODE_INFO, params);
+			if (result == 0) {
+				ret = DB_RESPONSE_STATUS_EXIST;
+				if (logger.isDebugEnabled()){
+					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				}
+			}
+
+			Object[] updDevNamePara = {deviceName, keyDeviceName};
+			utilsJdbc.update(conn, SQL_UPDATE_PORT_DEVICE_NAME, updDevNamePara);
+			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_IN_DEVICE, updDevNamePara);
+			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_OUT_DEVICE, updDevNamePara);
+
+			if (logger.isDebugEnabled()){
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		}
+	}
+
+	@Override
+	public Map<String, Object> getPortInfoFromPortName(Connection conn, String portName, String deviceName) throws SQLException {
+		final String fname = "getPortInfoFromPortName";
+		if (logger.isDebugEnabled()){
+			logger.debug(String.format("%s(conn=%s, portName=%s, deviceName=%s) - start", fname, conn, portName, deviceName));
+		}
+		Map<String, Object> map = null;
+		try {
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_PORT_INFO_FROM_PORT_NAME, new MapListHandler(), portName, deviceName);
+			if (!maps.isEmpty()) {
+				map = maps.get(0);
+			}
+			if (logger.isDebugEnabled()){
+				logger.debug(String.format("%s(ret=%s) - end", fname, map));
+			}
+			return map;
+		} catch (Exception e){
 			throw new SQLException(e.getMessage());
 		}
 	}

@@ -60,7 +60,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.google.gson.JsonSyntaxException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class LogicalBusinessImpl implements LogicalBusiness {
 	private static final Logger logger = Logger.getLogger(LogicalBusinessImpl.class);
@@ -105,7 +104,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				/* check outDevice is LEAF, other wise don't append port */
 				Boolean isOfpSw = devTypeMap.get(neiDevName);
 				if (isOfpSw == null) {
-					Map<String, Object> outDevDoc = dao.getDeviceInfoFromDeviceName(conn, neiDevName);
+					Map<String, Object> outDevDoc = dao.getNodeInfoFromDeviceName(conn, neiDevName);
 					String outDevType = (String)outDevDoc.get("type");
 					isOfpSw = StringUtils.equals(outDevType, NODE_TYPE_LEAF);
 					devTypeMap.put(neiDevName, isOfpSw);
@@ -132,7 +131,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @throws SQLException
 	 */
 	private OfpConDeviceInfo getLogicalNode(Connection conn, String devName) throws SQLException {
-		Map<String, Object> devDoc = dao.getDeviceInfoFromDeviceName(conn, devName);
+		Map<String, Object> devDoc = dao.getNodeInfoFromDeviceName(conn, devName);
 		if (devDoc == null) {
 			return null;
 		}
@@ -434,10 +433,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 
 		/* PHASE 3: Update topology */
+		Connection conn = null;
 		try {
 			ConnectionUtilsJdbc utilsJdbc = new ConnectionUtilsJdbcImpl();
 			dao = new DaoImpl(utilsJdbc);
-			Connection conn = utilsJdbc.getConnection(false);
+			conn = utilsJdbc.getConnection(false);
 
 			List<OfpConDeviceInfo> requestedNodes = requestedTopology.getNodes();
 			List<LogicalLink> requestedLinkList = requestedTopology.getLinks();
@@ -467,13 +467,12 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
 			for (LogicalLink link : decLinkList) {
 				PortData inPort  = link.getLink().get(0);
-				PortData outPort = link.getLink().get(1);
 				List<Map<String, Object>> patchDocList = dao.getPatchWiringsFromDeviceNamePortName(conn, inPort.getDeviceName(), inPort.getPortName());
 				dao.deletePatchWiring(conn, inPort.getDeviceName(), inPort.getPortName());
 
 				for (Map<String, Object> patchDoc : patchDocList) {
 					String ofpRid = (String)patchDoc.get("parent");
-					Map<String, Object> nodeDoc = dao.getDeviceInfoFromDeviceRid(conn, ofpRid);
+					Map<String, Object> nodeDoc = dao.getNodeInfoFromDeviceRid(conn, ofpRid);
 					String deviceName = (String)nodeDoc.get("name");
 					String deviceType = (String)nodeDoc.get("type");
 					int inPortNumber = 0;
@@ -505,14 +504,30 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 			}
 			for (LogicalLink link : incLinkList) {
-				PortData txPort = link.getLink().get(0);
-				PortData rxPort = link.getLink().get(1);
-				ODocument txPortDoc = dao.getPortInfo(txPort.getPortName(), txPort.getDeviceName());
-				ODocument rxPortDoc = dao.getPortInfo(rxPort.getPortName(), rxPort.getDeviceName());
-				String txPortRid = txPortDoc.getIdentity().toString();
-				String rxPortRid = rxPortDoc.getIdentity().toString();
+				PortData tx = link.getLink().get(0);
+				PortData rx = link.getLink().get(1);
+				Map<String, Object> txMap = null;
+				Map<String, Object> rxMap = null;
+				int txPortIndex = 0;
+				int rxPortIndex = -1;
+				if (StringUtils.isBlank(tx.getPortName())) {
+					txMap = dao.getNodeInfoFromDeviceName(conn, tx.getDeviceName());
+				} else {
+					txMap = dao.getPortInfoFromPortName(conn, tx.getPortName(), tx.getDeviceName());
+					txPortIndex = 1;
+				}
+				if (StringUtils.isBlank(rx.getPortName())) {
+					rxMap = dao.getNodeInfoFromDeviceName(conn, rx.getPortName());
+				} else {
+					rxMap = dao.getPortInfoFromPortName(conn, rx.getPortName(), rx.getDeviceName());
+					rxPortIndex = -2;
+				}
+				String txRid = (String)txMap.get("RID");
+				String rxRid = (String)rxMap.get("RID");
 
-				List<Map<String, Object>> path = dao.getShortestPath(conn, txPortRid, rxPortRid);
+				List<Map<String, Object>> path = dao.getShortestPath(conn, txRid, rxRid);
+				Map<String, Object> txPort = path.get(txPortIndex);
+				Map<String, Object> rxPort = path.get(path.size() + rxPortIndex);
 				for (int i = 0; i < path.size(); i++) {
 					Map<String, Object> vertex = path.get(i);
 					String deviceType = (String)vertex.get("type");
@@ -565,10 +580,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 							(String)ofpPortDataMap.get("@RID"),
 							(String) inPortDataMap.get("@RID"),
 							(String)outPortDataMap.get("@RID"),
-							(String)txPort.getDeviceName(),
-							(String)txPort.getPortName(),
-							(String)rxPort.getDeviceName(),
-							(String)rxPort.getPortName());
+							(String)txPort.get("deviceName"),
+							(String)txPort.get("name"),
+							(String)rxPort.get("deviceName"),
+							(String)rxPort.get("name"));
 
 					/* make PatchLink */
 					List<Integer> ofpPortNmbrList = new ArrayList<Integer>();
@@ -633,6 +648,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		} catch (SQLException e) {
 			return res.toJson();
 		} finally {
+			try {
+				if (conn != null && !conn.isClosed()) {
+					conn.close();
+				}
+			} catch (SQLException e) {
+				logger.error(e.getMessage());
+			}
 			if (logger.isDebugEnabled()) {
 				logger.debug(String.format("%s(ret=%s) - end", fname, res.toJson()));
 			}
