@@ -254,7 +254,7 @@ public interface Dao {
 	 * @throws SQLException failed sql
 	 */
 	String getDeviceNameFromDatapathId(String datapathId) throws SQLException;
-	
+
 	/**
 	 * get port RID from deviceName and portNumber
 	 * @param deviceName
@@ -282,7 +282,7 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	List<ODocument> getCableLinks(String devName) throws SQLException;
+	List<Map<String, Object>> getCableLinksFromDeviceName(String devName) throws SQLException;
 
 	/**
 	 * Get patchWiring-list that is connected to other devices.
@@ -290,7 +290,7 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	List<ODocument> getPatchWirings(String devName) throws SQLException;
+	List<Map<String, Object>> getPatchWiringsFromDeviceName(String devName) throws SQLException;
 
 	/**
 	 * Get patchWiring-list from devices port.
@@ -298,7 +298,7 @@ public interface Dao {
 	 * @param portName
 	 * @return
 	 */
-	List<Map<String, Object>> getPatchWirings(String deviceName, String portName);
+	List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(String deviceName, String portName);
 
 	/**
 	 * Delete patchWiring-list from devices port.
@@ -349,4 +349,12 @@ public interface Dao {
 	 * @param outPortName
 	 */
 	void insertPatchWiring(String ofpRid, String inPortRid, String outPortRid, String inDeviceName, String inPortName, String outDeviceName, String outPortName);
+
+	/**
+	 * Get DeviceInfo from device name.
+	 * @param deviceName
+	 * @return
+	 * @throws SQLException
+	 */
+	Map<String, Object> getDeviceInfoFromDeviceName(String deviceName) throws SQLException;
 }

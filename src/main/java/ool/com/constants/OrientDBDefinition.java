@@ -30,6 +30,7 @@ public class OrientDBDefinition {
 
 	/* select */
 	public static final String SQL_GET_DEVICE = "select from node where name='%s'";
+	public static final String SQL_GET_DEVICE_FROM_NAME = "select from node where name=?";
 	public static final String SQL_GET_DEVICE_LIST = "select from node %s";
 	public static final String SQL_GET_CONNECTED_NODE = "select from (traverse * from %s) where @class='node' and $depth=6";
 	public static final String SQL_GET_PATCHPORT_RID = "select from (traverse * from %s) where @class='port' and $depth=4";
@@ -42,10 +43,10 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PORT_INFO2 = "select from port where number = %s and deviceName = '%s'";
 	public static final String SQL_GET_LINK = "select from link where out = %s and in = %s";
 
-	public static final String SQL_GET_CABLE_LINKS    = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inNumber, "
-			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outNumber, @rid "
-			+ "from link where in.deviceName = '%s' and out.@class = 'port'";
-	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME  = "select from patchWiring where inDeviceName='%s'";
+	public static final String SQL_GET_CABLE_LINKS    = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
+			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @rid "
+			+ "from link where in.deviceName = ? and out.@class = 'port'";
+	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME  = "select from patchWiring where inDeviceName=?";
 	public static final String SQL_GET_CONNECTED_LINK = "select from link where in = %s";
 	public static final String SQL_IS_HAD_PATCH_WIRING = "select from patchWiring where parent = %s";
 	public static final String SQL_IS_CONNECTED_PATCH_WIRING = "select from patchWiring where out = %s or in = %s";
@@ -53,7 +54,7 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PATCH_CONNECTED_DEVICE_NAME = "select from patchWiring where inDeviceName = '%s'";
 
 	public static final String SQL_GET_PORT_LIST = "select from port where deviceName = '%s'";
-	
+
 	public static final String SQL_GET_DEVICENAME_FROM_DATAPATHID = "select from node where datapathId = ?";
 	public static final String SQL_GET_PORTRID_FROM_DEVICENAME_PORTNUMBER = "select @rid from port where deviceName = ? and number = ?";
 

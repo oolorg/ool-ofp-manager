@@ -1202,7 +1202,7 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see ool.com.orientdb.client.Dao#getPortRidFromDeviceNamePortNumber(java.lang.String, int)
 	 */
@@ -1236,28 +1236,27 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getCableLinks(java.lang.String)
 	 */
 	@Override
-	public List<ODocument> getCableLinks(String deviceName) throws SQLException {
+	public List<Map<String, Object>> getCableLinksFromDeviceName(String deviceName) throws SQLException {
 		final String fname = "getCableLinks";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
 		}
+		Connection conn = null;
 		try {
-//			Connection conn = utilsJdbc.getConnection(false);
-//			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_CABLE_LINKS, new MapListHandler(), deviceName);
-//			return records;
-			String query = String.format(SQL_GET_CABLE_LINKS, deviceName);
-			if (logger.isInfoEnabled()) {
-				logger.info("query=" + query);
-			}
-			List<ODocument> documents = utils.query(database, query);
+			conn = utilsJdbc.getConnection(false);
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_CABLE_LINKS, new MapListHandler(), deviceName);
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, documents));;
+				logger.debug(String.format("%s(ret=%s) - end", fname, maps));;
 			}
-			return documents;
+			return maps;
 		} catch (IndexOutOfBoundsException e) {
 			return null;
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
+		} finally {
+			if (conn != null && !conn.isClosed()) {
+				conn.close();
+			}
 		}
 	}
 
@@ -1266,25 +1265,27 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getPatchWiring(java.lang.String)
 	 */
 	@Override
-	public List<ODocument> getPatchWirings(String deviceName) throws SQLException {
+	public List<Map<String, Object>> getPatchWiringsFromDeviceName(String deviceName) throws SQLException {
 		final String fname = "getPatchWirings";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
 		}
+		Connection conn = null;
 		try {
-			String query = String.format(SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME, deviceName);
-			if (logger.isInfoEnabled()) {
-				logger.info("query=" + query);
-			}
-			List<ODocument> documents = utils.query(database, query);
+			conn = utilsJdbc.getConnection(false);
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME, new MapListHandler(), deviceName);
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, documents));;
+				logger.debug(String.format("%s(ret=%s) - end", fname, maps));;
 			}
-			return documents;
+			return maps;
 		} catch (IndexOutOfBoundsException e) {
 			return null;
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
+		} finally {
+			if (conn != null && !conn.isClosed()) {
+				conn.close();
+			}
 		}
 	}
 
@@ -1293,7 +1294,7 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getPatchWirings(java.lang.String, java.lang.String)
 	 */
 	@Override
-	public List<Map<String, Object>> getPatchWirings(String deviceName, String portName) {
+	public List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(String deviceName, String portName) {
 		final String fname = "getPatchWirings";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(devicename=%s, portName=%s) - start", fname, deviceName, portName));
@@ -1392,6 +1393,10 @@ public class DaoImpl implements Dao {
 		return ret;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#insertPatchWiring(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
 	@Override
 	public void insertPatchWiring(String ofpRid, String inPortRid, String outPortRid, String inDeviceName, String inPortName, String outDeviceName, String outPortName) {
 		final String fname = "insertPatchWiring";
@@ -1402,6 +1407,33 @@ public class DaoImpl implements Dao {
 		/* TODO : not implement*/
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s() - start", fname));
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getDeviceInfoFromName(java.lang.String)
+	 */
+	@Override
+	public Map<String, Object> getDeviceInfoFromDeviceName(String deviceName) throws SQLException {
+		if (logger.isDebugEnabled()){
+			logger.debug(String.format("getDeviceInfo(deviceName=%s) - start", deviceName));
+		}
+		Connection conn = null;
+		try {
+			conn = utilsJdbc.getConnection(false);
+			List<Map<String, Object>> documents = utilsJdbc.query(conn, SQL_GET_DEVICE_FROM_NAME, new MapListHandler(), deviceName);
+			if (logger.isDebugEnabled()){
+				logger.debug(String.format("getDeviceInfo(ret=%s) - end", documents.get(0)));
+			}
+			return documents.get(0);
+		} catch (IndexOutOfBoundsException e) {
+			throw new SQLException(String.format(NOT_FOUND, deviceName), e);
+		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (conn != null && !conn.isClosed()) {
+				conn.close();
+			}
 		}
 	}
 }

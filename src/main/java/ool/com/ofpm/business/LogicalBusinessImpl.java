@@ -50,7 +50,6 @@ import ool.com.openam.client.OpenAmClientException;
 import ool.com.openam.client.OpenAmClientImpl;
 import ool.com.openam.json.OpenAmIdentitiesOut;
 import ool.com.openam.json.TokenIdOut;
-import ool.com.openam.json.TokenValidChkOut;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.ConnectionUtilsJdbcImpl;
 import ool.com.orientdb.client.Dao;
@@ -103,8 +102,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				/* check outDevice is LEAF, other wise don't append port */
 				Boolean isOfpSw = devTypeMap.get(neiDevName);
 				if (isOfpSw == null) {
-					ODocument outDevDoc = dao.getDeviceInfo(neiDevName);
-					String outDevType = outDevDoc.field("type");
+					Map<String, Object> outDevDoc = dao.getDeviceInfoFromDeviceName(neiDevName);
+					String outDevType = (String)outDevDoc.get("type");
 					isOfpSw = StringUtils.equals(outDevType, NODE_TYPE_LEAF);
 					devTypeMap.put(neiDevName, isOfpSw);
 				}
@@ -129,35 +128,35 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @throws SQLException
 	 */
 	private OfpConDeviceInfo getLogicalNode(String devName) throws SQLException {
-		ODocument devDoc = dao.getDeviceInfo(devName);
+		Map<String, Object> devDoc = dao.getDeviceInfoFromDeviceName(devName);
 		if (devDoc == null) {
 			return null;
 		}
-		String   devType = devDoc.field("type");
+		String   devType = (String)devDoc.get("type");
 		OfpConDeviceInfo node = new OfpConDeviceInfo();
 		node.setDeviceName(devName);
 		node.setDeviceType(devType);
 
 		List<OfpConPortInfo> portList = new ArrayList<OfpConPortInfo>();
-		List<ODocument> linkDocList = dao.getCableLinks(devName);
+		List<Map<String, Object>> linkDocList = dao.getCableLinksFromDeviceName(devName);
 		if (linkDocList == null) {
 			return null;
 		}
-		for (ODocument linkDoc : linkDocList) {
-			String outDevName = linkDoc.field("outDeviceName");
+		for (Map<String, Object> linkDoc : linkDocList) {
+			String outDevName = (String)linkDoc.get("outDeviceName");
 
 			PortData ofpPort = new PortData();
-			String outPortName = linkDoc.field("outPortName");
-			String outPortNmbr = linkDoc.field("outPortNmbr");
+			String  outPortName = (String)linkDoc.get("outPortName");
+			Integer outPortNmbr = (Integer)linkDoc.get("outPortNumber");
 			ofpPort.setDeviceName(outDevName);
 			ofpPort.setPortName(outPortName);
-			ofpPort.setPortNumber(Integer.parseInt(outPortNmbr));
+			ofpPort.setPortNumber(outPortNmbr);
 
-			String inPortName = linkDoc.field("inPortName");
-			String inPortNmbr = linkDoc.field("inPortNo");
+			String  inPortName = (String)linkDoc.get("inPortName");
+			Integer inPortNmbr = (Integer)linkDoc.get("inPortNumber");
 			OfpConPortInfo port = new OfpConPortInfo();
 			port.setPortName(inPortName);
-			port.setPortNumber(Integer.parseInt(inPortNmbr));
+			port.setPortNumber(inPortNmbr);
 			port.setOfpPortLink(ofpPort);
 
 			portList.add(port);
@@ -203,19 +202,19 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 */
 	private Set<LogicalLink> getLogicalLink(String devName) throws SQLException {
 		Set<LogicalLink> linkSet = new HashSet<LogicalLink>();
-		List<ODocument> patchDocList = dao.getPatchWirings(devName);
+		List<Map<String, Object>> patchDocList = dao.getPatchWiringsFromDeviceName(devName);
 		if (patchDocList == null) {
 			return null;
 		}
-		for (ODocument patchDoc : patchDocList) {
-			String inDevName  = patchDoc.field("inDeviceName");
-			String inPortName = patchDoc.field("inPortName");
+		for (Map<String, Object> patchDoc : patchDocList) {
+			String inDevName  = (String)patchDoc.get("inDeviceName");
+			String inPortName = (String)patchDoc.get("inPortName");
 			PortData inPort = new PortData();
 			inPort.setDeviceName(inDevName);
 			inPort.setPortName(inPortName);
 
-			String outDevName  = patchDoc.field("outDeviceName");
-			String outPortName = patchDoc.field("outPortName");
+			String outDevName  = (String)patchDoc.get("outDeviceName");
+			String outPortName = (String)patchDoc.get("outPortName");
 			PortData outPort = new PortData();
 			outPort.setDeviceName(outDevName);
 			outPort.setPortName(outPortName);
@@ -247,34 +246,34 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		LogicalTopologyGetJsonOut res = new LogicalTopologyGetJsonOut();
 
 		/* PHASE 1: Authentication */
-		try {
-			String openamUrl = conf.getString(OPEN_AM_URL);
-			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
-			boolean isTokenValid = false;
-			if (!StringUtils.isBlank(tokenId) && openAmClient != null) {
-				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
-				isTokenValid = tokenValidchkOut.getIsTokenValid();
-			}
-			if (isTokenValid != true) {
-				logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
-				res.setStatus(STATUS_UNAUTHORIZED);
-				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
-				String ret = res.toJson();
-				if (logger.isDebugEnabled()) {
-					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-				}
-				return ret;
-			}
-		} catch (OpenAmClientException e) {
-			logger.error(e);
-			res.setStatus(STATUS_INTERNAL_ERROR);
-			res.setMessage(e.getMessage());
-			String ret = res.toJson();
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-			}
-			return ret;
-		}
+//		try {
+//			String openamUrl = conf.getString(OPEN_AM_URL);
+//			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
+//			boolean isTokenValid = false;
+//			if (!StringUtils.isBlank(tokenId) && openAmClient != null) {
+//				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
+//				isTokenValid = tokenValidchkOut.getIsTokenValid();
+//			}
+//			if (isTokenValid != true) {
+//				logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
+//				res.setStatus(STATUS_UNAUTHORIZED);
+//				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
+//				String ret = res.toJson();
+//				if (logger.isDebugEnabled()) {
+//					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+//				}
+//				return ret;
+//			}
+//		} catch (OpenAmClientException e) {
+//			logger.error(e);
+//			res.setStatus(STATUS_INTERNAL_ERROR);
+//			res.setMessage(e.getMessage());
+//			String ret = res.toJson();
+//			if (logger.isDebugEnabled()) {
+//				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+//			}
+//			return ret;
+//		}
 
 		/* PHASE 2: Validation */
 		List<String> deviceNames = null;
@@ -297,7 +296,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		/* PHASE 3: Get logical topology */
 		try {
-			dao = new DaoImpl(new ConnectionUtilsImpl());
+			dao = new DaoImpl(new ConnectionUtilsJdbcImpl());
 			List<OfpConDeviceInfo> nodeList = new ArrayList<OfpConDeviceInfo>();
 			List<LogicalLink> linkList = new ArrayList<LogicalLink>();
 			for (String devName : deviceNames) {
@@ -363,37 +362,37 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 
 		/* PHASE 1: Authenticate */
-		try {
-			String openamUrl = conf.getString(OPEN_AM_URL);
-			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
-			String tokenId = requestedTopology.getTokenId();
-			boolean isTokenValid = false;
-			if (openAmClient != null) {
-				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
-				isTokenValid = tokenValidchkOut.getIsTokenValid();
-			}
-			if (isTokenValid != true) {
-				if (logger.isDebugEnabled()) {
-					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
-				}
-				res.setStatus(STATUS_BAD_REQUEST);
-				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
-				String ret = res.toJson();
-				if (logger.isDebugEnabled()) {
-					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-				}
-				return ret;
-			}
-		} catch (OpenAmClientException e) {
-			logger.error(e);
-			res.setStatus(STATUS_UNAUTHORIZED);
-			res.setMessage(e.getMessage());
-			String ret = res.toString();
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-			}
-			return ret;
-		}
+//		try {
+//			String openamUrl = conf.getString(OPEN_AM_URL);
+//			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
+//			String tokenId = requestedTopology.getTokenId();
+//			boolean isTokenValid = false;
+//			if (openAmClient != null) {
+//				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
+//				isTokenValid = tokenValidchkOut.getIsTokenValid();
+//			}
+//			if (isTokenValid != true) {
+//				if (logger.isDebugEnabled()) {
+//					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
+//				}
+//				res.setStatus(STATUS_BAD_REQUEST);
+//				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
+//				String ret = res.toJson();
+//				if (logger.isDebugEnabled()) {
+//					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+//				}
+//				return ret;
+//			}
+//		} catch (OpenAmClientException e) {
+//			logger.error(e);
+//			res.setStatus(STATUS_UNAUTHORIZED);
+//			res.setMessage(e.getMessage());
+//			String ret = res.toString();
+//			if (logger.isDebugEnabled()) {
+//				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+//			}
+//			return ret;
+//		}
 
 		/* PHASE 2: Validation */
 		try {
@@ -412,6 +411,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		/* PHASE 3: Update topology */
 		try {
+			dao = new DaoImpl(new ConnectionUtilsImpl());
+			Dao daoJdbc = new DaoImpl(new ConnectionUtilsJdbcImpl());
+
 			List<OfpConDeviceInfo> requestedNodes = requestedTopology.getNodes();
 			List<LogicalLink> requestedLinkList = requestedTopology.getLinks();
 			List<LogicalLink> currentLinkList = new ArrayList<LogicalLink>();
@@ -441,27 +443,27 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			for (LogicalLink link : decLinkList) {
 				PortData inPort  = link.getLink().get(0);
 				PortData outPort = link.getLink().get(1);
-				List<Map<String, Object>> patchDocList = dao.getPatchWirings(inPort.getDeviceName(), inPort.getPortName());
-				dao.deletePatchWiring(inPort.getDeviceName(), inPort.getPortName());
+				List<Map<String, Object>> patchDocList = daoJdbc.getPatchWiringsFromDeviceNamePortName(inPort.getDeviceName(), inPort.getPortName());
+				daoJdbc.deletePatchWiring(inPort.getDeviceName(), inPort.getPortName());
 
 				for (Map<String, Object> patchDoc : patchDocList) {
 					String ofpRid = (String)patchDoc.get("parent");
-					Map<String, Object> nodeDoc = dao.getDeviceInfoFromDeviceRid(ofpRid);
+					Map<String, Object> nodeDoc = daoJdbc.getDeviceInfoFromDeviceRid(ofpRid);
 					String deviceName = (String)nodeDoc.get("name");
 					String deviceType = (String)nodeDoc.get("type");
 					int inPortNumber = 0;
 					int outPortNumber = 0;
 					if (deviceType.equals(NODE_TYPE_LEAF)) {
 						String inPortRid  = (String)patchDoc.get("in");
-						Map<String, Object> inLink = dao.getCableLinkFromPortRid(inPortRid);
+						Map<String, Object> inLink = daoJdbc.getCableLinkFromPortRid(inPortRid);
 						int newUsed = this.declementCableLinkUsed(inLink);
-						dao.updateCableLinkUsedFromPortRid(inPortRid, newUsed);
+						daoJdbc.updateCableLinkUsedFromPortRid(inPortRid, newUsed);
 						inPortNumber = (Integer)inLink.get("inPortNumber");
 
 						String outPortRid = (String)patchDoc.get("out");
-						Map<String, Object> outLink = dao.getCableLinkFromPortRid(outPortRid);
+						Map<String, Object> outLink = daoJdbc.getCableLinkFromPortRid(outPortRid);
 						newUsed = this.declementCableLinkUsed(outLink);
-						dao.updateCableLinkUsedFromPortRid(outPortRid, newUsed);
+						daoJdbc.updateCableLinkUsedFromPortRid(outPortRid, newUsed);
 						outPortNumber = (Integer)outLink.get("outPortNumber");
 					}
 
@@ -485,7 +487,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				String txPortRid = txPortDoc.getIdentity().toString();
 				String rxPortRid = rxPortDoc.getIdentity().toString();
 
-				List<Map<String, Object>> path = dao.getShortestPath(txPortRid, rxPortRid);
+				List<Map<String, Object>> path = daoJdbc.getShortestPath(txPortRid, rxPortRid);
 				for (int i = 0; i < path.size(); i++) {
 					Map<String, Object> vertex = path.get(i);
 					String deviceType = (String)vertex.get("type");
@@ -497,7 +499,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 						/* update used value */
 						Map<String, Object>  inPortMap = path.get(i-1);
 						String  inPortRid = (String)inPortMap.get("@RID");
-						Map<String, Object> inLink = dao.getCableLinkFromPortRid(inPortRid);
+						Map<String, Object> inLink = daoJdbc.getCableLinkFromPortRid(inPortRid);
 						int band = (Integer)inLink.get("band");
 						int used = (Integer)inLink.get("used");
 						int nicBand  = (Integer)path.get(i-2).get("band");
@@ -510,11 +512,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 						if (newUsed == used) {
 							newUsed = band * 1024 * 1024 * 1024;
 						}
-						dao.updateCableLinkUsedFromPortRid(inPortRid, newUsed);
+						daoJdbc.updateCableLinkUsedFromPortRid(inPortRid, newUsed);
 
 						Map<String, Object>  outPortMap = path.get(i+1);
 						String  outPortRid = (String)outPortMap.get("@RID");
-						Map<String, Object> outLink = dao.getCableLinkFromPortRid(outPortRid);
+						Map<String, Object> outLink = daoJdbc.getCableLinkFromPortRid(outPortRid);
 						band = (Integer)outLink.get("band");
 						used = (Integer)outLink.get("used");
 						nicBand  = (Integer)path.get(i+2).get("band");
@@ -527,13 +529,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 						if (newUsed == used) {
 							newUsed = band * 1024 * 1024 * 1024;
 						}
-						dao.updateCableLinkUsedFromPortRid(outPortRid, newUsed);
+						daoJdbc.updateCableLinkUsedFromPortRid(outPortRid, newUsed);
 					}
 					/* insert patch wiring */
 					Map<String, Object>  inPortDataMap = path.get(i-1);
 					Map<String, Object> ofpPortDataMap = path.get(i);
 					Map<String, Object> outPortDataMap = path.get(i+1);
-					dao.insertPatchWiring(
+					daoJdbc.insertPatchWiring(
 							(String)ofpPortDataMap.get("@RID"),
 							(String) inPortDataMap.get("@RID"),
 							(String)outPortDataMap.get("@RID"),
