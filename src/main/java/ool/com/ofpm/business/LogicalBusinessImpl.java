@@ -14,10 +14,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ool.com.dmdb.client.DMDBClient;
+import ool.com.dmdb.client.DMDBClientImpl;
 import ool.com.dmdb.client.DeviceManagerDBClient;
 import ool.com.dmdb.client.DeviceManagerDBClientImpl;
+import ool.com.dmdb.exception.DMDBClientException;
 import ool.com.dmdb.exception.DeviceManagerDBClientException;
+import ool.com.dmdb.json.Nic;
+import ool.com.dmdb.json.Port;
 import ool.com.dmdb.json.Used;
+import ool.com.dmdb.json.nic.NicReadRequest;
+import ool.com.dmdb.json.nic.NicReadResponse;
+import ool.com.dmdb.json.port.PortReadRequest;
+import ool.com.dmdb.json.port.PortReadResponse;
 import ool.com.ofpm.business.common.OFPatchCommon;
 import ool.com.ofpm.business.common.OFPatchCommonImpl;
 import ool.com.ofpm.client.AgentClient;
@@ -72,6 +81,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	OFPatchCommon ofPatchBusiness = new OFPatchCommonImpl();
 
 	Dao dao = null;
+
+	final String DEBUG_AUTH_TOKEN = "";
 
 	public LogicalBusinessImpl() {
 		if (logger.isDebugEnabled()) {
@@ -435,179 +446,50 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		/* PHASE 3: Update topology */
 		Connection conn = null;
 		try {
-			ConnectionUtilsJdbc utilsJdbc = new ConnectionUtilsJdbcImpl();
-			dao = new DaoImpl(utilsJdbc);
-			conn = utilsJdbc.getConnection(false);
-
-			List<OfpConDeviceInfo> requestedNodes = requestedTopology.getNodes();
-			List<LogicalLink> requestedLinkList = requestedTopology.getLinks();
-			List<LogicalLink> currentLinkList = new ArrayList<LogicalLink>();
-
-			/* Create current links */
-			for (OfpConDeviceInfo requestedNode : requestedNodes) {
-				String devName = requestedNode.getDeviceName();
-
-				Set<LogicalLink> linkSet = this.getLogicalLink(conn, devName);
-				if (linkSet != null) {
-					currentLinkList.addAll(linkSet);
-				}
+			/* initialize db connectors */
+			{
+				ConnectionUtilsJdbc utilsJdbc = new ConnectionUtilsJdbcImpl();
+				dao = new DaoImpl(utilsJdbc);
+				conn = utilsJdbc.getConnection(false);
 			}
-			this.normalizeLogicalLink(requestedNodes, currentLinkList);
 
-			/* Create/Delete LogicalLink */
+			/* compute Inclement/Declement LogicalLink */
 			List<LogicalLink> incLinkList = new ArrayList<LogicalLink>();
-			incLinkList.addAll(requestedLinkList);
-			incLinkList.removeAll(currentLinkList);
-
 			List<LogicalLink> decLinkList = new ArrayList<LogicalLink>();
-			decLinkList.addAll(currentLinkList);
-			decLinkList.removeAll(requestedLinkList);
+			{
+				List<OfpConDeviceInfo> requestedNodes = requestedTopology.getNodes();
+				List<LogicalLink> requestedLinkList = requestedTopology.getLinks();
+				List<LogicalLink> currentLinkList = new ArrayList<LogicalLink>();
 
+				/* Create current links */
+				for (OfpConDeviceInfo requestedNode : requestedNodes) {
+					String devName = requestedNode.getDeviceName();
+					Set<LogicalLink> linkSet = this.getLogicalLink(conn, devName);
+					if (linkSet != null) {
+						currentLinkList.addAll(linkSet);
+					}
+				}
+				this.normalizeLogicalLink(requestedNodes, currentLinkList);
+
+				/* get difference between current and next */
+				incLinkList.addAll(requestedLinkList);
+				incLinkList.removeAll(currentLinkList);
+
+				decLinkList.addAll(currentLinkList);
+				decLinkList.removeAll(requestedLinkList);
+			}
+
+			/* update patch wiring and make patch link */
 			List<PatchLink> reducedLinks = new ArrayList<PatchLink>();
 			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
 			for (LogicalLink link : decLinkList) {
-				PortData inPort  = link.getLink().get(0);
-				List<Map<String, Object>> patchDocList = dao.getPatchWiringsFromDeviceNamePortName(conn, inPort.getDeviceName(), inPort.getPortName());
-				dao.deletePatchWiring(conn, inPort.getDeviceName(), inPort.getPortName());
-
-				for (Map<String, Object> patchDoc : patchDocList) {
-					String ofpRid = (String)patchDoc.get("parent");
-					Map<String, Object> nodeDoc = dao.getNodeInfoFromDeviceRid(conn, ofpRid);
-					String deviceName = (String)nodeDoc.get("name");
-					String deviceType = (String)nodeDoc.get("type");
-					int inPortNumber = 0;
-					int outPortNumber = 0;
-					if (deviceType.equals(NODE_TYPE_LEAF)) {
-						String inPortRid  = (String)patchDoc.get("in");
-						Map<String, Object> inLink = dao.getCableLinkFromPortRid(conn, inPortRid);
-						int newUsed = this.declementCableLinkUsed(inLink);
-						dao.updateCableLinkUsedFromPortRid(conn, inPortRid, newUsed);
-						inPortNumber = (Integer)inLink.get("inPortNumber");
-
-						String outPortRid = (String)patchDoc.get("out");
-						Map<String, Object> outLink = dao.getCableLinkFromPortRid(conn, outPortRid);
-						newUsed = this.declementCableLinkUsed(outLink);
-						dao.updateCableLinkUsedFromPortRid(conn, outPortRid, newUsed);
-						outPortNumber = (Integer)outLink.get("outPortNumber");
-					}
-
-					/* make remove patch link */
-					List<Integer> portNames = new ArrayList<Integer>();
-					portNames.add(inPortNumber);
-					portNames.add(outPortNumber);
-
-					PatchLink patchLink = new PatchLink();
-					patchLink.setDeviceName(deviceName);
-					patchLink.setPortName(portNames);
-
-					reducedLinks.add(patchLink);
-				}
+				reducedLinks.addAll(this.declementLogicalLink(conn, link));
 			}
 			for (LogicalLink link : incLinkList) {
-				PortData tx = link.getLink().get(0);
-				PortData rx = link.getLink().get(1);
-				Map<String, Object> txMap = null;
-				Map<String, Object> rxMap = null;
-				int txPortIndex = 0;
-				int rxPortIndex = -1;
-				if (StringUtils.isBlank(tx.getPortName())) {
-					txMap = dao.getNodeInfoFromDeviceName(conn, tx.getDeviceName());
-				} else {
-					txMap = dao.getPortInfoFromPortName(conn, tx.getPortName(), tx.getDeviceName());
-					txPortIndex = 1;
-				}
-				if (StringUtils.isBlank(rx.getPortName())) {
-					rxMap = dao.getNodeInfoFromDeviceName(conn, rx.getPortName());
-				} else {
-					rxMap = dao.getPortInfoFromPortName(conn, rx.getPortName(), rx.getDeviceName());
-					rxPortIndex = -2;
-				}
-				String txRid = (String)txMap.get("RID");
-				String rxRid = (String)rxMap.get("RID");
-
-				List<Map<String, Object>> path = dao.getShortestPath(conn, txRid, rxRid);
-				Map<String, Object> txPort = path.get(txPortIndex);
-				Map<String, Object> rxPort = path.get(path.size() + rxPortIndex);
-				for (int i = 0; i < path.size(); i++) {
-					Map<String, Object> vertex = path.get(i);
-					String deviceType = (String)vertex.get("type");
-					if (!StringUtils.equals(deviceType, NODE_TYPE_LEAF) && !StringUtils.equals(deviceType, NODE_TYPE_SPINE)) {
-						continue;
-					}
-
-					if (deviceType.equals(NODE_TYPE_LEAF)) {
-						/* update used value */
-						Map<String, Object>  inPortMap = path.get(i-1);
-						String  inPortRid = (String)inPortMap.get("@RID");
-						Map<String, Object> inLink = dao.getCableLinkFromPortRid(conn, inPortRid);
-						int band = (Integer)inLink.get("band");
-						int used = (Integer)inLink.get("used");
-						int nicBand  = (Integer)path.get(i-2).get("band");
-						int portBand = (Integer)path.get(i-1).get("band");
-						int useBand  = (nicBand < portBand)? nicBand: portBand;
-						int newUsed  = used + useBand;
-						if (newUsed > used) {
-							// error
-						}
-						if (newUsed == used) {
-							newUsed = band * 1024 * 1024 * 1024;
-						}
-						dao.updateCableLinkUsedFromPortRid(conn, inPortRid, newUsed);
-
-						Map<String, Object>  outPortMap = path.get(i+1);
-						String  outPortRid = (String)outPortMap.get("@RID");
-						Map<String, Object> outLink = dao.getCableLinkFromPortRid(conn, outPortRid);
-						band = (Integer)outLink.get("band");
-						used = (Integer)outLink.get("used");
-						nicBand  = (Integer)path.get(i+2).get("band");
-						portBand = (Integer)path.get(i+1).get("band");
-						useBand  = (nicBand < portBand)? nicBand: portBand;
-						newUsed  = used + useBand;
-						if (newUsed > used) {
-							// error
-						}
-						if (newUsed == used) {
-							newUsed = band * 1024 * 1024 * 1024;
-						}
-						dao.updateCableLinkUsedFromPortRid(conn, outPortRid, newUsed);
-					}
-					/* insert patch wiring */
-					Map<String, Object>  inPortDataMap = path.get(i-1);
-					Map<String, Object> ofpPortDataMap = path.get(i);
-					Map<String, Object> outPortDataMap = path.get(i+1);
-					dao.insertPatchWiring(
-							conn,
-							(String)ofpPortDataMap.get("@RID"),
-							(String) inPortDataMap.get("@RID"),
-							(String)outPortDataMap.get("@RID"),
-							(String)txPort.get("deviceName"),
-							(String)txPort.get("name"),
-							(String)rxPort.get("deviceName"),
-							(String)rxPort.get("name"));
-
-					/* make PatchLink */
-					List<Integer> ofpPortNmbrList = new ArrayList<Integer>();
-					ofpPortNmbrList.add((Integer) inPortDataMap.get("number"));
-					ofpPortNmbrList.add((Integer)outPortDataMap.get("number"));
-
-					PatchLink patchLink = new PatchLink();
-					patchLink.setDeviceName((String)ofpPortDataMap.get("name"));
-					patchLink.setPortName(ofpPortNmbrList);
-
-					augmentedLinks.add(patchLink);
-				}
-
-				/* Notify NCS */
-//				List<String> deviceNames = link.getDeviceName();
-//				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
-//				int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
-//				if (notifyNcsRet != STATUS_SUCCESS) {
-//					res.setStatus(augmentedPatches.getStatus());
-//					res.setMessage(augmentedPatches.getMessage());
-//					return res.toJson();
-//				}
+				augmentedLinks.addAll(this.inclementLogicalLink(conn, link));
 			}
 
+			/* Notify changed topology to ofp-controller. */
 //			agentManager = AgentManager.getInstance();
 //			Map<AgentClient, List<AgentUpdateFlowData>> agentUpdateFlowDataList = this.makeAgentUpdateFlowList(reducedLinks, "delete");
 //			Map<AgentClient, List<AgentUpdateFlowData>> bufAgentUpdateReqList = this.makeAgentUpdateFlowList(augmentedLinks, "create");
@@ -639,13 +521,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 //			res.setStatus(STATUS_INTERNAL_ERROR);
 //			res.setMessage(UNEXPECTED_ERROR);
 //			return res.toJson();
-//		} catch (Exception e) {
-//			logger.error(e);
-//			res.setStatus(STATUS_INTERNAL_ERROR);
-//			res.setMessage(UNEXPECTED_ERROR);
-//			return res.toJson();
-
-		} catch (SQLException e) {
+		} catch (Exception e) {
+			logger.error(e);
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(UNEXPECTED_ERROR);
 			return res.toJson();
 		} finally {
 			try {
@@ -808,7 +687,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	private int declementCableLinkUsed(Map<String, Object> link) {
 		final String fname = "updateCableLinkUsed";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(portRid=%s) - start"));
+			logger.debug(String.format("%s(link=%s) - start", fname, link));
 		}
 		int band = (Integer)link.get("band");
 		int used = (Integer)link.get("used");
@@ -822,5 +701,269 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			logger.debug(String.format("%s(ret=%s) - end", fname, used));
 		}
 		return used;
+	}
+
+	/**
+	 * Get Nic info from Device Manager DB.
+	 * @param client DMDBClient
+	 * @param deviceName
+	 * @param nicName
+	 * @return
+	 * @throws DMDBClientException
+	 */
+	private Nic getNic(DMDBClient client, String deviceName, String nicName) throws DMDBClientException {
+		Nic ret = null;
+		Nic nic = new Nic();
+		nic.setNicName(nicName);
+		NicReadRequest req = new NicReadRequest();
+		req.setDeviceName(deviceName);
+		req.setParams(nic);
+		req.setAuth(DEBUG_AUTH_TOKEN);
+		NicReadResponse res = client.nicRead(req);
+		if (res.getStatus() != STATUS_SUCCESS) {
+
+		}
+		if (res.getResult() != null && res.getResult().size() > 1) {
+			ret = res.getResult().get(0);
+		}
+		return ret;
+	}
+
+	/**
+	 * Get port info from Device Manager DB.
+	 * @param client DMDBClinet
+	 * @param deviceName
+	 * @param portName
+	 * @return
+	 * @throws DMDBClientException
+	 */
+	private Port getPort(DMDBClient client, String deviceName, String portName) throws DMDBClientException {
+		Port ret = null;
+		Port port = new Port();
+		port.setPortName(portName);
+		PortReadRequest req = new PortReadRequest();
+		req.setDeviceName(deviceName);
+		req.setParams(port);
+		req.setAuth(DEBUG_AUTH_TOKEN);
+		PortReadResponse res = client.portRead(req);
+		if (res.getStatus() != STATUS_SUCCESS) {
+
+		}
+		if (res.getResult() != null && res.getResult().size() > 1) {
+			ret = res.getResult().get(0);
+		}
+		return ret;
+	}
+
+	/**
+	 * Get band width from Device Manager DB
+	 * @param client DMDBClient
+	 * @param conn
+	 * @param deviceName
+	 * @param portName
+	 * @return
+	 * @throws DMDBClientException
+	 * @throws SQLException
+	 */
+	private long getBandWidth(DMDBClient client, Connection conn, String deviceName, String portName) throws DMDBClientException, SQLException {
+		long band = 0;
+		Map<String, Object> devMap = dao.getNodeInfoFromDeviceName(conn, deviceName);
+		if (((String)devMap.get("type")).equals(NODE_TYPE_SERVER)) {
+			Nic nic = this.getNic(client, deviceName, portName);
+//			band = OFPMUtils.bandWidthToBaseMbps(nic.getBand());
+			band = OFPMUtils.bandWidthToBaseMbps("1Gbps");
+		} else {
+			Port port = this.getPort(client, deviceName, portName);
+			band = OFPMUtils.bandWidthToBaseMbps("1Gbps");
+//			band = OFPMUtils.bandWidthToBaseMbps(port.getBand());
+		}
+		return band;
+	}
+
+	/**
+	 * Delete logical link, in fact remove patch wiring and update links used value.
+	 * @param conn
+	 * @param link
+	 * @return
+	 * @throws SQLException
+	 */
+	private List<PatchLink> declementLogicalLink(Connection conn, LogicalLink link) throws SQLException {
+		List<PatchLink> ret = new ArrayList<PatchLink>();
+		PortData inPort  = link.getLink().get(0);
+		List<Map<String, Object>> patchDocList = dao.getPatchWiringsFromDeviceNamePortName(conn, inPort.getDeviceName(), inPort.getPortName());
+		dao.deletePatchWiring(conn, inPort.getDeviceName(), inPort.getPortName());
+
+		for (Map<String, Object> patchDoc : patchDocList) {
+			String ofpRid = (String)patchDoc.get("parent");
+			Map<String, Object> nodeDoc = dao.getNodeInfoFromDeviceRid(conn, ofpRid);
+			String deviceName = (String)nodeDoc.get("name");
+			String deviceType = (String)nodeDoc.get("type");
+			int inPortNumber = 0;
+			int outPortNumber = 0;
+			if (deviceType.equals(NODE_TYPE_LEAF)) {
+				String inPortRid  = (String)patchDoc.get("in");
+				Map<String, Object> inLink = dao.getCableLinkFromPortRid(conn, inPortRid);
+				int newUsed = this.declementCableLinkUsed(inLink);
+				dao.updateCableLinkUsedFromPortRid(conn, inPortRid, newUsed);
+				inPortNumber = (Integer)inLink.get("inPortNumber");
+
+				String outPortRid = (String)patchDoc.get("out");
+				Map<String, Object> outLink = dao.getCableLinkFromPortRid(conn, outPortRid);
+				newUsed = this.declementCableLinkUsed(outLink);
+				dao.updateCableLinkUsedFromPortRid(conn, outPortRid, newUsed);
+				outPortNumber = (Integer)outLink.get("outPortNumber");
+			}
+
+			/* make remove patch link */
+			List<Integer> portNames = new ArrayList<Integer>();
+			portNames.add(inPortNumber);
+			portNames.add(outPortNumber);
+
+			PatchLink patchLink = new PatchLink();
+			patchLink.setDeviceName(deviceName);
+			patchLink.setPortName(portNames);
+
+			ret.add(patchLink);
+		}
+		return ret;
+	}
+
+	/**
+	 * Create logical link, in fact insert patch wiring, update links used value, and then notify NCS.
+	 * @param conn
+	 * @param link
+	 * @return
+	 * @throws SQLException
+	 * @throws DMDBClientException
+	 */
+	private List<PatchLink> inclementLogicalLink(Connection conn, LogicalLink link) throws SQLException, DMDBClientException {
+		List<PatchLink> ret = new ArrayList<PatchLink>();
+
+		PortData tx = link.getLink().get(0);
+		PortData rx = link.getLink().get(1);
+		/* get rid of txPort/rxPort */
+		String txRid = null;
+		String rxRid = null;
+		{
+			Map<String, Object> txMap =
+					(StringUtils.isBlank(tx.getPortName()))
+					? dao.getNodeInfoFromDeviceName(conn, tx.getDeviceName())
+					: dao.getPortInfoFromPortName(conn, tx.getDeviceName(), tx.getPortName());
+			Map<String, Object> rxMap =
+					(StringUtils.isBlank(rx.getPortName()))
+					? dao.getNodeInfoFromDeviceName(conn, rx.getDeviceName())
+					: dao.getPortInfoFromPortName(conn, rx.getDeviceName(), rx.getPortName());
+			txRid = (String)txMap.get("rid");
+			rxRid = (String)rxMap.get("rid");
+		}
+
+		/* get shortest path */
+		List<Map<String, Object>> path = dao.getShortestPath(conn, txRid, rxRid);
+		/* search first/last port */
+		int txPortIndex = (StringUtils.isBlank(tx.getPortName()))? 1: 0;
+		int rxPortIndex = (StringUtils.isBlank(rx.getPortName()))? path.size() - 2: path.size() - 1;
+		Map<String, Object> txPort = path.get(txPortIndex);
+		Map<String, Object> rxPort = path.get(rxPortIndex);
+		/* check patch wiring exist */
+		if (dao.getPatchWiringsFromDeviceNamePortName(conn, (String)txPort.get("deviceName"), (String)txPort.get("name")).size() > 0) {
+			// TODO : error
+		}
+		if (dao.getPatchWiringsFromDeviceNamePortName(conn, (String)rxPort.get("deviceName"), (String)rxPort.get("name")).size() > 0) {
+			// TODO : error
+		}
+		/* conmute need band-width for patching */
+		long needBand = 0;
+		{
+			DMDBClient client = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
+			Map<String, Object> txNextPort = path.get(txPortIndex + 1);
+			Map<String, Object> rxBackPort = path.get(rxPortIndex - 1);
+			long txBand = this.getBandWidth(client, conn, (String)txPort.get("deviceName"), (String)txPort.get("name"));
+			long rxBand = this.getBandWidth(client, conn, (String)rxPort.get("deviceName"), (String)rxPort.get("name"));
+			long txNextBand = this.getBandWidth(client, conn, (String)txNextPort.get("deviceName"), (String)txNextPort.get("name"));
+			long rxNextBand = this.getBandWidth(client, conn, (String)rxBackPort.get("deviceName"), (String)rxBackPort.get("name"));
+			needBand = (txBand < rxBand)? txBand: rxBand;
+			needBand = (needBand < txNextBand)? needBand: txNextBand;
+			needBand = (needBand < rxNextBand)? needBand: rxNextBand;
+		}
+
+		/* Update links used value */
+		for (int i = 1; i < path.size(); i++) {
+			Map<String, Object> currentV = path.get(i);
+			String vClass = (String)currentV.get("class");
+			if (!StringUtils.equals(vClass, "port")) {
+				continue;
+			}
+			Map<String, Object> beforV = path.get(i - 1);
+			if (!StringUtils.equals((String)beforV.get("class"), "port")) {
+				continue;
+			}
+
+			String currentPortRid = (String)currentV.get("RID");
+			Map<String, Object> cableLink = dao.getCableLinkFromPortRid(conn, currentPortRid);
+			long band = (long)(Integer)cableLink.get("band");
+			long used = (long)(Long)cableLink.get("used");
+			long newUsed = used + needBand;
+			if (newUsed > band) {
+				// TODO: error
+			}
+			else if (newUsed == band) {
+				newUsed = band * 10000;
+			}
+
+			dao.updateCableLinkUsedFromPortRid(conn, currentPortRid, newUsed);
+		}
+
+		/* Make insert patch-wiring and make patch-link */
+		/* MEMO: Don't integrate to the loop for the above for easy to read. */
+		for (int i = 1; i < path.size(); i++) {
+			Map<String, Object> currentV = path.get(i);
+			String vClass = (String)currentV.get("class");
+			if (!StringUtils.equals(vClass, "node")) {
+				continue;
+			}
+			String deviceType = (String)currentV.get("type");
+			if (StringUtils.isBlank(deviceType)) {
+				// TODO: error
+			}
+			if (!StringUtils.equals(deviceType, NODE_TYPE_LEAF) && !StringUtils.equals(deviceType, NODE_TYPE_SPINE)) {
+				continue;
+			}
+
+			/* insert patch wiring */
+			Map<String, Object>  inPortDataMap = path.get(i-1);
+			Map<String, Object> ofpPortDataMap = path.get(i);
+			Map<String, Object> outPortDataMap = path.get(i+1);
+			dao.insertPatchWiring(
+					conn,
+					(String)ofpPortDataMap.get("RID"),
+					(String) inPortDataMap.get("RID"),
+					(String)outPortDataMap.get("RID"),
+					(String)txPort.get("deviceName"),
+					(String)txPort.get("name"),
+					(String)rxPort.get("deviceName"),
+					(String)rxPort.get("name"));
+
+			/* make PatchLink */
+			List<Integer> ofpPortNmbrList = new ArrayList<Integer>();
+			ofpPortNmbrList.add((Integer) inPortDataMap.get("number"));
+			ofpPortNmbrList.add((Integer)outPortDataMap.get("number"));
+
+			PatchLink patchLink = new PatchLink();
+			patchLink.setDeviceName((String)ofpPortDataMap.get("name"));
+			patchLink.setPortName(ofpPortNmbrList);
+
+			ret.add(patchLink);
+		}
+
+		/* Notify NCS */
+//		List<String> deviceNames = link.getDeviceName();
+//		List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
+//		int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
+//		if (notifyNcsRet != STATUS_SUCCESS) {
+//			res.setStatus(augmentedPatches.getStatus());
+//			res.setMessage(augmentedPatches.getMessage());
+//			return res.toJson();
+//		}
+		return ret;
 	}
 }

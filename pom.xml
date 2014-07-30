@@ -79,7 +79,7 @@
 	<dependency>
 		<groupId>ool.com</groupId>
 		<artifactId>DeviceManagerDBClient</artifactId>
-		<version>0.1.6</version>
+		<version>0.2.0</version>
 	</dependency>
 	<dependency>
 		<groupId>ool.com.common</groupId>

@@ -339,7 +339,7 @@ public interface Dao {
 	 * @param newUsed
 	 * @throws SQLException
 	 */
-	void updateCableLinkUsedFromPortRid(Connection conn, String portRid, int newUsed) throws SQLException;
+	void updateCableLinkUsedFromPortRid(Connection conn, String portRid, long newUsed) throws SQLException;
 
 	/**
 	 * Get port-to-port path that computed by dijkstra.
@@ -366,7 +366,7 @@ public interface Dao {
 	int insertPatchWiring(Connection conn, String ofpRid, String in, String out, String inDeviceName, String inPortName, String outDeviceName, String outPortName) throws SQLException;
 
 
-	/*================ |1_2 3_4 5_6 7_8  console |
+	/*================ |1_2 3_4 5_6 7_8   RS-485 |
 	 *  NodeInfo I/F   |[_] [_] [_] [_]  _______ |
 	 *================ |[_]_[_]_[_]_[_]__\_::::_/| */
 	/**
@@ -427,11 +427,11 @@ public interface Dao {
 	/**
 	 * Get port info from device name and port name.
 	 * @param conn
-	 * @param portName
 	 * @param deviceName
+	 * @param portName
 	 * @return
 	 * @throws SQLException
 	 */
-	Map<String, Object> getPortInfoFromPortName(Connection conn, String portName, String deviceName) throws SQLException;
+	Map<String, Object> getPortInfoFromPortName(Connection conn, String deviceName, String portName) throws SQLException;
 
 }

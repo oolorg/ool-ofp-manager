@@ -9,6 +9,8 @@ import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OrientDBDefinition.*;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1347,7 +1349,7 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#updateCableLinkUsedFromPortRid(java.sql.Connection, java.lang.String, int)
 	 */
 	@Override
-	public void updateCableLinkUsedFromPortRid(Connection conn, String portRid, int newUsed) throws SQLException {
+	public void updateCableLinkUsedFromPortRid(Connection conn, String portRid, long newUsed) throws SQLException {
 		final String fname = "updateCableLinkUsedFromPortRid";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(conn=%s, portRid=%s, newUsed=%s) - start", fname, conn, portRid, newUsed));
@@ -1362,7 +1364,7 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - start", fname));
+			logger.debug(String.format("%s() - start", fname));
 		}
 	}
 
@@ -1378,7 +1380,24 @@ public class DaoImpl implements Dao {
 		}
 		List<Map<String, Object>> ret = null;
 		try {
-			ret = utilsJdbc.query(conn, SQL_GET_DIJKSTRA_PATH_FLATTEN, new MapListHandler(), ridA, ridZ);
+			String query = String.format(SQL_GET_DIJKSTRA_PATH_FLATTEN, ridA, ridZ);
+//			ret = utilsJdbc.query(conn, query, new MapListHandler());
+			PreparedStatement stmt = conn.prepareStatement(query);
+			ResultSet result = stmt.executeQuery();
+			ret = new ArrayList<Map<String, Object>>();
+			while (result.next()) {
+				Map<String, Object> map = new HashMap<String, Object>();
+				map.put("RID", result.getString("rid"));
+				map.put("class", result.getString("class"));
+				map.put("name", result.getString("name"));
+				map.put("number", result.getInt("number"));
+				map.put("deviceName", result.getString("deviceName"));
+				map.put("type", result.getString("type"));
+				map.put("datapathId", result.getString("datapathId"));
+				map.put("ofcIp", result.getString("ofcIp"));
+				ret.add(map);
+			}
+			stmt.close();
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
@@ -1396,18 +1415,11 @@ public class DaoImpl implements Dao {
 	public int insertPatchWiring(Connection conn, String ofpRid, String in, String out, String inDeviceName, String inPortName, String outDeviceName, String outPortName) throws SQLException {
 		final String fname = "insertPatchWiring";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, ofpRid=%s, inPortRid=%s, outPortRid=%s, inDeviceName=%s, inPortName=%s, outDeviceName=%s, outPortName=%s) - start",
-					conn, ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName));
+			logger.debug(String.format("%s(conn=%s, ofpRid=%s, in=%s, out=%s, inDeviceName=%s, inPortName=%s, outDeviceName=%s, outPortName=%s) - start",
+					fname, conn, ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName));
 		}
 		int ret = DB_RESPONSE_STATUS_OK;
 		try {
-			if (this.getPatchWiringsFromDeviceNamePortName(conn, inDeviceName, inPortName).size() > 0) {
-				ret = DB_RESPONSE_STATUS_EXIST;
-			}
-			if (this.getPatchWiringsFromDeviceNamePortName(conn, outDeviceName, outPortName).size() > 0) {
-				ret = DB_RESPONSE_STATUS_EXIST;
-			}
-
 			Object[] forwardParams = {ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName};
 			int result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, forwardParams);
 			if (result != 1) {
@@ -1554,7 +1566,7 @@ public class DaoImpl implements Dao {
 				}
 			}
 
-			String nodeRid = (String)current.get("@RID");
+			String nodeRid = (String)current.get("rid");
 			if (StringUtils.isBlank(deviceName)) {
 				deviceName = (String)current.get("name");
 			}
@@ -1589,10 +1601,10 @@ public class DaoImpl implements Dao {
 	}
 
 	@Override
-	public Map<String, Object> getPortInfoFromPortName(Connection conn, String portName, String deviceName) throws SQLException {
+	public Map<String, Object> getPortInfoFromPortName(Connection conn, String deviceName, String portName) throws SQLException {
 		final String fname = "getPortInfoFromPortName";
 		if (logger.isDebugEnabled()){
-			logger.debug(String.format("%s(conn=%s, portName=%s, deviceName=%s) - start", fname, conn, portName, deviceName));
+			logger.debug(String.format("%s(conn=%s, deviceName=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
 		Map<String, Object> map = null;
 		try {

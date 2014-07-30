@@ -30,27 +30,28 @@ public class OrientDBDefinition {
 
 	/* select */
 	public static final String SQL_GET_DEVICE = "select from node where name='%s'";
-	public static final String SQL_GET_NODE_INFO_FROM_DEVICE_NAME = "select @RID, name, type, datapathId, ofcIp from node where name=?";
-	public static final String SQL_GET_NODE_INFO_FROM_DEVICE_RID = "select @RID, name, type, datapathId, ofcIp from node where @rid=?";
+	public static final String SQL_GET_NODE_INFO_FROM_DEVICE_NAME = "select @rid.asString(), name, type, datapathId, ofcIp from node where name=?";
+	public static final String SQL_GET_NODE_INFO_FROM_DEVICE_RID  = "select @rid.asString(), name, type, datapathId, ofcIp from node where @rid=?";
 	public static final String SQL_GET_DEVICE_LIST = "select from node %s";
 	public static final String SQL_GET_CONNECTED_NODE = "select from (traverse * from %s) where @class='node' and $depth=6";
 	public static final String SQL_GET_PATCHPORT_RID = "select from (traverse * from %s) where @class='port' and $depth=4";
 	public static final String SQL_GET_PATCH_WIRING = "select from patchWiring where out = %s and in = %s";
 	public static final String SQL_GET_DIJKSTRA_PATH = "select dijkstra(%s,%s,'band').asString() from V limit 1";
-	public static final String SQL_GET_DIJKSTRA_PATH_FLATTEN  = "select flatten(dijkstra) from (select dijkstra(?,?,'used'))";
+	public static final String SQL_GET_DIJKSTRA_PATH_FLATTEN  = "select @rid.asString() as rid, name, number, deviceName, type, datapathId, ofcIp, @class from "
+			+ "(select flatten(dijkstra) from (select dijkstra(%s,%s,'used')))";
 	public static final String SQL_GET_PATCH_WIRING2 = "select from patchWiring where outDeviceName = '%s' and inDeviceName = '%s'";
 	public static final String SQL_GET_PATCH_CONNECTED_NODE = "select from patchWiring";
 	public static final String SQL_GET_PORT = "select from port where @RID = %s";
 	public static final String SQL_GET_PORT_INFO = "select from port where name = '%s' and deviceName = '%s'";
 	public static final String SQL_GET_PORT_INFO2 = "select from port where number = %s and deviceName = '%s'";
-	public static final String SQL_GET_PORT_INFO_FROM_PORT_NAME = "select @RID, name, number, deviceName from port where name = ? and deviceName = ?";
+	public static final String SQL_GET_PORT_INFO_FROM_PORT_NAME = "select @rid.asString(), name, number, deviceName from port where name = ? and deviceName = ?";
 	public static final String SQL_GET_LINK = "select from link where out = %s and in = %s";
 
 	public static final String SQL_GET_CABLE_LINK_FROM_PORT_RID = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
-			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @rid "
+			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @RID.asString(), band, used "
 			+ "from link where in.@RID = ?";
 	public static final String SQL_GET_CABLE_LINKS    = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
-			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @rid "
+			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @RID, band, used "
 			+ "from link where in.deviceName = ? and out.@class = 'port'";
 	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME           = "select from patchWiring where inDeviceName=?";
 	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME_PORT_NAME = "select from patchWiring where inDeviceName=? and inPortName=?";
