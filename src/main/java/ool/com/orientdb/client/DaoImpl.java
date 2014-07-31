@@ -9,15 +9,14 @@ import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OrientDBDefinition.*;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.dbutils.handlers.MapListHandler;
+import ool.com.orientdb.utils.handlers.MapListHandler;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
@@ -1381,23 +1380,8 @@ public class DaoImpl implements Dao {
 		List<Map<String, Object>> ret = null;
 		try {
 			String query = String.format(SQL_GET_DIJKSTRA_PATH_FLATTEN, ridA, ridZ);
-//			ret = utilsJdbc.query(conn, query, new MapListHandler());
-			PreparedStatement stmt = conn.prepareStatement(query);
-			ResultSet result = stmt.executeQuery();
-			ret = new ArrayList<Map<String, Object>>();
-			while (result.next()) {
-				Map<String, Object> map = new HashMap<String, Object>();
-				map.put("RID", result.getString("rid"));
-				map.put("class", result.getString("class"));
-				map.put("name", result.getString("name"));
-				map.put("number", result.getInt("number"));
-				map.put("deviceName", result.getString("deviceName"));
-				map.put("type", result.getString("type"));
-				map.put("datapathId", result.getString("datapathId"));
-				map.put("ofcIp", result.getString("ofcIp"));
-				ret.add(map);
-			}
-			stmt.close();
+			MapListHandler rsh = new MapListHandler("rid", "class", "name", "number", "deviceName", "type", "datapathId", "ofcIp");
+			ret = utilsJdbc.query(conn, query, rsh);
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
@@ -1420,13 +1404,19 @@ public class DaoImpl implements Dao {
 		}
 		int ret = DB_RESPONSE_STATUS_OK;
 		try {
+			// TODO : happen unexpected error, ODocument -> Integer. もしかして、insertはこんな感じ？
 			Object[] forwardParams = {ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName};
-			int result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, forwardParams);
+//			int result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, forwardParams);
+			int result = utilsJdbc.query(conn, SQL_INSERT_PATCH_WIRING_2, new MapListHandler(), forwardParams).size();
+//			PrepareStatemeconn.prepareStatement(String.format("insert into patchWiring (parent, in, out, inDeviceName, inPort, outDeviceName, outPortName) values (%s, %s, %s, %s, %s, %s, %s)",
+//					ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName));
+
 			if (result != 1) {
 				//TODO:error
 			}
 			Object[] reverseParams = {ofpRid, out, in, outDeviceName, outPortName, inDeviceName, inPortName};
-			result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, reverseParams);
+//			result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, reverseParams);
+//			result = utilsJdbc.query(conn, SQL_INSERT_PATCH_WIRING_2, new MapListHandler(), reverseParams).size();
 			if (result != 1) {
 				//TODO:error
 			}
@@ -1600,6 +1590,10 @@ public class DaoImpl implements Dao {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getPortInfoFromPortName(java.sql.Connection, java.lang.String, java.lang.String)
+	 */
 	@Override
 	public Map<String, Object> getPortInfoFromPortName(Connection conn, String deviceName, String portName) throws SQLException {
 		final String fname = "getPortInfoFromPortName";
@@ -1620,4 +1614,5 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 	}
+
 }

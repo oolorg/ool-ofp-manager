@@ -898,7 +898,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				continue;
 			}
 
-			String currentPortRid = (String)currentV.get("RID");
+			String currentPortRid = (String)currentV.get("rid");
 			Map<String, Object> cableLink = dao.getCableLinkFromPortRid(conn, currentPortRid);
 			long band = (long)(Integer)cableLink.get("band");
 			long used = (long)(Long)cableLink.get("used");
