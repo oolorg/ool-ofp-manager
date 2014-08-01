@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -98,7 +99,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @param nodes
 	 * @throws SQLException
 	 */
-	private void normalizeLogicalNode(Connection conn, List<OfpConDeviceInfo> nodes) throws SQLException {
+	private void normalizeLogicalNode(Connection conn, Collection<OfpConDeviceInfo> nodes) throws SQLException {
 		Map<String, Boolean> devTypeMap = new HashMap<String, Boolean>();
 		List<OfpConDeviceInfo> removalNodeList = new ArrayList<OfpConDeviceInfo>();
 		for (OfpConDeviceInfo node : nodes) {
@@ -188,7 +189,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @param nodes
 	 * @param links
 	 */
-	private void normalizeLogicalLink(List<OfpConDeviceInfo> nodes, List<LogicalLink> links) {
+	private void normalizeLogicalLink(Collection<OfpConDeviceInfo> nodes, Collection<LogicalLink> links) {
 		String fname = "normalizeLogicalLink";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(nodes=%s, links=%s) - start", fname, nodes, links));
@@ -318,6 +319,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 			List<OfpConDeviceInfo> nodeList = new ArrayList<OfpConDeviceInfo>();
 			List<LogicalLink> linkList = new ArrayList<LogicalLink>();
+			Set<LogicalLink> linkSet = new HashSet<LogicalLink>();
 			for (String devName : deviceNames) {
 				OfpConDeviceInfo node = this.getLogicalNode(conn, devName);
 				if (node == null) {
@@ -325,12 +327,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 				nodeList.add(node);
 
-				Set<LogicalLink> linkSet = this.getLogicalLink(conn, devName);
-				if (linkSet == null) {
+				Set<LogicalLink> links = this.getLogicalLink(conn, devName);
+				if (links == null) {
 					continue;
 				}
-				linkList.addAll(linkSet);
+				linkSet.addAll(links);
 			}
+			linkList.addAll(linkSet);
 			this.normalizeLogicalNode(conn, nodeList);
 			this.normalizeLogicalLink(nodeList, linkList);
 
@@ -459,7 +462,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			{
 				List<OfpConDeviceInfo> requestedNodes = requestedTopology.getNodes();
 				List<LogicalLink> requestedLinkList = requestedTopology.getLinks();
-				List<LogicalLink> currentLinkList = new ArrayList<LogicalLink>();
+				Set<LogicalLink> currentLinkList = new HashSet<LogicalLink>();
 
 				/* Create current links */
 				for (OfpConDeviceInfo requestedNode : requestedNodes) {
@@ -469,6 +472,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 						currentLinkList.addAll(linkSet);
 					}
 				}
+
 				this.normalizeLogicalLink(requestedNodes, currentLinkList);
 
 				/* get difference between current and next */
@@ -684,18 +688,30 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		return rid;
 	}
 
-	private int declementCableLinkUsed(Map<String, Object> link) {
+	/**
+	 *
+	 * @param link
+	 * @return
+	 * @throws SQLException
+	 * @throws DMDBClientException
+	 */
+	private long calcReduceCableLinkUsed(DMDBClient client, Connection conn, Map<String, Object> link) throws DMDBClientException, SQLException {
 		final String fname = "updateCableLinkUsed";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(link=%s) - start", fname, link));
 		}
 		int band = (Integer)link.get("band");
-		int used = (Integer)link.get("used");
-		int inBand  = (Integer)link.get("inBand");
-		int outBand = (Integer)link.get("outBand");
-		int useBand = (inBand < outBand)? inBand : outBand;
-		if (used < band) {
-			used -= useBand;
+		long used = (Long)link.get("used");
+		long inBand = this.getBandWidth(client, conn, (String)link.get("inDeviceName"), (String)link.get("inPortName"));
+		long outBand = this.getBandWidth(client, conn, (String)link.get("outDeviceName"), (String)link.get("outPortName"));
+		long useBand = (inBand < outBand)? inBand : outBand;
+		used -= useBand;
+		if (used > band) {
+			used = band - useBand;
+		}
+		if (used < 0) {
+			used = 0;
+			// TODO: error?
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, used));
@@ -721,7 +737,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		req.setAuth(DEBUG_AUTH_TOKEN);
 		NicReadResponse res = client.nicRead(req);
 		if (res.getStatus() != STATUS_SUCCESS) {
-
+			// TODO: error
 		}
 		if (res.getResult() != null && res.getResult().size() > 1) {
 			ret = res.getResult().get(0);
@@ -747,7 +763,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		req.setAuth(DEBUG_AUTH_TOKEN);
 		PortReadResponse res = client.portRead(req);
 		if (res.getStatus() != STATUS_SUCCESS) {
-
+			// TODO : error
 		}
 		if (res.getResult() != null && res.getResult().size() > 1) {
 			ret = res.getResult().get(0);
@@ -786,32 +802,47 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @param link
 	 * @return
 	 * @throws SQLException
+	 * @throws DMDBClientException
 	 */
-	private List<PatchLink> declementLogicalLink(Connection conn, LogicalLink link) throws SQLException {
+	private List<PatchLink> declementLogicalLink(Connection conn, LogicalLink link) throws SQLException, DMDBClientException {
 		List<PatchLink> ret = new ArrayList<PatchLink>();
 		PortData inPort  = link.getLink().get(0);
 		List<Map<String, Object>> patchDocList = dao.getPatchWiringsFromDeviceNamePortName(conn, inPort.getDeviceName(), inPort.getPortName());
-		dao.deletePatchWiring(conn, inPort.getDeviceName(), inPort.getPortName());
+		if (patchDocList == null || patchDocList.isEmpty()) {
+			// TODO: error
+		}
+		int reducedNumb = dao.deletePatchWiring(conn, inPort.getDeviceName(), inPort.getPortName());
+		if (reducedNumb == 0) {
+			// TODO: error
+		}
 
+		DMDBClient client = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
+		List<String> alreadyProcCable = new ArrayList<String>();
 		for (Map<String, Object> patchDoc : patchDocList) {
 			String ofpRid = (String)patchDoc.get("parent");
 			Map<String, Object> nodeDoc = dao.getNodeInfoFromDeviceRid(conn, ofpRid);
 			String deviceName = (String)nodeDoc.get("name");
-			String deviceType = (String)nodeDoc.get("type");
 			int inPortNumber = 0;
 			int outPortNumber = 0;
-			if (deviceType.equals(NODE_TYPE_LEAF)) {
-				String inPortRid  = (String)patchDoc.get("in");
-				Map<String, Object> inLink = dao.getCableLinkFromPortRid(conn, inPortRid);
-				int newUsed = this.declementCableLinkUsed(inLink);
+
+			String inPortRid  = (String)patchDoc.get("in");
+			Map<String, Object> inLink = dao.getCableLinkFromPortRid(conn, inPortRid);
+			String inCableRid = (String)inLink.get("rid");
+			if (!alreadyProcCable.contains(inCableRid)) {
+				long newUsed = this.calcReduceCableLinkUsed(client, conn, inLink);
 				dao.updateCableLinkUsedFromPortRid(conn, inPortRid, newUsed);
 				inPortNumber = (Integer)inLink.get("inPortNumber");
+				alreadyProcCable.add(inCableRid);
+			}
 
-				String outPortRid = (String)patchDoc.get("out");
-				Map<String, Object> outLink = dao.getCableLinkFromPortRid(conn, outPortRid);
-				newUsed = this.declementCableLinkUsed(outLink);
+			String outPortRid = (String)patchDoc.get("out");
+			Map<String, Object> outLink = dao.getCableLinkFromPortRid(conn, outPortRid);
+			String outCableRid = (String)outLink.get("rid");
+			if (!alreadyProcCable.contains(outCableRid)) {
+				long newUsed = this.calcReduceCableLinkUsed(client, conn, outLink);
 				dao.updateCableLinkUsedFromPortRid(conn, outPortRid, newUsed);
-				outPortNumber = (Integer)outLink.get("outPortNumber");
+				outPortNumber = (Integer)outLink.get("inPortNumber");
+				alreadyProcCable.add(outCableRid);
 			}
 
 			/* make remove patch link */
@@ -935,9 +966,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			Map<String, Object> outPortDataMap = path.get(i+1);
 			dao.insertPatchWiring(
 					conn,
-					(String)ofpPortDataMap.get("RID"),
-					(String) inPortDataMap.get("RID"),
-					(String)outPortDataMap.get("RID"),
+					(String)ofpPortDataMap.get("rid"),
+					(String) inPortDataMap.get("rid"),
+					(String)outPortDataMap.get("rid"),
 					(String)txPort.get("deviceName"),
 					(String)txPort.get("name"),
 					(String)rxPort.get("deviceName"),

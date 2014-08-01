@@ -2,12 +2,8 @@ package ool.com.orientdb.client;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 
 import org.apache.commons.dbutils.ResultSetHandler;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ConnectionUtilsJdbc {
 	 /**
@@ -46,7 +42,7 @@ public interface ConnectionUtilsJdbc {
      * @param conn
      */
     public abstract void rollback(Connection conn);
-    
+
     /**
      * insert
      * @param conn
@@ -74,4 +70,15 @@ public interface ConnectionUtilsJdbc {
      * @throws SQLException
      */
     public abstract void query(Connection conn, String sql) throws SQLException;
+
+    /**
+     * insert
+     * @param conn
+     * @param sql
+     * @param handler
+     * @param params
+     * @return
+     * @throws SQLException
+     */
+    public abstract <T> T insert(Connection conn, String sql, ResultSetHandler<T> handler, Object[] params) throws SQLException;
 }

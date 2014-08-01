@@ -8,19 +8,19 @@ package ool.com.orientdb.client;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+import ool.com.ofpm.utils.Config;
+import ool.com.ofpm.utils.ConfigImpl;
+
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.log4j.Logger;
-
-import ool.com.ofpm.utils.Config;
-import ool.com.ofpm.utils.ConfigImpl;
 
 /**
  * @author 1131080355959
  *
  */
 public class ConnectionUtilsJdbcImpl implements ConnectionUtilsJdbc {
-	
+
 	private static final Logger logger = Logger.getLogger(ConnectionUtilsJdbcImpl.class);
 
     /**
@@ -107,7 +107,7 @@ public class ConnectionUtilsJdbcImpl implements ConnectionUtilsJdbc {
         }
         return rows;
     }
-    
+
     @Override
     public void query(Connection conn, String sql) throws SQLException {
         if (logger.isDebugEnabled()) {
@@ -125,12 +125,26 @@ public class ConnectionUtilsJdbcImpl implements ConnectionUtilsJdbc {
     public <T> T query(Connection conn, String sql,
             ResultSetHandler<T> handler, Object... params) throws SQLException {
         if (logger.isDebugEnabled()) {
-            logger.debug(String.format("query(conn=%s, sql=%s, handler=%s, params) - start ", conn, sql, handler, params.toString()));
+            logger.debug(String.format("query(conn=%s, sql=%s, handler=%s, params=%s) - start ", conn, sql, handler, params.toString()));
         }
         QueryRunner qRunner = new QueryRunner();
         T records = qRunner.query(conn, sql, handler, params);
         if (logger.isDebugEnabled()) {
             logger.debug(String.format("query(records=%s) - end ", records));
+        }
+        return records;
+    }
+
+    @Override
+    public <T> T insert(Connection conn, String sql,
+            ResultSetHandler<T> handler, Object... params) throws SQLException {
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("insert(conn=%s, sql=%s, handler=%s, params=%s) - start", conn, sql, handler, params.toString()));
+        }
+        QueryRunner qRunner = new QueryRunner();
+        T records = qRunner.insert(conn, sql, handler, params);
+        if (logger.isDebugEnabled()) {
+            logger.debug(String.format("insert(records=%s) - end", records));
         }
         return records;
     }

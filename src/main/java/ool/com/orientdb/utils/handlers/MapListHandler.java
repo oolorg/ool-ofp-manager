@@ -19,6 +19,7 @@ public class MapListHandler extends org.apache.commons.dbutils.handlers.MapListH
 	 * When instanced by this constructor, process is same as org.apache.commons.dbutils.handlers.MapListHandler.
 	 */
 	public MapListHandler() {
+		super();
 		this.labels = null;
 	}
 	/**
@@ -26,6 +27,7 @@ public class MapListHandler extends org.apache.commons.dbutils.handlers.MapListH
 	 * @param labels
 	 */
 	public MapListHandler(String... labels) {
+		super();
 		this.labels = labels;
 	}
 
