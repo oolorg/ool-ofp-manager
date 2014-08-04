@@ -17,6 +17,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  */
 public interface Dao {
+	
+	/**
+	 * set connectionUtilsJdbc
+	 * @param utils
+	 */
+	void setConnectionUtilsJdbc(ConnectionUtilsJdbc utils);
 
 	void close() throws SQLException;
 
@@ -254,7 +260,7 @@ public interface Dao {
 	 * @return device name
 	 * @throws SQLException failed sql
 	 */
-	String getDeviceNameFromDatapathId(String datapathId) throws SQLException;
+	String getDeviceNameFromDatapathId(Connection conn, String datapathId) throws SQLException;
 
 	/**
 	 * get port RID from deviceName and portNumber

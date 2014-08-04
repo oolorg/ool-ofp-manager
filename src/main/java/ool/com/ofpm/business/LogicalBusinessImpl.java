@@ -675,8 +675,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		String rid = "";
 		try {
-			dao = new DaoImpl(new ConnectionUtilsJdbcImpl());
-			rid = dao.getDeviceNameFromDatapathId(requestedData);
+			dao = new DaoImpl();
+			ConnectionUtilsJdbc utilsJdbc = new ConnectionUtilsJdbcImpl();
+			dao.setConnectionUtilsJdbc(utilsJdbc);
+			Connection conn = utilsJdbc.getConnection(false);
+			rid = dao.getDeviceNameFromDatapathId(conn, requestedData);
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.getMessage();

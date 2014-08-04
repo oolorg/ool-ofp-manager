@@ -52,7 +52,7 @@ public class DaoImpl implements Dao {
 	}
 
 	// jdbc
-	public DaoImpl(ConnectionUtilsJdbc utils) throws SQLException {
+	public DaoImpl(ConnectionUtilsJdbc utils) {
 		if (logger.isDebugEnabled()){
 			logger.debug(String.format("DaoImpl(utils=%s) - start", utils));
 		}
@@ -60,6 +60,21 @@ public class DaoImpl implements Dao {
 		if (logger.isDebugEnabled()){
 			logger.debug("DaoImpl() - end");
 		}
+	}
+	
+	// default constructor
+	public DaoImpl() {
+		if (logger.isDebugEnabled()){
+			logger.debug(String.format("DaoImpl() - start"));
+		}
+		if (logger.isDebugEnabled()){
+			logger.debug("DaoImpl() - end");
+		}
+	}
+	
+	// connectionUtil setter
+	public void setConnectionUtilsJdbc(ConnectionUtilsJdbc utils) {
+		this.utilsJdbc = utils;
 	}
 
 	synchronized private void init() throws SQLException {
@@ -1183,19 +1198,18 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#getDeviceNameFromDatapathId(java.lang.String)
 	 */
 	@Override
-	public String getDeviceNameFromDatapathId(String datapathId) throws SQLException {
+	public String getDeviceNameFromDatapathId(Connection conn, String datapathId) throws SQLException {
 		final String fname = "getDeviceNameFromDatapathId";
-		if (logger.isDebugEnabled()){
-			logger.debug(String.format("%s(datapathId=%s) - start", fname, datapathId));
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s, datapathId=%s) - start", fname, conn, datapathId));
 		}
 		try {
-			Connection conn = utilsJdbc.getConnection(false);
 			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_DEVICENAME_FROM_DATAPATHID,
                     new MapListHandler(), datapathId);
 			if (records.size() <= 0) {
                 // error
 			}
-			if (logger.isDebugEnabled()) {
+			if (logger.isTraceEnabled()) {
 			//	logger.debug(String.format("%s(ret=%s) - end", rs.toString()));
 			}
 			return records.get(0).get("rid").toString();
