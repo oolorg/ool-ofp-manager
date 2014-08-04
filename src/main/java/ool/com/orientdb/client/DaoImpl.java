@@ -1301,9 +1301,10 @@ public class DaoImpl implements Dao {
 			logger.debug(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
 		try {
-			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME_PORT_NAME, new MapListHandler(), deviceName, portName);
+			MapListHandler rsh = new MapListHandler("in", "out", "parent", "inDeviceName", "inPortName", "outDeviceName", "outPortName");
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME_PORT_NAME, rsh, deviceName, portName);
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - start", fname, maps));
+				logger.debug(String.format("%s(ret=%s) - end", fname, maps));
 			}
 			return maps;
 		} catch (Exception e) {
@@ -1316,20 +1317,22 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#deletePatchWiring(java.sql.Connection, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public void deletePatchWiring(Connection conn, String deviceName, String portName) throws SQLException {
+	public int deletePatchWiring(Connection conn, String deviceName, String portName) throws SQLException {
 		final String fname = "deletePatchWiring";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
+		int ret = 0;
 		try {
 			Object[] params = {deviceName, portName, deviceName, portName};
-			utilsJdbc.update(conn, SQL_DELETE_PATCH_WIRING_FROM_DEVICE_NAME_PORT_NAME, params);
+			ret = utilsJdbc.update(conn, SQL_DELETE_PATCH_WIRING_FROM_DEVICE_NAME_PORT_NAME, params);
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s() - start", fname));
+			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 		}
+		return ret;
 	}
 
 	/*
@@ -1352,7 +1355,7 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 		}
 		return ret;
 	}
@@ -1377,7 +1380,7 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s() - start", fname));
+			logger.debug(String.format("%s() - end", fname));
 		}
 	}
 
@@ -1400,7 +1403,7 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 		}
 		return ret;
 	}
@@ -1419,18 +1422,13 @@ public class DaoImpl implements Dao {
 		int ret = DB_RESPONSE_STATUS_OK;
 		try {
 			// TODO : happen unexpected error, ODocument -> Integer. もしかして、insertはこんな感じ？
-			Object[] forwardParams = {ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName};
-//			int result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, forwardParams);
-			int result = utilsJdbc.query(conn, SQL_INSERT_PATCH_WIRING_2, new MapListHandler(), forwardParams).size();
-//			PrepareStatemeconn.prepareStatement(String.format("insert into patchWiring (parent, in, out, inDeviceName, inPort, outDeviceName, outPortName) values (%s, %s, %s, %s, %s, %s, %s)",
-//					ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName));
-
+			Object[] forwardParams = {in, out, ofpRid, inDeviceName, inPortName, outDeviceName, outPortName};
+			int result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, forwardParams);
 			if (result != 1) {
 				//TODO:error
 			}
-			Object[] reverseParams = {ofpRid, out, in, outDeviceName, outPortName, inDeviceName, inPortName};
-//			result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, reverseParams);
-//			result = utilsJdbc.query(conn, SQL_INSERT_PATCH_WIRING_2, new MapListHandler(), reverseParams).size();
+			Object[] reverseParams = {out, in, ofpRid, outDeviceName, outPortName, inDeviceName, inPortName};
+			result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, reverseParams);
 			if (result != 1) {
 				//TODO:error
 			}
@@ -1438,7 +1436,7 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 		}
 		return ret;
 	}
@@ -1485,7 +1483,7 @@ public class DaoImpl implements Dao {
 				map = maps.get(0);
 			}
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - start", fname, map));
+				logger.debug(String.format("%s(ret=%s) - end", fname, map));
 			}
 			return map;
 		} catch (Exception e) {
@@ -1511,7 +1509,7 @@ public class DaoImpl implements Dao {
 				return DB_RESPONSE_STATUS_EXIST;
 			}
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 			}
 			return ret;
 		} catch (Exception e) {
@@ -1542,7 +1540,7 @@ public class DaoImpl implements Dao {
 				return DB_RESPONSE_STATUS_EXIST;
 			}
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 			}
 			return ret;
 		} catch (Exception e) {

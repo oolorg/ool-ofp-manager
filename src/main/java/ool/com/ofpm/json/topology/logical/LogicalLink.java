@@ -38,7 +38,9 @@ public class LogicalLink implements Cloneable {
 	public int hashCode() {
 		int hash = 0;
 		if (this.link != null) {
-			hash += this.link.hashCode();
+			for (PortData port : this.link) {
+				hash += port.hashCode();
+			}
 		}
 		return hash;
 	}

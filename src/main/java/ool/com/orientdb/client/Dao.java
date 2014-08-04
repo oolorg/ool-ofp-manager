@@ -322,9 +322,10 @@ public interface Dao {
 	 * @param conn
 	 * @param deviceName
 	 * @param portName
+	 * @return
 	 * @throws SQLException
 	 */
-	void deletePatchWiring(Connection conn, String deviceName, String portName) throws SQLException;
+	int deletePatchWiring(Connection conn, String deviceName, String portName) throws SQLException;
 
 
 	/**

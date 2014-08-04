@@ -3,8 +3,8 @@ package ool.com.ofpm.utils;
 import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OfpmDefinition.*;
 
+import java.util.Collection;
 import java.util.IllegalFormatException;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,7 +14,13 @@ import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConPortInfo;
 
 public class OFPMUtils {
 
-	public static boolean nodesContainsPort(List<OfpConDeviceInfo> nodes, PortData port) {
+	/**
+	 * Check port contains in nodes.
+	 * @param nodes
+	 * @param port
+	 * @return
+	 */
+	public static boolean nodesContainsPort(Collection<OfpConDeviceInfo> nodes, PortData port) {
 		for (OfpConDeviceInfo device : nodes) {
 			if (device.getDeviceName().equals(port.getDeviceName())) {
 				for (OfpConPortInfo ofpConPort : device.getPorts()) {
