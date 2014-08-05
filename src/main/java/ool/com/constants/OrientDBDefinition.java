@@ -63,8 +63,13 @@ public class OrientDBDefinition {
 
 	public static final String SQL_GET_PORT_LIST = "select from port where deviceName = '%s'";
 
-	public static final String SQL_GET_DEVICENAME_FROM_DATAPATHID = "select deviceName from node where datapathId = ?";
+	public static final String SQL_GET_DEVICENAME_FROM_DATAPATHID = "select name from node where datapathId = ?";
 	public static final String SQL_GET_PORTRID_FROM_DEVICENAME_PORTNUMBER = "select @RID.asString() as rid from port where deviceName = ? and number = ?";
+	public static final String SQL_GET_PATCH_INFO_FROM_PATCHWIRING_PORTRID = "select from patchWiring where in = ?";
+	public static final String SQL_GET_PATCH_INFO_FROM_PATCHWIRING_DEVICENAME_PORTNAME = "select out, in, parent from patchWiring where inDeviceName = ? and inPortName = ? and "
+			+ "outDeviceName = ? and outPortName = ?";
+	public static final String SQL_GET_PORT_INFO_FROM_PORTRID = "select from port where @RID = ?";
+	public static final String SQL_GET_DEVICE_INFO_FROM_DEVICERID = "select from node where @RID = ?";
 
 	/* insert */
 	public static final String SQL_INSERT_PATCH_WIRING = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";

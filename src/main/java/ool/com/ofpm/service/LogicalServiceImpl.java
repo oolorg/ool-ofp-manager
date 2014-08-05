@@ -82,7 +82,8 @@ public class LogicalServiceImpl implements LogicalService {
 		//Client c = Client.create();
 		//WebResource r = c.resource("http://172.16.1.85:28080/ofc/ryu/ctrl/test");
 		//String html = r.post(String.class, "{}");
-
+		return Response.ok(requestedData).type(MediaType.APPLICATION_JSON_TYPE).build();
+/*
 		this.injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
@@ -96,6 +97,6 @@ public class LogicalServiceImpl implements LogicalService {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));
 		}
 		return Response.ok(resLogiBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
-
+*/
 	}
 }
