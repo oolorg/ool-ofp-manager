@@ -17,6 +17,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  */
 public interface Dao {
+	
+	/**
+	 * set connectionUtilsJdbc
+	 * @param utils
+	 */
+	void setConnectionUtilsJdbc(ConnectionUtilsJdbc utils);
 
 	void close() throws SQLException;
 
@@ -254,7 +260,7 @@ public interface Dao {
 	 * @return device name
 	 * @throws SQLException failed sql
 	 */
-	String getDeviceNameFromDatapathId(String datapathId) throws SQLException;
+	String getDeviceNameFromDatapathId(Connection conn, String datapathId) throws SQLException;
 
 	/**
 	 * get port RID from deviceName and portNumber
@@ -263,7 +269,14 @@ public interface Dao {
 	 * @return port Rid
 	 * @throws SQLException
 	 */
-	String getPortRidFromDeviceNamePortNumber(String deviceName, int portNumber) throws SQLException;
+	String getPortRidFromDeviceNamePortNumber(Connection conn, String deviceName, int portNumber) throws SQLException;
+	
+	/**
+	 * @param portRid
+	 * @return
+	 * @throws SQLException
+	 */
+	List<Map<String, Map<String, Object>>> getDevicePortInfoSetFlowFromPortRid(Connection conn, String portRid) throws SQLException;
 
 	/**
 	 *
@@ -449,6 +462,24 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	Map<String, Object> getPortInfoFromPortName(Connection conn, String deviceName, String portName) throws SQLException;
+	
+	/**
+	 * Get port info from rid.
+	 * @param conn
+	 * @param rid
+	 * @return
+	 * @throws SQLException
+	 */
+	Map<String, Object> getPortInfoFromPortRid(Connection conn, String rid) throws SQLException;
+	
+	/**
+	 * Get node info from rid.
+	 * @param conn
+	 * @param rid
+	 * @return
+	 * @throws SQLException
+	 */
+	Map<String, Object> getDeviceInfoFromDeviceRid(Connection conn, String rid) throws SQLException;
 
 
 }

@@ -28,6 +28,9 @@ public class OfpmDefinition {
 	/* Define agent manager config */
 	public static final String AGENT_PATH   = "/ofpa/ctrl";
 	public static final String AGENT_RECODE = "agent.recode";
+	
+	/* Define openflow controller config */
+	public static final String OFC_PATH = "/ofc/ryu/ctrl";
 
 	/* Define Open AM url */
 	public static final String OPEN_AM_URL                         = "openam.url";

@@ -7,6 +7,8 @@ package ool.com.ofpm.json.ofc;
 
 import java.lang.reflect.Type;
 
+import ool.com.ofpm.json.device.DeviceInfoCreateJsonIn;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -14,7 +16,7 @@ import com.google.gson.reflect.TypeToken;
  * @author 1131080355959
  *
  */
-public class setFlowJsonIn {
+public class SetFlowIn {
 	private String dpId;
 	private String inPort;
 	private String srcMac;
@@ -45,10 +47,14 @@ public class setFlowJsonIn {
 		this.dstMac = dstMac;
 	}
 	
-	@Override
-	public String toString() {
+	public static SetFlowIn fromJson(String json) {
 		Gson gson = new Gson();
-		Type type = new TypeToken<setFlowJsonIn>() {}.getType();
+		Type type = new TypeToken<SetFlowIn>(){}.getType();
+		return gson.fromJson(json, type);
+	}
+	public String toJson() {
+		Gson gson = new Gson();
+		Type type = new TypeToken<SetFlowIn>(){}.getType();
 		return gson.toJson(this, type);
 	}
 }

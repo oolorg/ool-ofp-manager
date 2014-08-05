@@ -10,8 +10,8 @@ import javax.xml.bind.Unmarshaller;
 
 import ool.com.constants.OfpmDefinition;
 import ool.com.constants.ErrorMessage;
-import ool.com.ofpm.client.AgentClient;
-import ool.com.ofpm.client.AgentClientImpl;
+import ool.com.ofpm.client.OFCClient;
+import ool.com.ofpm.client.OFCClientImpl;
 import ool.com.ofpm.exception.AgentManagerException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.ofc.AgentInfo;
@@ -26,7 +26,7 @@ public class AgentManager {
 	private static final Logger logger = Logger.getLogger(AgentManager.class);
 	private static AgentManager instance = null;
 
-	private Map<String, AgentClient> ipTable = new HashMap<String, AgentClient>();
+	private Map<String, OFCClient> ipTable = new HashMap<String, OFCClient>();
 	private Map<String, String> nameToIp = new HashMap<String, String>();
 	private Map<String, String> switchToOfc = new HashMap<String, String>();
 
@@ -80,15 +80,15 @@ public class AgentManager {
 			logger.debug(String.format("%s(deviceName=%s, switchIp=%s, ofcUrl=%s, agentIp=%s) - start", fname, deviceName, switchIp, ofcUrl, agentIp));
 		}
 
-		AgentClient agentClient = null;
-		for (AgentClient client : ipTable.values()) {
+		OFCClient agentClient = null;
+		for (OFCClient client : ipTable.values()) {
 			if (client.getIp().equals(agentIp)) {
 				agentClient = client;
 				break;
 			}
 		}
 		if (agentClient == null) {
-			agentClient = new AgentClientImpl(agentIp);
+			agentClient = new OFCClientImpl(agentIp);
 		}
 		ipTable.put(switchIp, agentClient);
 		nameToIp.put(deviceName, switchIp);
@@ -99,12 +99,12 @@ public class AgentManager {
 		}
 	}
 
-	public AgentClient getAgentClient(String ip) throws AgentManagerException {
+	public OFCClient getAgentClient(String ip) throws AgentManagerException {
 		String fname = "getAgentClient";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ip=%s) - start", fname, ip));
 		}
-		AgentClient ret = this.ipTable.get(ip);
+		OFCClient ret = this.ipTable.get(ip);
 		if (ret == null) {
 			throw new AgentManagerException(String.format(ErrorMessage.NOT_FOUND, "OF-Patch Agent-" + ip));
 		}

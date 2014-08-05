@@ -32,7 +32,7 @@ import ool.com.dmdb.json.port.PortReadRequest;
 import ool.com.dmdb.json.port.PortReadResponse;
 import ool.com.ofpm.business.common.OFPatchCommon;
 import ool.com.ofpm.business.common.OFPatchCommonImpl;
-import ool.com.ofpm.client.AgentClient;
+import ool.com.ofpm.client.OFCClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
 import ool.com.ofpm.exception.AgentManagerException;
@@ -46,6 +46,7 @@ import ool.com.ofpm.json.ncs.NetworkConfigSetupperInData;
 import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq;
 import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq.AgentUpdateFlowData;
 import ool.com.ofpm.json.ofc.PatchLink;
+import ool.com.ofpm.json.ofc.SetFlowIn;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
 import ool.com.ofpm.json.topology.logical.LogicalTopology;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConDeviceInfo;
@@ -632,13 +633,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		return ret;
 	}
 
-	private Map<AgentClient, List<AgentUpdateFlowData>> makeAgentUpdateFlowList(List<PatchLink> updatedLinks, String type) throws AgentManagerException {
+	private Map<OFCClient, List<AgentUpdateFlowData>> makeAgentUpdateFlowList(List<PatchLink> updatedLinks, String type) throws AgentManagerException {
 		String fname = "makeAgentUpdateFlowList";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(updatedLinks=%s, type=%s) - start", fname, updatedLinks, type));
 		}
 
-		Map<AgentClient, List<AgentUpdateFlowData>> pairAgentClient_UpdateFlowDataList = new HashMap<AgentClient, List<AgentUpdateFlowData>>();
+		Map<OFCClient, List<AgentUpdateFlowData>> pairAgentClient_UpdateFlowDataList = new HashMap<OFCClient, List<AgentUpdateFlowData>>();
 		for (PatchLink link : updatedLinks) {
 			String switchIp = agentManager.getSwitchIp(link.getDeviceName());
 			String ofcUrl = agentManager.getOfcUrl(switchIp);
@@ -649,7 +650,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			newUpdateFlowData.setPort(link.getPortName());
 			newUpdateFlowData.setOfcUrl(ofcUrl);
 
-			AgentClient agentClient = agentManager.getAgentClient(switchIp);
+			OFCClient agentClient = agentManager.getAgentClient(switchIp);
 			if (!pairAgentClient_UpdateFlowDataList.containsKey(agentClient)) {
 				pairAgentClient_UpdateFlowDataList.put(agentClient, new ArrayList<AgentUpdateFlowData>());
 			}
@@ -701,14 +702,44 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			logger.debug(String.format("%s(requestedData=%s) - start", fname, requestedData));
 		}
 
+		BaseResponse res = new BaseResponse();
+		Connection conn = null;
+		ConnectionUtilsJdbc utilsJdbc = null;
+		SetFlowIn req = null;
 		String rid = "";
+		
 		try {
-			dao = new DaoImpl(new ConnectionUtilsJdbcImpl());
-			rid = dao.getDeviceNameFromDatapathId(requestedData);
+			req = SetFlowIn.fromJson(requestedData);
+		} catch (JsonSyntaxException jse) {
+			logger.error(jse);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
+		}
+		
+		try {
+			dao = new DaoImpl();
+			utilsJdbc = new ConnectionUtilsJdbcImpl();
+			dao.setConnectionUtilsJdbc(utilsJdbc);
+			conn = utilsJdbc.getConnection(false);
+			String deviceName = dao.getDeviceNameFromDatapathId(conn, req.getDpId());
+			rid = dao.getPortRidFromDeviceNamePortNumber(conn, deviceName, Integer.parseInt(req.getInPort()));
+			List<Map<String, Map<String, Object>>> ret = dao.getDevicePortInfoSetFlowFromPortRid(conn, rid);
+			
+			// send each ofc setFlow
+			
+			
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.getMessage();
+		} finally {
+			if (conn != null) {
+				try {
+					conn.close();
+				} catch (SQLException e) {
+				}
+			}
 		}
+		
 		return rid;
 	}
 
