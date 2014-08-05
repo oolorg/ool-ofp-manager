@@ -1,14 +1,13 @@
 package ool.com.ofpm.client;
 
+import static ool.com.constants.ErrorMessage.*;
+import static ool.com.constants.OfpmDefinition.*;
+
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 
-import static ool.com.constants.OfpmDefinition.*;
-import static ool.com.constants.ErrorMessage.*;
-
 import ool.com.ofpm.exception.OFCClientException;
 import ool.com.ofpm.json.common.BaseResponse;
-import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq;
 import ool.com.ofpm.json.ofc.SetFlowToOFC;
 import ool.com.ofpm.json.ofc.SetFlowToOFC.Action;
 import ool.com.ofpm.json.ofc.SetFlowToOFC.Match;
@@ -40,23 +39,23 @@ public class OFCClientImpl implements OFCClient {
 			logger.debug(String.format("%s() - end", fname));
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see ool.com.ofpm.client.OFCClient#setFlows(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.Boolean, java.lang.Boolean)
 	 */
 	@Override
-	public BaseResponse setFlows(String dpid, String inPort, String srcMac, String outPort, String modSrcMac, String modDstMac,
+	public BaseResponse setFlows(String dpid, Integer inPort, String srcMac, Integer outPort, String modSrcMac, String modDstMac,
 			Boolean packetIn, Boolean drop) throws OFCClientException {
 		final String fname = "setFlows";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(dpid=%s,inPort=%s,srcMac=%s,outPort=%s,modSrcMac=%s,modDstMac=%s,packetIn=%s,drop=%s) - start", 
+			logger.debug(String.format("%s(dpid=%s,inPort=%s,srcMac=%s,outPort=%s,modSrcMac=%s,modDstMac=%s,packetIn=%s,drop=%s) - start",
 					fname, dpid, inPort, srcMac, outPort, modSrcMac, modDstMac, packetIn, drop));
 		}
 
 		BaseResponse ret = new BaseResponse();
 		try {
 			SetFlowToOFC requestData = new SetFlowToOFC();
-			requestData.setDpId(dpid);
+			requestData.setDpid(dpid);
 			Match match = requestData.new Match();
 			Action action = requestData.new Action();
 			match.setInPort(inPort);
@@ -64,12 +63,16 @@ public class OFCClientImpl implements OFCClient {
 			action.setOutPort(outPort);
 			action.setModSrcMac(modSrcMac);
 			action.setModDstMac(modDstMac);
-			action.setPacketIn(packetIn);
-			action.setDrop(drop);
+			if (!isNull(packetIn)) {
+				action.setPacketIn(packetIn.toString());
+			}
+			if (!isNull(drop)) {
+				action.setDrop(drop.toString());
+			}
 			requestData.setMatch(match);
 			requestData.setAction(action);
-			
-			Builder resBuilder = this.resource.entity(requestData);
+
+			Builder resBuilder = this.resource.entity(requestData.toJson());
 			resBuilder = resBuilder.accept(MediaType.APPLICATION_JSON);
 			resBuilder = resBuilder.type(MediaType.APPLICATION_JSON);
 			ClientResponse res = resBuilder.post(ClientResponse.class);
@@ -99,29 +102,29 @@ public class OFCClientImpl implements OFCClient {
 	 * @see ool.com.ofpm.client.OFCClient#deleteFlows(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.Boolean, java.lang.Boolean)
 	 */
 	@Override
-	public BaseResponse deleteFlows(String dpid, String inPort, String srcMac, String outPort, String modSrcMac, String modDstMac,
+	public BaseResponse deleteFlows(String dpid, Integer inPort, String srcMac, Integer outPort, String modSrcMac, String modDstMac,
 			Boolean packetIn, Boolean drop) throws OFCClientException {
 		final String fname = "deleteFlows";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(dpid=%s,inPort=%s,srcMac=%s,outPort=%s,modSrcMac=%s,modDstMac=%s,packetIn=%s,drop=%s) - start", 
+			logger.debug(String.format("%s(dpid=%s,inPort=%s,srcMac=%s,outPort=%s,modSrcMac=%s,modDstMac=%s,packetIn=%s,drop=%s) - start",
 					fname, dpid, inPort, srcMac, outPort, modSrcMac, modDstMac, packetIn, drop));
 		}
 
 		BaseResponse ret = new BaseResponse();
 		try {
 			MultivaluedMap<String, String> queryParams = new MultivaluedMapImpl();
-			
+
 			if (!isNullAndEmpty(dpid)) {
 				queryParams.add("dpid", dpid);
 			}
-			if (!isNullAndEmpty(inPort)) {
-				queryParams.add("inPort", inPort);
+			if (!isNull(inPort)) {
+				queryParams.add("inPort", inPort.toString());
 			}
 			if (!isNullAndEmpty(srcMac)) {
 				queryParams.add("srcMac", srcMac);
 			}
-			if (!isNullAndEmpty(outPort)) {
-				queryParams.add("outPort", outPort);
+			if (!isNull(outPort)) {
+				queryParams.add("outPort", outPort.toString());
 			}
 			if (!isNullAndEmpty(modSrcMac)) {
 				queryParams.add("modSrcMac", modSrcMac);
@@ -135,7 +138,7 @@ public class OFCClientImpl implements OFCClient {
 			if (!isNull(drop)) {
 				queryParams.add("drop", drop.toString());
 			}
-	
+
 			ClientResponse res = this.resource.queryParams(queryParams).delete(ClientResponse.class);
 
 			if (res.getStatus() != STATUS_SUCCESS) {
@@ -158,15 +161,22 @@ public class OFCClientImpl implements OFCClient {
 		}
 		return ret;
 	}
-	
+
 	private boolean isNullAndEmpty(String param) {
 		if (!StringUtils.isBlank(param)) {
 			return false;
 		}
 		return true;
 	}
-	
+
 	private boolean isNull(Boolean param) {
+		if (param != null) {
+			return false;
+		}
+		return true;
+	}
+
+	private boolean isNull(Integer param) {
 		if (param != null) {
 			return false;
 		}
