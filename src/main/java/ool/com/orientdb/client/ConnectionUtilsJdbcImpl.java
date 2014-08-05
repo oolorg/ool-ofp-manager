@@ -135,18 +135,4 @@ public class ConnectionUtilsJdbcImpl implements ConnectionUtilsJdbc {
         return records;
     }
 
-    @Override
-    public <T> T insert(Connection conn, String sql,
-            ResultSetHandler<T> handler, Object... params) throws SQLException {
-        if (logger.isDebugEnabled()) {
-            logger.debug(String.format("insert(conn=%s, sql=%s, handler=%s, params=%s) - start", conn, sql, handler, params.toString()));
-        }
-        QueryRunner qRunner = new QueryRunner();
-        T records = qRunner.insert(conn, sql, handler, params);
-        if (logger.isDebugEnabled()) {
-            logger.debug(String.format("insert(records=%s) - end", records));
-        }
-        return records;
-    }
-
 }

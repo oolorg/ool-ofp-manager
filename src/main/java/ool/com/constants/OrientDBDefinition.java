@@ -67,11 +67,11 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PORTRID_FROM_DEVICENAME_PORTNUMBER = "select @rid from port where deviceName = ? and number = ?";
 
 	/* insert */
-	public static final String SQL_INSERT_PATCH_WIRING = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";
+	public static final String SQL_INSERT_PATCH_WIRING   = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";
 	public static final String SQL_INSERT_PATCH_WIRING_2 = "insert into patchWiring(out, in, parent, inDeviceName, inPortName, outDeviceName, outPortName) values (?, ?, ?, ?, ?, ?, ?)";
-	public static final String SQL_INSERT_NODE = "create vertex node set name = '%s', type = '%s', datapathId = '%s', ofcIp = '%s'";
-	public static final String SQL_INSERT_NODE_INFO = "create vertex node set name = ?, type = ?, datapathId = ?, ofcIp = ?";
-	public static final String SQL_INSERT_PORT = "create vertex port set name = '%s', number = %s, deviceName = '%s'";
+	public static final String SQL_INSERT_NODE      = "create vertex node set name = '%s', type = '%s', datapathId = '%s', ofcIp = '%s'";
+	public static final String SQL_INSERT_NODE_INFO = "create create vertex node set name = ?, type = ?, datapathId = ?, ofcIp = ?";
+	public static final String SQL_INSERT_PORT      = "create vertex port set name = '%s', number = %s, deviceName = '%s'";
 	public static final String SQL_INSERT_PORT_INFO = "create vertex port set name = ?, number = ?, devicename = ?";
 	public static final String SQL_INSERT_LINK = "create edge link from %s to %s set band = %s, used = %s";
 

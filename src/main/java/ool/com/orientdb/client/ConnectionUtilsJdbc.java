@@ -71,14 +71,4 @@ public interface ConnectionUtilsJdbc {
      */
     public abstract void query(Connection conn, String sql) throws SQLException;
 
-    /**
-     * insert
-     * @param conn
-     * @param sql
-     * @param handler
-     * @param params
-     * @return
-     * @throws SQLException
-     */
-    public abstract <T> T insert(Connection conn, String sql, ResultSetHandler<T> handler, Object[] params) throws SQLException;
 }

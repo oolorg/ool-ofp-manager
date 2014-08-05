@@ -1282,7 +1282,7 @@ public class DaoImpl implements Dao {
 	 */
 	@Override
 	public List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(Connection conn, String deviceName, String portName) throws SQLException {
-		final String fname = "getPatchWirings";
+		final String fname = "getPatchWiringsFromDeviceNamePortName";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
@@ -1293,6 +1293,32 @@ public class DaoImpl implements Dao {
 				logger.debug(String.format("%s(ret=%s) - end", fname, maps));
 			}
 			return maps;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#isContainsPatchWiringFromDeviceNamePortName(java.sql.Connection, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public boolean isContainsPatchWiringFromDeviceNamePortName(Connection conn, String deviceName, String portName) throws SQLException {
+		final String fname = "isContainsPatchWiringFromDeviceNamePortName";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
+		}
+		try {
+			boolean ret = true;
+			MapListHandler rsh = new MapListHandler("in", "out", "parent", "inDeviceName", "inPortName", "outDeviceName", "outPortName");
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME_PORT_NAME, rsh, deviceName, portName);
+			if (maps == null || maps.isEmpty()) {
+				ret = false;
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
@@ -1360,7 +1386,7 @@ public class DaoImpl implements Dao {
 			Object[] params = {newUsed, portRid, portRid};
 			int result = utilsJdbc.update(conn, SQL_UPDATE_CALBE_LINK_USED_VALUE_FROM_PORT_RID, params);
 			if (result != 2) {
-				// TODO:error
+				throw new SQLException(String.format(INVALID_NUMBER_OF, "link(represent cable)"));
 			}
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
@@ -1491,6 +1517,7 @@ public class DaoImpl implements Dao {
 		try {
 			Object[] params = {deviceName, deviceType, datapathId, ofcIp};
 			int nRecords = utilsJdbc.update(conn, SQL_INSERT_NODE_INFO, params);
+//			int nRecords = utilsJdbc.query(conn, SQL_INSERT_NODE_INFO, new MapListHandler(), params).size();
 			if (nRecords == 0) {
 				return DB_RESPONSE_STATUS_EXIST;
 			}

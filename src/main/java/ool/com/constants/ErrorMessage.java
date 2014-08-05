@@ -25,6 +25,9 @@ public class ErrorMessage {
 	public static final String IS_PATCHED = "%s is patched";
 	public static final String IS_NO_ROUTE = "%s and %s are no route";
 	public static final String IS_NOT_NUMBER = "%s is not number.";
-	
+
 	public static final String PARSE_ERROR = "Parse error: %s";
+
+	public static final String COULD_NOT_DELETE = "Couldn't delete %s";
+	public static final String INVALID_NUMBER_OF = "Invalid number of %s.";
 }

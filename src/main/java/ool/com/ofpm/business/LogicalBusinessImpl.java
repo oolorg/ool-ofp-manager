@@ -4,6 +4,8 @@ import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OfpmDefinition.*;
 import static ool.com.constants.OrientDBDefinition.*;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -250,8 +252,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		return linkSet;
 	}
 
-	/**
-	 *
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.business.LogicalBusiness#getLogicalTopology(java.lang.String, java.lang.String)
 	 */
 	public String getLogicalTopology(String deviceNamesCSV, String tokenId) {
 		String fname = "getLogicalTopology";
@@ -299,6 +302,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			BaseValidate.checkArrayStringBlank(deviceNames);
 			BaseValidate.checkArrayOverlapped(deviceNames);
 			BaseValidate.checkStringBlank(tokenId);
+			// TODO: check user tenant(by used-info from DMDB).
 		} catch (ValidateException e) {
 			logger.error(e.getMessage());
 			res.setStatus(STATUS_BAD_REQUEST);
@@ -311,11 +315,12 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 
 		/* PHASE 3: Get logical topology */
+		ConnectionUtilsJdbc utilsJdbc = null;
 		Connection conn = null;
 		try {
-			ConnectionUtilsJdbc utilsJdbc = new ConnectionUtilsJdbcImpl();
-			dao = new DaoImpl(utilsJdbc);
+			utilsJdbc = new ConnectionUtilsJdbcImpl();
 			conn = utilsJdbc.getConnection(false);
+			dao = new DaoImpl(utilsJdbc);
 
 			List<OfpConDeviceInfo> nodeList = new ArrayList<OfpConDeviceInfo>();
 			List<LogicalLink> linkList = new ArrayList<LogicalLink>();
@@ -348,21 +353,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			logger.error(e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
-			try {
-				if (conn != null && !conn.isClosed()) {
-					conn.rollback();
-				}
-			} catch (SQLException e1) {
-				logger.error(e1.getMessage());
-			}
 		} finally {
-			try {
-				if (conn != null && !conn.isClosed()) {
-					conn.close();
-				}
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-			}
+			utilsJdbc.rollback(conn);
+			utilsJdbc.close(conn);
 		}
 
 		String ret = res.toJson();
@@ -435,6 +428,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		try {
 			LogicalTopologyValidate validator = new LogicalTopologyValidate();
 			validator.checkValidationRequestIn(requestedTopology);
+			// TODO: check user tenant (by used-info in DMDB).
 		} catch (ValidateException ve) {
 			logger.error(ve);
 			res.setStatus(STATUS_BAD_REQUEST);
@@ -446,14 +440,38 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			return ret;
 		}
 
-		/* PHASE 3: Update topology */
+		/* PHASE 3: Get Auth token */
+		String ofpmToken = null;
+		try {
+			String url = conf.getString(OPEN_AM_URL);
+			String user = conf.getString(CONFIG_KEY_AUTH_USERNAME);
+			String pass = conf.getString(CONFIG_KEY_AUTH_PASSWORD);
+			OpenAmClient client = new OpenAmClientImpl(url);
+			TokenIdOut tokenInfo = client.authenticate(user, pass);
+			ofpmToken = tokenInfo.getTokenId();
+		} catch (OpenAmClientException e) {
+			StringWriter stack = new StringWriter();
+			e.printStackTrace(new PrintWriter(stack));
+			logger.error(e);
+			logger.error(stack.toString());
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+			String ret = res.toString();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
+
+		/* PHASE 4: Update topology */
+		ConnectionUtilsJdbc utilsJdbc = null;
 		Connection conn = null;
 		try {
 			/* initialize db connectors */
 			{
-				ConnectionUtilsJdbc utilsJdbc = new ConnectionUtilsJdbcImpl();
-				dao = new DaoImpl(utilsJdbc);
+				utilsJdbc = new ConnectionUtilsJdbcImpl();
 				conn = utilsJdbc.getConnection(false);
+				dao = new DaoImpl(utilsJdbc);
 			}
 
 			/* compute Inclement/Declement LogicalLink */
@@ -472,7 +490,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 						currentLinkList.addAll(linkSet);
 					}
 				}
-
 				this.normalizeLogicalLink(requestedNodes, currentLinkList);
 
 				/* get difference between current and next */
@@ -486,12 +503,23 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			/* update patch wiring and make patch link */
 			List<PatchLink> reducedLinks = new ArrayList<PatchLink>();
 			List<PatchLink> augmentedLinks = new ArrayList<PatchLink>();
+			DMDBClient client = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
 			for (LogicalLink link : decLinkList) {
-				reducedLinks.addAll(this.declementLogicalLink(conn, link));
+				reducedLinks.addAll(this.declementLogicalLink(conn, link, client, ofpmToken));
 			}
 			for (LogicalLink link : incLinkList) {
-				augmentedLinks.addAll(this.inclementLogicalLink(conn, link));
+				augmentedLinks.addAll(this.inclementLogicalLink(conn, link, client, ofpmToken));
+				/* Notify NCS */
+//				List<String> deviceNames = link.getDeviceName();
+//				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
+//				int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
+//				if (notifyNcsRet != STATUS_SUCCESS) {
+//					res.setStatus(augmentedPatches.getStatus());
+//					res.setMessage(augmentedPatches.getMessage());
+//					return res.toJson();
+//				}
 			}
+
 
 			/* Notify changed topology to ofp-controller. */
 //			agentManager = AgentManager.getInstance();
@@ -518,6 +546,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 //					break;
 //				}
 //			}
+			utilsJdbc.commit(conn);
 			return res.toJson();
 
 //		} catch (AgentManagerException ame) {
@@ -529,15 +558,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			logger.error(e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(UNEXPECTED_ERROR);
+			utilsJdbc.rollback(conn);
 			return res.toJson();
 		} finally {
-			try {
-				if (conn != null && !conn.isClosed()) {
-					conn.close();
-				}
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-			}
+			utilsJdbc.close(conn);
 			if (logger.isDebugEnabled()) {
 				logger.debug(String.format("%s(ret=%s) - end", fname, res.toJson()));
 			}
@@ -689,21 +713,24 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	}
 
 	/**
-	 *
+	 * Calculate new used-value when reduced patchWiring.
+	 * @param conn
 	 * @param link
+	 * @param client
+	 * @param ofpmToken
 	 * @return
-	 * @throws SQLException
 	 * @throws DMDBClientException
+	 * @throws SQLException
 	 */
-	private long calcReduceCableLinkUsed(DMDBClient client, Connection conn, Map<String, Object> link) throws DMDBClientException, SQLException {
+	private long calcReduceCableLinkUsed(Connection conn, Map<String, Object> link, DMDBClient client, String ofpmToken) throws DMDBClientException, SQLException {
 		final String fname = "updateCableLinkUsed";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(link=%s) - start", fname, link));
+			logger.debug(String.format("%s(conn=%s, link=%s, client=%s, ofpmToken=%s) - start", fname, link, client, ofpmToken));
 		}
 		int band = (Integer)link.get("band");
 		long used = (Long)link.get("used");
-		long inBand = this.getBandWidth(client, conn, (String)link.get("inDeviceName"), (String)link.get("inPortName"));
-		long outBand = this.getBandWidth(client, conn, (String)link.get("outDeviceName"), (String)link.get("outPortName"));
+		long inBand = this.getBandWidth(conn, (String)link.get("inDeviceName"), (String)link.get("inPortName"), client, null);
+		long outBand = this.getBandWidth(conn, (String)link.get("outDeviceName"), (String)link.get("outPortName"), client, null);
 		long useBand = (inBand < outBand)? inBand : outBand;
 		used -= useBand;
 		if (used > band) {
@@ -711,7 +738,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 		if (used < 0) {
 			used = 0;
-			// TODO: error?
+			// MEMO: output log message, however not throw exception. That's right?
+			logger.error(String.format("Used value was been under than zero, and the value modify zero. %s", link));
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, used));
@@ -721,13 +749,14 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	/**
 	 * Get Nic info from Device Manager DB.
-	 * @param client DMDBClient
 	 * @param deviceName
 	 * @param nicName
+	 * @param client DMDBClient
+	 * @param ofpmToken
 	 * @return
 	 * @throws DMDBClientException
 	 */
-	private Nic getNic(DMDBClient client, String deviceName, String nicName) throws DMDBClientException {
+	private Nic getNic(String deviceName, String nicName, DMDBClient client, String ofpmToken) throws DMDBClientException {
 		Nic ret = null;
 		Nic nic = new Nic();
 		nic.setNicName(nicName);
@@ -737,7 +766,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		req.setAuth(DEBUG_AUTH_TOKEN);
 		NicReadResponse res = client.nicRead(req);
 		if (res.getStatus() != STATUS_SUCCESS) {
-			// TODO: error
+			logger.error(res.getMessage());
 		}
 		if (res.getResult() != null && res.getResult().size() > 1) {
 			ret = res.getResult().get(0);
@@ -747,13 +776,14 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	/**
 	 * Get port info from Device Manager DB.
-	 * @param client DMDBClinet
 	 * @param deviceName
 	 * @param portName
+	 * @param client DMDBClinet
+	 * @param ofpmToken
 	 * @return
 	 * @throws DMDBClientException
 	 */
-	private Port getPort(DMDBClient client, String deviceName, String portName) throws DMDBClientException {
+	private Port getPort(String deviceName, String portName, DMDBClient client, String ofpmToken) throws DMDBClientException {
 		Port ret = null;
 		Port port = new Port();
 		port.setPortName(portName);
@@ -763,7 +793,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		req.setAuth(DEBUG_AUTH_TOKEN);
 		PortReadResponse res = client.portRead(req);
 		if (res.getStatus() != STATUS_SUCCESS) {
-			// TODO : error
+			logger.error(res.getMessage());
 		}
 		if (res.getResult() != null && res.getResult().size() > 1) {
 			ret = res.getResult().get(0);
@@ -773,25 +803,29 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	/**
 	 * Get band width from Device Manager DB
-	 * @param client DMDBClient
 	 * @param conn
 	 * @param deviceName
 	 * @param portName
+	 * @param client DMDBClient
+	 * @param ofpmToken
 	 * @return
 	 * @throws DMDBClientException
 	 * @throws SQLException
 	 */
-	private long getBandWidth(DMDBClient client, Connection conn, String deviceName, String portName) throws DMDBClientException, SQLException {
+	private long getBandWidth(Connection conn, String deviceName, String portName, DMDBClient client, String ofpmToken) throws DMDBClientException, SQLException {
 		long band = 0;
-		Map<String, Object> devMap = dao.getNodeInfoFromDeviceName(conn, deviceName);
-		if (((String)devMap.get("type")).equals(NODE_TYPE_SERVER)) {
-			Nic nic = this.getNic(client, deviceName, portName);
-//			band = OFPMUtils.bandWidthToBaseMbps(nic.getBand());
-			band = OFPMUtils.bandWidthToBaseMbps("1Gbps");
-		} else {
-			Port port = this.getPort(client, deviceName, portName);
-			band = OFPMUtils.bandWidthToBaseMbps("1Gbps");
-//			band = OFPMUtils.bandWidthToBaseMbps(port.getBand());
+		try {
+			Map<String, Object> devMap = dao.getNodeInfoFromDeviceName(conn, deviceName);
+			String devType = (String)devMap.get("type");
+			if (StringUtils.equals(devType, NODE_TYPE_SERVER)) {
+				Nic nic = this.getNic(deviceName, portName, client, ofpmToken);
+				band = OFPMUtils.bandWidthToBaseMbps(nic.getBand());
+			} else {
+				Port port = this.getPort(deviceName, portName, client, ofpmToken);
+				band = OFPMUtils.bandWidthToBaseMbps(port.getBand());
+			}
+		} catch (NullPointerException e) {
+			throw new RuntimeException(String.format(NOT_FOUND, "port={deviceName:'" + deviceName + "', portName:'" + portName + "'}"));
 		}
 		return band;
 	}
@@ -804,19 +838,23 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @throws SQLException
 	 * @throws DMDBClientException
 	 */
-	private List<PatchLink> declementLogicalLink(Connection conn, LogicalLink link) throws SQLException, DMDBClientException {
+	private List<PatchLink> declementLogicalLink(Connection conn, LogicalLink link, DMDBClient client, String ofpmToken) throws SQLException, DMDBClientException {
 		List<PatchLink> ret = new ArrayList<PatchLink>();
 		PortData inPort  = link.getLink().get(0);
+
+		/* get patch wiring, and check it is exist. */
 		List<Map<String, Object>> patchDocList = dao.getPatchWiringsFromDeviceNamePortName(conn, inPort.getDeviceName(), inPort.getPortName());
 		if (patchDocList == null || patchDocList.isEmpty()) {
-			// TODO: error
-		}
-		int reducedNumb = dao.deletePatchWiring(conn, inPort.getDeviceName(), inPort.getPortName());
-		if (reducedNumb == 0) {
-			// TODO: error
+			throw new RuntimeException(String.format(NOT_FOUND, "patchWiring=" + link));
 		}
 
-		DMDBClient client = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
+		/* delete patch wiring */
+		int reducedNumb = dao.deletePatchWiring(conn, inPort.getDeviceName(), inPort.getPortName());
+		if (reducedNumb == 0) {
+			throw new RuntimeException(String.format(COULD_NOT_DELETE, "patchWiring=" + link));
+		}
+
+		/* update link-used-value and make patch link for ofc */
 		List<String> alreadyProcCable = new ArrayList<String>();
 		for (Map<String, Object> patchDoc : patchDocList) {
 			String ofpRid = (String)patchDoc.get("parent");
@@ -829,7 +867,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			Map<String, Object> inLink = dao.getCableLinkFromPortRid(conn, inPortRid);
 			String inCableRid = (String)inLink.get("rid");
 			if (!alreadyProcCable.contains(inCableRid)) {
-				long newUsed = this.calcReduceCableLinkUsed(client, conn, inLink);
+				long newUsed = this.calcReduceCableLinkUsed(conn, inLink, client, ofpmToken);
 				dao.updateCableLinkUsedFromPortRid(conn, inPortRid, newUsed);
 				inPortNumber = (Integer)inLink.get("inPortNumber");
 				alreadyProcCable.add(inCableRid);
@@ -839,7 +877,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			Map<String, Object> outLink = dao.getCableLinkFromPortRid(conn, outPortRid);
 			String outCableRid = (String)outLink.get("rid");
 			if (!alreadyProcCable.contains(outCableRid)) {
-				long newUsed = this.calcReduceCableLinkUsed(client, conn, outLink);
+				long newUsed = this.calcReduceCableLinkUsed(conn, outLink, client, ofpmToken);
 				dao.updateCableLinkUsedFromPortRid(conn, outPortRid, newUsed);
 				outPortNumber = (Integer)outLink.get("inPortNumber");
 				alreadyProcCable.add(outCableRid);
@@ -863,11 +901,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * Create logical link, in fact insert patch wiring, update links used value, and then notify NCS.
 	 * @param conn
 	 * @param link
+	 * @param client
+	 * @param token
 	 * @return
 	 * @throws SQLException
 	 * @throws DMDBClientException
 	 */
-	private List<PatchLink> inclementLogicalLink(Connection conn, LogicalLink link) throws SQLException, DMDBClientException {
+	private List<PatchLink> inclementLogicalLink(Connection conn, LogicalLink link, DMDBClient client, String token) throws SQLException, DMDBClientException {
 		List<PatchLink> ret = new ArrayList<PatchLink>();
 
 		PortData tx = link.getLink().get(0);
@@ -890,28 +930,38 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		/* get shortest path */
 		List<Map<String, Object>> path = dao.getShortestPath(conn, txRid, rxRid);
+
 		/* search first/last port */
 		int txPortIndex = (StringUtils.isBlank(tx.getPortName()))? 1: 0;
 		int rxPortIndex = (StringUtils.isBlank(rx.getPortName()))? path.size() - 2: path.size() - 1;
 		Map<String, Object> txPort = path.get(txPortIndex);
 		Map<String, Object> rxPort = path.get(rxPortIndex);
+
 		/* check patch wiring exist */
-		if (dao.getPatchWiringsFromDeviceNamePortName(conn, (String)txPort.get("deviceName"), (String)txPort.get("name")).size() > 0) {
-			// TODO : error
+		{
+			boolean isTxPatch = dao.isContainsPatchWiringFromDeviceNamePortName(conn, (String)txPort.get("deviceName"), (String)txPort.get("name"));
+			boolean isRxPatch = dao.isContainsPatchWiringFromDeviceNamePortName(conn, (String)rxPort.get("deviceName"), (String)rxPort.get("name"));
+			if (isTxPatch || isRxPatch) {
+				throw new RuntimeException(String.format(ALREADY_EXIST, "patchWiring-" + link));
+			}
 		}
-		if (dao.getPatchWiringsFromDeviceNamePortName(conn, (String)rxPort.get("deviceName"), (String)rxPort.get("name")).size() > 0) {
-			// TODO : error
+
+		/* get band width of port info from dmdb */
+		Map<Map<String, Object>, Long> portBandMap = new HashMap<Map<String, Object>, Long>();
+		for (Map<String, Object> current : path) {
+			if (StringUtils.equals((String)current.get("class"), "port")) {
+				long band = this.getBandWidth(conn, (String)current.get("deviceName"), (String)current.get("portName"), client, token);
+				portBandMap.put(current, band);
+			}
 		}
+
 		/* conmute need band-width for patching */
 		long needBand = 0;
 		{
-			DMDBClient client = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
-			Map<String, Object> txNextPort = path.get(txPortIndex + 1);
-			Map<String, Object> rxBackPort = path.get(rxPortIndex - 1);
-			long txBand = this.getBandWidth(client, conn, (String)txPort.get("deviceName"), (String)txPort.get("name"));
-			long rxBand = this.getBandWidth(client, conn, (String)rxPort.get("deviceName"), (String)rxPort.get("name"));
-			long txNextBand = this.getBandWidth(client, conn, (String)txNextPort.get("deviceName"), (String)txNextPort.get("name"));
-			long rxNextBand = this.getBandWidth(client, conn, (String)rxBackPort.get("deviceName"), (String)rxBackPort.get("name"));
+			long txBand = portBandMap.get(txPort);
+			long rxBand = portBandMap.get(rxPort);
+			long txNextBand = portBandMap.get(path.get(txPortIndex + 1));
+			long rxNextBand = portBandMap.get(path.get(rxPortIndex - 1));
 			needBand = (txBand < rxBand)? txBand: rxBand;
 			needBand = (needBand < txNextBand)? needBand: txNextBand;
 			needBand = (needBand < rxNextBand)? needBand: rxNextBand;
@@ -919,42 +969,39 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		/* Update links used value */
 		for (int i = 1; i < path.size(); i++) {
-			Map<String, Object> currentV = path.get(i);
-			String vClass = (String)currentV.get("class");
-			if (!StringUtils.equals(vClass, "port")) {
-				continue;
-			}
-			Map<String, Object> beforV = path.get(i - 1);
-			if (!StringUtils.equals((String)beforV.get("class"), "port")) {
+			Map<String, Object> nowV = path.get(i);
+			Map<String, Object> prvV = path.get(i - 1);
+			String nowClass = (String)nowV.get("class");
+			String prvClass = (String)prvV.get("class");
+			if (!StringUtils.equals(nowClass, "port") || !StringUtils.equals(prvClass, "port")) {
 				continue;
 			}
 
-			String currentPortRid = (String)currentV.get("rid");
-			Map<String, Object> cableLink = dao.getCableLinkFromPortRid(conn, currentPortRid);
-			long band = (long)(Integer)cableLink.get("band");
-			long used = (long)(Long)cableLink.get("used");
-			long newUsed = used + needBand;
-			if (newUsed > band) {
-				// TODO: error
+			String nowPortRid = (String)nowV.get("rid");
+			Map<String, Object> cableLink = dao.getCableLinkFromPortRid(conn, nowPortRid);
+			long nowUsed = (long)(Long)cableLink.get("used");
+			long  inBand = portBandMap.get(nowV);
+			long outBand = portBandMap.get(prvV);
+			long maxBand = (inBand < outBand)? inBand: outBand;
+			long newUsed = nowUsed + needBand;
+			if (newUsed > maxBand) {
+				throw new RuntimeException(String.format(NOT_FOUND, "Path"));
 			}
-			else if (newUsed == band) {
-				newUsed = band * 10000;
+			else if (newUsed == maxBand) {
+				newUsed = maxBand * LINK_MAXIMUM_USED_RATIO;
 			}
 
-			dao.updateCableLinkUsedFromPortRid(conn, currentPortRid, newUsed);
+			dao.updateCableLinkUsedFromPortRid(conn, nowPortRid, newUsed);
 		}
 
 		/* Make insert patch-wiring and make patch-link */
 		/* MEMO: Don't integrate to the loop for the above for easy to read. */
 		for (int i = 1; i < path.size(); i++) {
-			Map<String, Object> currentV = path.get(i);
-			String vClass = (String)currentV.get("class");
-			if (!StringUtils.equals(vClass, "node")) {
+			Map<String, Object> nowV = path.get(i);
+			String nowClass   = (String)nowV.get("class");
+			String deviceType = (String)nowV.get("type");
+			if (!StringUtils.equals(nowClass, "node")) {
 				continue;
-			}
-			String deviceType = (String)currentV.get("type");
-			if (StringUtils.isBlank(deviceType)) {
-				// TODO: error
 			}
 			if (!StringUtils.equals(deviceType, NODE_TYPE_LEAF) && !StringUtils.equals(deviceType, NODE_TYPE_SPINE)) {
 				continue;
@@ -986,15 +1033,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			ret.add(patchLink);
 		}
 
-		/* Notify NCS */
-//		List<String> deviceNames = link.getDeviceName();
-//		List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
-//		int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
-//		if (notifyNcsRet != STATUS_SUCCESS) {
-//			res.setStatus(augmentedPatches.getStatus());
-//			res.setMessage(augmentedPatches.getMessage());
-//			return res.toJson();
-//		}
 		return ret;
 	}
 }

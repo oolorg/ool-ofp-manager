@@ -8,7 +8,7 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.jdbc.OrientJdbcConnection;
 
 /**
@@ -32,7 +32,9 @@ public class OrientJdbcPreparedStatement extends com.orientechnologies.orient.jd
 			field.setAccessible(true);
 			String sql = (String) field.get(this);
 
-			query = new OCommandSQL(sql);
+			sql = sql.trim();
+//			query = new OCommandSQL(sql);
+			query = new OSQLSynchQuery<ODocument>(sql);
 			Object result = database.command(query).execute(params.values().toArray());
 			if (result instanceof ODocument) {
 				return 1;

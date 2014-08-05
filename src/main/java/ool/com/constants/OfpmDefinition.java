@@ -46,6 +46,10 @@ public class OfpmDefinition {
 	public static final String CONFIG_KEY_DB_PASSWORD = "db.password";
 	public static final String DB_DEFAULT = "admin";
 
+	/* Define Auth System User Pass */
+	public static final String CONFIG_KEY_AUTH_USERNAME = "auth.username";
+	public static final String CONFIG_KEY_AUTH_PASSWORD = "auth.password";
+
 	/* Define Open AM admin user */
 	public static final String OPEN_AM_ADMIN_USER_ID               = "amadmin";
 	public static final String OPEN_AM_ADMIN_USER_PW               = "okinawa1940";
@@ -65,4 +69,7 @@ public class OfpmDefinition {
 	/* Define max macaddress value */
 	public static final int MIN_MACADDRESS_VALUE = 1;
 	public static final long MAX_MACADDRESS_VALUE = 281474976710655L;
+
+	/* Define max link ratio */
+	public static final long LINK_MAXIMUM_USED_RATIO = 10000L;
 }
