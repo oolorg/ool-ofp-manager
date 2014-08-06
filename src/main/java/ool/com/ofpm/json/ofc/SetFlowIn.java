@@ -17,16 +17,16 @@ import com.google.gson.reflect.TypeToken;
  *
  */
 public class SetFlowIn {
-	private String dpId;
+	private String dpid;
 	private String inPort;
 	private String srcMac;
 	private String dstMac;
 	
 	public String getDpId() {
-		return dpId;
+		return dpid;
 	}
-	public void setDpId(String dpId) {
-		this.dpId = dpId;
+	public void setDpId(String dpid) {
+		this.dpid = dpid;
 	}
 	public String getInPort() {
 		return inPort;

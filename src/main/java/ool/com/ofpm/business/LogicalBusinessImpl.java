@@ -768,7 +768,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				if (type.equals("Leaf") && i == 1) {
 					// noting
 				} else if (type.equals("Leaf") && i == switchNum) {
-					srcMac = req.getDstMac();
+					srcMac = req.getSrcMac();
 				} else {
 					// nothing
 				}
