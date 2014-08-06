@@ -44,12 +44,12 @@ public class OFCClientImpl implements OFCClient {
 	 * @see ool.com.ofpm.client.OFCClient#setFlows(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.Boolean, java.lang.Boolean)
 	 */
 	@Override
-	public BaseResponse setFlows(String dpid, Integer inPort, String srcMac, Integer outPort, String modSrcMac, String modDstMac,
+	public BaseResponse setFlows(String dpid, Integer inPort, String srcMac, String dstMac, Integer outPort, String modSrcMac, String modDstMac,
 			Boolean packetIn, Boolean drop) throws OFCClientException {
 		final String fname = "setFlows";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(dpid=%s,inPort=%s,srcMac=%s,outPort=%s,modSrcMac=%s,modDstMac=%s,packetIn=%s,drop=%s) - start",
-					fname, dpid, inPort, srcMac, outPort, modSrcMac, modDstMac, packetIn, drop));
+			logger.debug(String.format("%s(dpid=%s,inPort=%s,srcMac=%s,dstMac=%s,outPort=%s,modSrcMac=%s,modDstMac=%s,packetIn=%s,drop=%s) - start",
+					fname, dpid, inPort, srcMac, dstMac, outPort, modSrcMac, modDstMac, packetIn, drop));
 		}
 
 		BaseResponse ret = new BaseResponse();
@@ -60,6 +60,7 @@ public class OFCClientImpl implements OFCClient {
 			Action action = requestData.new Action();
 			match.setInPort(inPort);
 			match.setSrcMac(srcMac);
+			match.setDstMac(dstMac);
 			action.setOutPort(outPort);
 			action.setModSrcMac(modSrcMac);
 			action.setModDstMac(modDstMac);
@@ -102,12 +103,12 @@ public class OFCClientImpl implements OFCClient {
 	 * @see ool.com.ofpm.client.OFCClient#deleteFlows(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.Boolean, java.lang.Boolean)
 	 */
 	@Override
-	public BaseResponse deleteFlows(String dpid, Integer inPort, String srcMac, Integer outPort, String modSrcMac, String modDstMac,
+	public BaseResponse deleteFlows(String dpid, Integer inPort, String srcMac, String dstMac, Integer outPort, String modSrcMac, String modDstMac,
 			Boolean packetIn, Boolean drop) throws OFCClientException {
 		final String fname = "deleteFlows";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(dpid=%s,inPort=%s,srcMac=%s,outPort=%s,modSrcMac=%s,modDstMac=%s,packetIn=%s,drop=%s) - start",
-					fname, dpid, inPort, srcMac, outPort, modSrcMac, modDstMac, packetIn, drop));
+			logger.debug(String.format("%s(dpid=%s,inPort=%s,srcMac=%s,dstMac=%s,outPort=%s,modSrcMac=%s,modDstMac=%s,packetIn=%s,drop=%s) - start",
+					fname, dpid, inPort, srcMac, dstMac, outPort, modSrcMac, modDstMac, packetIn, drop));
 		}
 
 		BaseResponse ret = new BaseResponse();
@@ -122,6 +123,9 @@ public class OFCClientImpl implements OFCClient {
 			}
 			if (!isNullAndEmpty(srcMac)) {
 				queryParams.add("srcMac", srcMac);
+			}
+			if (!isNullAndEmpty(dstMac)) {
+				queryParams.add("dstMac", dstMac);
 			}
 			if (!isNull(outPort)) {
 				queryParams.add("outPort", outPort.toString());

@@ -28,6 +28,7 @@ public class SetFlowToOFC {
 	public class Match {
 		private Integer inPort;
 		private String srcMac;
+		private String dstMac;
 
 		public Integer getInPort() {
 			return inPort;
@@ -40,6 +41,13 @@ public class SetFlowToOFC {
 		}
 		public void setSrcMac(String srcMac) {
 			this.srcMac = srcMac;
+		}
+		public String getDstMac() {
+			return dstMac;
+		}
+		public void setDstMac(
+				String dstMac) {
+			this.dstMac = dstMac;
 		}
 	}
 
