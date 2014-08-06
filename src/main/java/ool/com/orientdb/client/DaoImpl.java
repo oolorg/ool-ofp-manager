@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import ool.com.ofpm.utils.OFPMUtils;
 import ool.com.orientdb.utils.handlers.MapListHandler;
 
 import org.apache.commons.lang3.StringUtils;
@@ -1755,5 +1756,43 @@ public class DaoImpl implements Dao {
 		}
 	}
 
-
+	/* (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getInternalMacFromDeviceNameInPortSrcMacDstMac(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public String getInternalMacFromDeviceNameInPortSrcMacDstMac(Connection conn, String deviceName, String inPort, String srcMac, String dstMac) throws SQLException {
+		final String fname = "getInternalMacFromDeviceNameInPortSrcMacDstMac";
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s, deviceName=%s, inPort=%s, srcMac=%s, dstMac=%s) - start", fname, conn, deviceName, inPort, srcMac, dstMac));
+		}
+		try {
+			String ret = null;
+			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_INTERNALMAC_FROM_SRCMAC_DSTMAC_INPORT_DEVICENAME,
+                    new MapListHandler(), deviceName, inPort, srcMac, dstMac);
+			if (records.size() > 0) {
+                ret = OFPMUtils.longToMacAddress(Long.parseLong((records.get(0).get("internalMac").toString())));
+			} else {
+				records = utilsJdbc.query(conn, SQL_GET_MAX_INTERNALMAC, new MapListHandler());
+				Long newInternalMac = 1L;
+				if (records.size() > 0) {
+					newInternalMac = Long.parseLong((records.get(0).get("internalMac").toString())) + 1L;
+				} else {
+					newInternalMac = 1L;
+				}
+				Object[] params = {deviceName, inPort, srcMac, dstMac, newInternalMac};
+				int rows = utilsJdbc.update(conn, SQL_INSERT_INTERNALMAC, params);
+				if (rows == 0) {
+					// TODO exist error
+				}
+				ret = OFPMUtils.longToMacAddress(newInternalMac);
+			}
+			
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", ret));
+			}
+			return ret;
+		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		}
+	}
 }

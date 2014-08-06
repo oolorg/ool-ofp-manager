@@ -67,9 +67,12 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PORTRID_FROM_DEVICENAME_PORTNUMBER = "select @RID.asString() as rid from port where deviceName = ? and number = ?";
 	public static final String SQL_GET_PATCH_INFO_FROM_PATCHWIRING_PORTRID = "select from patchWiring where in = ?";
 	public static final String SQL_GET_PATCH_INFO_FROM_PATCHWIRING_DEVICENAME_PORTNAME = "select out, in, parent from patchWiring where inDeviceName = ? and inPortName = ? and "
-			+ "outDeviceName = ? and outPortName = ?";
+			+ "outDeviceName = ? and outPortName = ? order by sequence desc";
 	public static final String SQL_GET_PORT_INFO_FROM_PORTRID = "select from port where @RID = ?";
 	public static final String SQL_GET_DEVICE_INFO_FROM_DEVICERID = "select from node where @RID = ?";
+	public static final String SQL_GET_INTERNALMAC_FROM_SRCMAC_DSTMAC_INPORT_DEVICENAME = "select internalMac from internalMacMap where deviceName = ? and inPort = ? and " 
+			+ "srcMac = ? and dstMac = ?";
+	public static final String SQL_GET_MAX_INTERNALMAC = "select max(internalMac) as maxInternalMac from internalMacMap";
 
 	/* insert */
 	public static final String SQL_INSERT_PATCH_WIRING   = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";
@@ -79,6 +82,8 @@ public class OrientDBDefinition {
 	public static final String SQL_INSERT_PORT      = "create vertex port set name = '%s', number = %s, deviceName = '%s'";
 	public static final String SQL_INSERT_PORT_INFO = "create vertex port set name = ?, number = ?, devicename = ?";
 	public static final String SQL_INSERT_LINK = "create edge link from %s to %s set band = %s, used = %s";
+	
+	public static final String SQL_INSERT_INTERNALMAC = "insert into internalMacMap(deviceName, inPort, srcMac, dstMac, internalMac) values (?, ?, ?, ?, ?)"; 
 
 	/* delete */
 	public static final String SQL_DELETE_PATCH_WIRING = "delete from patchWiring where outDeviceName = '%s' and inDeviceName = '%s'";

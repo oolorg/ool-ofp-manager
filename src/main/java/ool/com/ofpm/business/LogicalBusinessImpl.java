@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +36,7 @@ import ool.com.ofpm.business.common.OFPatchCommonImpl;
 import ool.com.ofpm.client.OFCClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
+import ool.com.ofpm.client.OFCClientImpl;
 import ool.com.ofpm.exception.AgentManagerException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
@@ -707,9 +709,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		ConnectionUtilsJdbc utilsJdbc = null;
 		SetFlowIn req = null;
 		String rid = "";
+		String deviceName = null;
 		
 		try {
 			req = SetFlowIn.fromJson(requestedData);
+			// TODO: validation
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
 			res.setStatus(STATUS_BAD_REQUEST);
@@ -721,17 +725,83 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			utilsJdbc = new ConnectionUtilsJdbcImpl();
 			dao.setConnectionUtilsJdbc(utilsJdbc);
 			conn = utilsJdbc.getConnection(false);
-			String deviceName = dao.getDeviceNameFromDatapathId(conn, req.getDpId());
+			deviceName = dao.getDeviceNameFromDatapathId(conn, req.getDpId());
 			rid = dao.getPortRidFromDeviceNamePortNumber(conn, deviceName, Integer.parseInt(req.getInPort()));
 			List<Map<String, Map<String, Object>>> ret = dao.getDevicePortInfoSetFlowFromPortRid(conn, rid);
 			
-			// send each ofc setFlow
+			// generate InternalMac and setFlow to OFC
+			Iterator<Map<String, Map<String, Object>>> it = ret.iterator();
+			//String srcMac = req.getSrcMac();
+			//String dstMac = req.getDstMac();
+			String internalMac = dao.getInternalMacFromDeviceNameInPortSrcMacDstMac(conn, deviceName, req.getInPort(), req.getSrcMac(), req.getDstMac());
+			String internalDstMac = OFPMUtils.longToMacAddress(~(OFPMUtils.macAddressToLong(internalMac)));
 			
-			
+			int switchNum = ret.size();
+			int i = 1;
+			while (it.hasNext()) {
+				Map<String, Map<String, Object>> deviceportInfo = it.next();	// in, out, parent
+				Map<String, Object> parentInfo = deviceportInfo.get("parent");
+				Map<String, Object> inPortInfo = deviceportInfo.get("in");
+				Map<String, Object> outPortInfo = deviceportInfo.get("out");
+				
+				// new client
+				String ofcIp = parentInfo.get("ofcIp").toString();
+				OFCClient restClient = new OFCClientImpl(ofcIp);
+				
+				// dpid
+				String dpid = parentInfo.get("datapathId").toString();
+				// inPort
+				Integer inPort = new Integer(inPortInfo.get("number").toString());
+				// srcMac
+				String type = parentInfo.get("type").toString();
+				String srcMac = null;
+				if (type.equals("Leaf") && i == 1) {
+					srcMac = internalMac;
+				} else if (type.equals("Leaf") && i == switchNum) {
+					srcMac = req.getSrcMac();
+				} else {
+					srcMac = internalMac;
+				}
+				// dstMac
+				String dstMac = null;
+				if (type.equals("Leaf") && i == 1) {
+					// noting
+				} else if (type.equals("Leaf") && i == switchNum) {
+					srcMac = req.getDstMac();
+				} else {
+					// nothing
+				}
+				// outPort
+				Integer outPort = new Integer(outPortInfo.get("number").toString());
+				// modSrcMac
+				String modSrcMac = null;
+				if (type.equals("Leaf") && i == 1) {
+					modSrcMac = req.getSrcMac();
+				} else if (type.equals("Leaf") && i == switchNum) {
+					modSrcMac = internalMac;
+				} else {
+					// nothing
+				}
+				// modDstMac
+				String modDstMac = null;
+				if (type.equals("Leaf") && i == 1) {
+					modDstMac = req.getDstMac();
+				} else if (type.equals("Leaf") && i == switchNum) {
+					modDstMac = internalDstMac;
+				} else {
+					// nothing
+				}
+				restClient.setFlows(dpid, inPort, srcMac, dstMac, outPort, modSrcMac, modDstMac, false, false);
+				i++;
+			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.getMessage();
-		} finally {
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+		} catch (Exception e) {
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+		}
+		finally {
 			if (conn != null) {
 				try {
 					conn.close();
@@ -739,8 +809,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 			}
 		}
-		
-		return rid;
+		String ret = res.toJson();
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+		}
+		return ret;
 	}
 
 	/**

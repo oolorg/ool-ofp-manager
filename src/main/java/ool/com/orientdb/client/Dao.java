@@ -277,6 +277,17 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	List<Map<String, Map<String, Object>>> getDevicePortInfoSetFlowFromPortRid(Connection conn, String portRid) throws SQLException;
+	
+	/**
+	 * get internalmac (if exist then to return it, not if generate internalmac)
+	 * @param deviceName
+	 * @param inPort
+	 * @param srcMac
+	 * @param dstMac
+	 * @return internalmac String
+	 * @throws SQLException
+	 */
+	String getInternalMacFromDeviceNameInPortSrcMacDstMac(Connection conn, String deviceName, String inPort, String srcMac, String dstMac) throws SQLException;
 
 	/**
 	 *
