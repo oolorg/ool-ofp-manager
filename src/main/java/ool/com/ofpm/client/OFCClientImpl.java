@@ -77,7 +77,7 @@ public class OFCClientImpl implements OFCClient {
 			resBuilder = resBuilder.type(MediaType.APPLICATION_JSON);
 			ClientResponse res = resBuilder.post(ClientResponse.class);
 
-			if (res.getStatus() != STATUS_SUCCESS) {
+			if (res.getStatus() != STATUS_CREATED) {
 				logger.error(res.getEntity(String.class));
 				throw new OFCClientException(String.format(WRONG_RESPONSE, "OFC-" + this.ip));
 			}
