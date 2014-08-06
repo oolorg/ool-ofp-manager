@@ -734,7 +734,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			//String srcMac = req.getSrcMac();
 			//String dstMac = req.getDstMac();
 			String internalMac = dao.getInternalMacFromDeviceNameInPortSrcMacDstMac(conn, deviceName, req.getInPort(), req.getSrcMac(), req.getDstMac());
-			String internalDstMac = OFPMUtils.longToMacAddress(~(OFPMUtils.macAddressToLong(internalMac)));
+			Long tmp = ~(OFPMUtils.macAddressToLong(internalMac));
+			String internalDstMac = OFPMUtils.longToMacAddress(tmp);
 			
 			int switchNum = ret.size();
 			int i = 1;

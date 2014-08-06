@@ -70,8 +70,8 @@ public class OfpmDefinition {
 	public static final String REGEX_DATAPATH_ID = "[0-9a-fA-F]{1,16}";
 
 	/* Define max macaddress value */
-	public static final int MIN_MACADDRESS_VALUE = 1;
-	public static final long MAX_MACADDRESS_VALUE = 281474976710655L;
+	public static final long MIN_MACADDRESS_VALUE = -140737488355329L;
+	public static final long MAX_MACADDRESS_VALUE = 140737488355328L;
 
 	/* Define max link ratio */
 	public static final long LINK_MAXIMUM_USED_RATIO = 10000L;
