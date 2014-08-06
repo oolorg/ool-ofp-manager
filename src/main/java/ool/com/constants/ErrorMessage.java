@@ -30,4 +30,5 @@ public class ErrorMessage {
 
 	public static final String COULD_NOT_DELETE = "Couldn't delete %s";
 	public static final String INVALID_NUMBER_OF = "Invalid number of %s.";
+	public static final String PATCH_INSERT_FAILD = "patchWiring insert failed. %s[%s]-%s[%s]@%s(%s,%s)";
 }

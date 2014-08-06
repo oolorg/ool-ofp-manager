@@ -49,7 +49,7 @@ public class OrientDBDefinition {
 
 	public static final String SQL_GET_CABLE_LINK_FROM_PORT_RID = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
 			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @RID.asString(), band, used "
-			+ "from link where in.@RID = ?";
+			+ "from link where in.@RID = ? and in.@class='port' and out.@class='port'";
 	public static final String SQL_GET_CABLE_LINKS    = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
 			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @RID, band, used "
 			+ "from link where in.deviceName = ? and out.@class = 'port'";
@@ -70,20 +70,20 @@ public class OrientDBDefinition {
 			+ "outDeviceName = ? and outPortName = ? order by sequence desc";
 	public static final String SQL_GET_PORT_INFO_FROM_PORTRID = "select from port where @RID = ?";
 	public static final String SQL_GET_DEVICE_INFO_FROM_DEVICERID = "select from node where @RID = ?";
-	public static final String SQL_GET_INTERNALMAC_FROM_SRCMAC_DSTMAC_INPORT_DEVICENAME = "select internalMac from internalMacMap where deviceName = ? and inPort = ? and " 
+	public static final String SQL_GET_INTERNALMAC_FROM_SRCMAC_DSTMAC_INPORT_DEVICENAME = "select internalMac from internalMacMap where deviceName = ? and inPort = ? and "
 			+ "srcMac = ? and dstMac = ?";
 	public static final String SQL_GET_MAX_INTERNALMAC = "select max(internalMac) as maxInternalMac from internalMacMap";
 
 	/* insert */
 	public static final String SQL_INSERT_PATCH_WIRING   = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";
-	public static final String SQL_INSERT_PATCH_WIRING_2 = "insert into patchWiring(out, in, parent, inDeviceName, inPortName, outDeviceName, outPortName) values (?, ?, ?, ?, ?, ?, ?)";
+	public static final String SQL_INSERT_PATCH_WIRING_2 = "insert into patchWiring(out, in, parent, inDeviceName, inPortName, outDeviceName, outPortName, sequence) values (?, ?, ?, ?, ?, ?, ?, ?)";
 	public static final String SQL_INSERT_NODE      = "create vertex node set name = '%s', type = '%s', datapathId = '%s', ofcIp = '%s'";
-	public static final String SQL_INSERT_NODE_INFO = "create create vertex node set name = ?, type = ?, datapathId = ?, ofcIp = ?";
+	public static final String SQL_INSERT_NODE_INFO = "create vertex node set name = ?, type = ?, datapathId = ?, ofcIp = ?";
 	public static final String SQL_INSERT_PORT      = "create vertex port set name = '%s', number = %s, deviceName = '%s'";
 	public static final String SQL_INSERT_PORT_INFO = "create vertex port set name = ?, number = ?, devicename = ?";
 	public static final String SQL_INSERT_LINK = "create edge link from %s to %s set band = %s, used = %s";
-	
-	public static final String SQL_INSERT_INTERNALMAC = "insert into internalMacMap(deviceName, inPort, srcMac, dstMac, internalMac) values (?, ?, ?, ?, ?)"; 
+
+	public static final String SQL_INSERT_INTERNALMAC = "insert into internalMacMap(deviceName, inPort, srcMac, dstMac, internalMac) values (?, ?, ?, ?, ?)";
 
 	/* delete */
 	public static final String SQL_DELETE_PATCH_WIRING = "delete from patchWiring where outDeviceName = '%s' and inDeviceName = '%s'";
@@ -92,7 +92,7 @@ public class OrientDBDefinition {
 	public static final String SQL_DELETE_PORT = "delete vertex port where name = '%s' and deviceName = '%s'";
 	public static final String SQL_DELETE_PORT_DEViCE_NAME = "delete vertex port where deviceName = '%s'";
 	public static final String SQL_DELETE_NODE = "delete vertex node where name = '%s'";
-	public static final String SQL_DELETE_PATCH_WIRING_FROM_DEVICE_NAME_PORT_NAME = "delete from patchWiring where (inDeviceName = ? and inPortName = ?) or (outDeviceName = ? and outPortName = ?)";
+	public static final String SQL_DELETE_PATCH_WIRING_FROM_DEVICE_NAME_PORT_NAME = "delete from patchWiring where (inDeviceName=? and inPortName=?) or (outDeviceName=? and outPortName=?)";
 
 	/* update */
 	public static final String SQL_UPDATE_WEIGHT_TO_LINK = "update link set band = %s where out = %s and in = %s";

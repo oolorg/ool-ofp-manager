@@ -63,7 +63,7 @@ public class DaoImpl implements Dao {
 			logger.debug("DaoImpl() - end");
 		}
 	}
-	
+
 	// default constructor
 	public DaoImpl() {
 		if (logger.isDebugEnabled()){
@@ -73,7 +73,7 @@ public class DaoImpl implements Dao {
 			logger.debug("DaoImpl() - end");
 		}
 	}
-	
+
 	// connectionUtil setter
 	public void setConnectionUtilsJdbc(ConnectionUtilsJdbc utils) {
 		this.utilsJdbc = utils;
@@ -1246,7 +1246,7 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see ool.com.orientdb.client.Dao#getDevicePortInfoSetFlowFromPortRid(java.lang.String)
 	 */
@@ -1271,7 +1271,7 @@ public class DaoImpl implements Dao {
 			if (records.size() != 3 && records.size() != 1) {
                 // error
 			}
-			
+
 			Iterator<Map<String, Object>> it = records.iterator();
 			List<Map<String, Map<String, Object>>> ret = new ArrayList<Map<String, Map<String, Object>>>();
 			while (it.hasNext()) {
@@ -1279,14 +1279,14 @@ public class DaoImpl implements Dao {
 				Map<String, Object> inPortInfo = getPortInfoFromPortRid(conn, record.get("in").toString());
 				Map<String, Object> outPortInfo = getPortInfoFromPortRid(conn, record.get("out").toString());
 				Map<String, Object> parentInfo = getDeviceInfoFromDeviceRid(conn, record.get("parent").toString());
-				
+
 				Map<String, Map<String, Object>> tmp = new HashMap<String, Map<String, Object>>();
 				tmp.put("in", inPortInfo);
 				tmp.put("out", outPortInfo);
 				tmp.put("parent", parentInfo);
 				ret.add(tmp);
 			}
-			
+
 			if (logger.isTraceEnabled()) {
 				//logger.trace(String.format("%s(ret=%s) - end", ret));
 			}
@@ -1489,24 +1489,18 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#insertPatchWiring(java.sql.Connection, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public int insertPatchWiring(Connection conn, String ofpRid, String in, String out, String inDeviceName, String inPortName, String outDeviceName, String outPortName) throws SQLException {
+	public int insertPatchWiring(Connection conn, String ofpRid, String in, String out, String inDeviceName, String inPortName, String outDeviceName, String outPortName, int sequence) throws SQLException {
 		final String fname = "insertPatchWiring";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, ofpRid=%s, in=%s, out=%s, inDeviceName=%s, inPortName=%s, outDeviceName=%s, outPortName=%s) - start",
-					fname, conn, ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName));
+			logger.debug(String.format("%s(conn=%s, ofpRid=%s, in=%s, out=%s, inDeviceName=%s, inPortName=%s, outDeviceName=%s, outPortName=%s, sequence=%s) - start",
+					fname, conn, ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName, sequence));
 		}
 		int ret = DB_RESPONSE_STATUS_OK;
 		try {
-			// TODO : happen unexpected error, ODocument -> Integer. もしかして、insertはこんな感じ？
-			Object[] forwardParams = {in, out, ofpRid, inDeviceName, inPortName, outDeviceName, outPortName};
+			Object[] forwardParams = {in, out, ofpRid, inDeviceName, inPortName, outDeviceName, outPortName, sequence};
 			int result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, forwardParams);
 			if (result != 1) {
-				//TODO:error
-			}
-			Object[] reverseParams = {out, in, ofpRid, outDeviceName, outPortName, inDeviceName, inPortName};
-			result = utilsJdbc.update(conn, SQL_INSERT_PATCH_WIRING_2, reverseParams);
-			if (result != 1) {
-				//TODO:error
+				throw new SQLException(String.format(PATCH_INSERT_FAILD, inDeviceName, inPortName, outDeviceName, outPortName, ofpRid, in, out));
 			}
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
@@ -1720,7 +1714,7 @@ public class DaoImpl implements Dao {
                 // error
 			}
 			Map<String, Object> record = records.get(0);
-			
+
 			if (logger.isTraceEnabled()){
 				//logger.trace(String.format("getPortInfo(ret=%s) - end", documents.get(0)));
 			}
@@ -1746,7 +1740,7 @@ public class DaoImpl implements Dao {
                 // error
 			}
 			Map<String, Object> record = records.get(0);
-			
+
 			if (logger.isTraceEnabled()){
 				//logger.trace(String.format("getPortInfo(ret=%s) - end", documents.get(0)));
 			}
@@ -1786,7 +1780,7 @@ public class DaoImpl implements Dao {
 				}
 				ret = OFPMUtils.longToMacAddress(newInternalMac);
 			}
-			
+
 			if (logger.isTraceEnabled()) {
 				logger.trace(String.format("%s(ret=%s) - end", ret));
 			}

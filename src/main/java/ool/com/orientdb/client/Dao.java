@@ -17,7 +17,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  */
 public interface Dao {
-	
+
 	/**
 	 * set connectionUtilsJdbc
 	 * @param utils
@@ -270,14 +270,14 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	String getPortRidFromDeviceNamePortNumber(Connection conn, String deviceName, int portNumber) throws SQLException;
-	
+
 	/**
 	 * @param portRid
 	 * @return
 	 * @throws SQLException
 	 */
 	List<Map<String, Map<String, Object>>> getDevicePortInfoSetFlowFromPortRid(Connection conn, String portRid) throws SQLException;
-	
+
 	/**
 	 * get internalmac (if exist then to return it, not if generate internalmac)
 	 * @param deviceName
@@ -329,7 +329,6 @@ public interface Dao {
 
 	/**
 	 * Insert patch-wiring infromation into db.
-	 * @param Connection conn
 	 * @param ofpRid RID of of-patch switch.
 	 * @param in RID of of-patchs in port.
 	 * @param out RID of of-patchs out port.
@@ -337,9 +336,11 @@ public interface Dao {
 	 * @param inPortName
 	 * @param outDeviceName
 	 * @param outPortName
+	 * @param sequence TODO
+	 * @param Connection conn
 	 * @throws SQLException
 	 */
-	int insertPatchWiring(Connection conn, String ofpRid, String in, String out, String inDeviceName, String inPortName, String outDeviceName, String outPortName) throws SQLException;
+	int insertPatchWiring(Connection conn, String ofpRid, String in, String out, String inDeviceName, String inPortName, String outDeviceName, String outPortName, int sequence) throws SQLException;
 
 	/**
 	 * Delete patchWiring-list from devices port.
@@ -473,7 +474,7 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	Map<String, Object> getPortInfoFromPortName(Connection conn, String deviceName, String portName) throws SQLException;
-	
+
 	/**
 	 * Get port info from rid.
 	 * @param conn
@@ -482,7 +483,7 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	Map<String, Object> getPortInfoFromPortRid(Connection conn, String rid) throws SQLException;
-	
+
 	/**
 	 * Get node info from rid.
 	 * @param conn
