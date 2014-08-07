@@ -76,7 +76,7 @@ public class OrientDBDefinition {
 
 	/* insert */
 	public static final String SQL_INSERT_PATCH_WIRING   = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";
-	public static final String SQL_INSERT_PATCH_WIRING_2 = "insert into patchWiring(out, in, parent, inDeviceName, inPortName, outDeviceName, outPortName, sequence) values (?, ?, ?, ?, ?, ?, ?, ?)";
+	public static final String SQL_INSERT_PATCH_WIRING_2 = "insert into patchWiring(in, out, parent, inDeviceName, inPortName, outDeviceName, outPortName, sequence) values (?, ?, ?, ?, ?, ?, ?, ?)";
 	public static final String SQL_INSERT_NODE      = "create vertex node set name = '%s', type = '%s', datapathId = '%s', ofcIp = '%s'";
 	public static final String SQL_INSERT_NODE_INFO = "create vertex node set name = ?, type = ?, datapathId = ?, ofcIp = ?";
 	public static final String SQL_INSERT_PORT      = "create vertex port set name = '%s', number = %s, deviceName = '%s'";
