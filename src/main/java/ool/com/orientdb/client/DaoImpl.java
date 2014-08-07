@@ -1769,9 +1769,7 @@ public class DaoImpl implements Dao {
 				records = utilsJdbc.query(conn, SQL_GET_MAX_INTERNALMAC, new MapListHandler());
 				Long newInternalMac = 1L;
 				if (records.size() > 0) {
-					newInternalMac = Long.parseLong((records.get(0).get("internalMac").toString())) + 1L;
-				} else {
-					newInternalMac = 1L;
+					newInternalMac = Long.parseLong((records.get(0).get("maxInternalMac").toString())) + 1L;
 				}
 				Object[] params = {deviceName, inPort, srcMac, dstMac, newInternalMac};
 				int rows = utilsJdbc.update(conn, SQL_INSERT_INTERNALMAC, params);
