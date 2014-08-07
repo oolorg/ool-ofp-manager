@@ -508,10 +508,16 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			{
 				DMDBClient client = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
 				for (LogicalLink link : decLinkList) {
-					reducedFlows.putAll(this.declementLogicalLink(conn, link, client, ofpmToken));
+					MultivaluedMap<String, Map<String, Object>> buf = this.declementLogicalLink(conn, link, client, ofpmToken);
+					for (Entry<String, List<Map<String, Object>>> entry : buf.entrySet()) {
+						reducedFlows.addAll(entry.getKey(), entry.getValue());
+					}
 				}
 				for (LogicalLink link : incLinkList) {
-					augmentedFlows.putAll(this.inclementLogicalLink(conn, link, client, ofpmToken));
+					MultivaluedMap<String, Map<String, Object>> buf = this.inclementLogicalLink(conn, link, client, ofpmToken);
+					for (Entry<String, List<Map<String, Object>>> entry : buf.entrySet()) {
+						augmentedFlows.addAll(entry.getKey(), entry.getValue());
+					}
 					/* Notify NCS */
 	//				List<String> deviceNames = link.getDeviceName();
 	//				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
@@ -529,31 +535,31 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				for (Entry<String, List<Map<String, Object>>> entry : reducedFlows.entrySet()) {
 					OFCClient client = new OFCClientImpl(entry.getKey());
 					for (Map<String, Object> flow : entry.getValue()) {
-//						client.deleteFlows(
-//								(String)flow.get("datapathId"),
-//								(Integer)flow.get("inPort"),
-//								(String)flow.get("srcMac"),
-//								(String)flow.get("dstMac"),
-//								(Integer)flow.get("outPort"),
-//								(String)flow.get("modSrcMac"),
-//								(String)flow.get("modDstMac"),
-//								(Boolean)flow.get("packetInFlg"),
-//								(Boolean)flow.get("dropFlg"));
+						client.deleteFlows(
+								(String)flow.get("datapathId"),
+								(Integer)flow.get("inPort"),
+								(String)flow.get("srcMac"),
+								(String)flow.get("dstMac"),
+								(Integer)flow.get("outPort"),
+								(String)flow.get("modSrcMac"),
+								(String)flow.get("modDstMac"),
+								(Boolean)flow.get("packetInFlg"),
+								(Boolean)flow.get("dropFlg"));
 					}
 				}
 				for (Entry<String, List<Map<String, Object>>> entry : augmentedFlows.entrySet()) {
 					OFCClient client = new OFCClientImpl(entry.getKey());
 					for (Map<String, Object> flow : entry.getValue()) {
-//						client.deleteFlows(
-//								(String)flow.get("datapathId"),
-//								(Integer)flow.get("inPort"),
-//								(String)flow.get("srcMac"),
-//								(String)flow.get("dstMac"),
-//								(Integer)flow.get("outPort"),
-//								(String)flow.get("modSrcMac"),
-//								(String)flow.get("modDstMac"),
-//								(Boolean)flow.get("packetInFlg"),
-//								(Boolean)flow.get("dropFlg"));
+						client.setFlows(
+								(String)flow.get("datapathId"),
+								(Integer)flow.get("inPort"),
+								(String)flow.get("srcMac"),
+								(String)flow.get("dstMac"),
+								(Integer)flow.get("outPort"),
+								(String)flow.get("modSrcMac"),
+								(String)flow.get("modDstMac"),
+								(Boolean)flow.get("packetInFlg"),
+								(Boolean)flow.get("dropFlg"));
 					}
 				}
 			}
@@ -846,9 +852,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		long inBand = this.getBandWidth(conn, (String)link.get("inDeviceName"), (String)link.get("inPortName"), client, ofpmToken);
 		long outBand = this.getBandWidth(conn, (String)link.get("outDeviceName"), (String)link.get("outPortName"), client, ofpmToken);
 		long useBand = (inBand < outBand)? inBand : outBand;
-		used -= useBand;
-		if (used > band) {
-			used = band - useBand;
+		used -= band;
+		if (used > useBand) {
+			used = useBand - band;
 		}
 		if (used < 0) {
 			used = 0;
@@ -1008,29 +1014,43 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		/* make flow edge-switch tx side */
 		{
 			Map<String, Object> ofpsMap = dao.getDeviceInfoFromDeviceRid(conn, (String)txPatchMap.get("parent"));
-			Map<String, Object> portMap = dao.getPortInfoFromPortRid(conn, (String)txPatchMap.get("in"));
 			String ofcIp = (String)ofpsMap.get("ofcIp");
 
+			Map<String, Object> portMap = dao.getPortInfoFromPortRid(conn, (String)txPatchMap.get("in"));
 			Map<String, Object> flow = new HashMap<String, Object>();
 			flow.put("datapathId", ofpsMap.get("datapathId"));
 			flow.put("inPort", portMap.get("number"));
 			flow.put("dropFlg", false);
+			ret.add(ofcIp, flow);
 
+			portMap = dao.getPortInfoFromPortRid(conn, (String)txPatchMap.get("out"));
+			flow = new HashMap<String, Object>();
+			flow.put("datapathId", ofpsMap.get("datapathId"));
+			flow.put("inPort", portMap.get("number"));
+			flow.put("dropFlg", false);
 			ret.add(ofcIp, flow);
 		}
 		/* make flow edge-switch rx side */
 		{
 			Map<String, Object> ofpsMap = dao.getDeviceInfoFromDeviceRid(conn, (String)rxPatchMap.get("parent"));
-			Map<String, Object> portMap = dao.getPortInfoFromPortRid(conn, (String)rxPatchMap.get("out"));
 			String ofcIp = (String)ofpsMap.get("ofcIp");
 
+			Map<String, Object> portMap = dao.getPortInfoFromPortRid(conn, (String)rxPatchMap.get("out"));
 			Map<String, Object> flow = new HashMap<String, Object>();
 			flow.put("datapathId", ofpsMap.get("datapathId"));
 			flow.put("inPort", portMap.get("number"));
 			flow.put("dropFlg", false);
+			ret.add(ofcIp, flow);
 
+			portMap = dao.getPortInfoFromPortRid(conn, (String)rxPatchMap.get("in"));
+			flow = new HashMap<String, Object>();
+			flow.put("datapathId", ofpsMap.get("datapathId"));
+			flow.put("inPort", portMap.get("number"));
+			flow.put("dropFlg", false);
 			ret.add(ofcIp, flow);
 		}
+
+		// TODO: delete mac address record
 		return ret;
 	}
 
@@ -1225,9 +1245,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			flow.put("inPort", inPortDataMap.get("number"));
 			flow.put("packetInFlg", true);
 			ret.add((String)ofpNodeDataMap.get("ofcIp"), flow);
-
 		}
-
 		return ret;
 	}
 }
