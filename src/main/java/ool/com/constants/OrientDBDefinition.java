@@ -5,6 +5,7 @@
  */
 package ool.com.constants;
 
+
 public class OrientDBDefinition {
 	/* Routing */
 	public static final int DIJKSTRA_WEIGHT_NO_ROUTE = 100;
@@ -73,6 +74,7 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_INTERNALMAC_FROM_SRCMAC_DSTMAC_INPORT_DEVICENAME = "select internalMac from internalMacMap where deviceName = ? and inPort = ? and "
 			+ "srcMac = ? and dstMac = ?";
 	public static final String SQL_GET_MAX_INTERNALMAC = "select max(internalMac) as maxInternalMac from internalMacMap";
+	public static final String SQL_GET_INTERNALMAC_LIST_FROM_DEVICENAME_INPORT = "select internalMac from internalMacMap where deviceName=? and inPort=?";
 
 	/* insert */
 	public static final String SQL_INSERT_PATCH_WIRING   = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";

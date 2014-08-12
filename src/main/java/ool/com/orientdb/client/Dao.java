@@ -290,6 +290,16 @@ public interface Dao {
 	String getInternalMacFromDeviceNameInPortSrcMacDstMac(Connection conn, String deviceName, String inPort, String srcMac, String dstMac) throws SQLException;
 
 	/**
+	 * get internal-mac-address list. if not exist, return empty list.
+	 * @param conn
+	 * @param deviceName
+	 * @param inPort
+	 * @return
+	 * @throws SQLException
+	 */
+	List<String> getInternalMacListFromDeviceNameInPort(Connection conn, String deviceName, String inPort) throws SQLException;
+
+	/**
 	 *
 	 * @param outRid
 	 * @param inRid

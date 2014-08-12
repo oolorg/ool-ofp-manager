@@ -42,6 +42,7 @@ import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
 import ool.com.ofpm.client.OFCClient;
 import ool.com.ofpm.client.OFCClientImpl;
 import ool.com.ofpm.exception.AgentManagerException;
+import ool.com.ofpm.exception.OFCClientException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.common.GraphDevicePort;
@@ -432,7 +433,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			validator.checkValidationRequestIn(requestedTopology);
 			// TODO: check user tenant (by used-info in DMDB).
 		} catch (ValidateException ve) {
+			StringWriter sw = new StringWriter();
+			ve.printStackTrace(new PrintWriter(sw));
 			logger.error(ve);
+			logger.error(sw.toString());
 			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
 			String ret = res.toString();
@@ -452,10 +456,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			TokenIdOut tokenInfo = client.authenticate(user, pass);
 			ofpmToken = tokenInfo.getTokenId();
 		} catch (OpenAmClientException e) {
-			StringWriter stack = new StringWriter();
-			e.printStackTrace(new PrintWriter(stack));
+			StringWriter sw = new StringWriter();
+			e.printStackTrace(new PrintWriter(sw));
 			logger.error(e);
-			logger.error(stack.toString());
+			logger.error(sw.toString());
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
 			String ret = res.toString();
@@ -466,6 +470,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 
 		/* PHASE 4: Update topology */
+		MultivaluedMap<String, Map<String, Object>> reducedFlows = new MultivaluedHashMap<String, Map<String, Object>>();
+		MultivaluedMap<String, Map<String, Object>> augmentedFlows = new MultivaluedHashMap<String, Map<String, Object>>();
 		ConnectionUtilsJdbc utilsJdbc = null;
 		Connection conn = null;
 		try {
@@ -503,69 +509,30 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 
 			/* update patch wiring and make patch link */
-			MultivaluedMap<String, Map<String, Object>> reducedFlows = new MultivaluedHashMap<String, Map<String, Object>>();
-			MultivaluedMap<String, Map<String, Object>> augmentedFlows = new MultivaluedHashMap<String, Map<String, Object>>();
-			{
-				DMDBClient client = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
-				for (LogicalLink link : decLinkList) {
-					MultivaluedMap<String, Map<String, Object>> buf = this.declementLogicalLink(conn, link, client, ofpmToken);
-					for (Entry<String, List<Map<String, Object>>> entry : buf.entrySet()) {
-						reducedFlows.addAll(entry.getKey(), entry.getValue());
-					}
-				}
-				for (LogicalLink link : incLinkList) {
-					MultivaluedMap<String, Map<String, Object>> buf = this.inclementLogicalLink(conn, link, client, ofpmToken);
-					for (Entry<String, List<Map<String, Object>>> entry : buf.entrySet()) {
-						augmentedFlows.addAll(entry.getKey(), entry.getValue());
-					}
-					/* Notify NCS */
-	//				List<String> deviceNames = link.getDeviceName();
-	//				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
-	//				int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
-	//				if (notifyNcsRet != STATUS_SUCCESS) {
-	//					res.setStatus(augmentedPatches.getStatus());
-	//					res.setMessage(augmentedPatches.getMessage());
-	//					return res.toJson();
-	//				}
+			DMDBClient client = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
+			for (LogicalLink link : decLinkList) {
+				MultivaluedMap<String, Map<String, Object>> buf = this.declementLogicalLink(conn, link, client, ofpmToken);
+				for (Entry<String, List<Map<String, Object>>> entry : buf.entrySet()) {
+					reducedFlows.addAll(entry.getKey(), entry.getValue());
 				}
 			}
-
-			/* Set flow to ofps via ofc */
-			{
-				for (Entry<String, List<Map<String, Object>>> entry : reducedFlows.entrySet()) {
-					OFCClient client = new OFCClientImpl(entry.getKey());
-					for (Map<String, Object> flow : entry.getValue()) {
-						client.deleteFlows(
-								(String)flow.get("datapathId"),
-								(Integer)flow.get("inPort"),
-								(String)flow.get("srcMac"),
-								(String)flow.get("dstMac"),
-								(Integer)flow.get("outPort"),
-								(String)flow.get("modSrcMac"),
-								(String)flow.get("modDstMac"),
-								(Boolean)flow.get("packetInFlg"),
-								(Boolean)flow.get("dropFlg"));
-					}
+			for (LogicalLink link : incLinkList) {
+				MultivaluedMap<String, Map<String, Object>> buf = this.inclementLogicalLink(conn, link, client, ofpmToken);
+				for (Entry<String, List<Map<String, Object>>> entry : buf.entrySet()) {
+					augmentedFlows.addAll(entry.getKey(), entry.getValue());
 				}
-				for (Entry<String, List<Map<String, Object>>> entry : augmentedFlows.entrySet()) {
-					OFCClient client = new OFCClientImpl(entry.getKey());
-					for (Map<String, Object> flow : entry.getValue()) {
-						client.setFlows(
-								(String)flow.get("datapathId"),
-								(Integer)flow.get("inPort"),
-								(String)flow.get("srcMac"),
-								(String)flow.get("dstMac"),
-								(Integer)flow.get("outPort"),
-								(String)flow.get("modSrcMac"),
-								(String)flow.get("modDstMac"),
-								(Boolean)flow.get("packetInFlg"),
-								(Boolean)flow.get("dropFlg"));
-					}
-				}
+				/* Notify NCS */
+//				List<String> deviceNames = link.getDeviceName();
+//				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
+//				int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
+//				if (notifyNcsRet != STATUS_SUCCESS) {
+//					res.setStatus(augmentedPatches.getStatus());
+//					res.setMessage(augmentedPatches.getMessage());
+//					return res.toJson();
+//				}
 			}
 
 //			utilsJdbc.commit(conn);
-			return res.toJson();
 
 //		} catch (AgentManagerException ame) {
 //			logger.error(ame);
@@ -573,18 +540,74 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 //			res.setMessage(UNEXPECTED_ERROR);
 //			return res.toJson();
 		} catch (Exception e) {
-			logger.error(e);
-			res.setStatus(STATUS_INTERNAL_ERROR);
-			res.setMessage(UNEXPECTED_ERROR);
 //			utilsJdbc.rollback(conn);
-			return res.toJson();
+			StringWriter sw = new StringWriter();
+			e.printStackTrace(new PrintWriter(sw));
+			logger.error(e);
+			logger.error(sw.toString());
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
 		} finally {
 			utilsJdbc.close(conn);
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, res.toJson()));
-			}
 		}
-		/* must be not writing code from this point foward */
+
+
+		/* PHASE 5: Set flow to OFPS via OFC */
+		try {
+			for (Entry<String, List<Map<String, Object>>> entry : reducedFlows.entrySet()) {
+				OFCClient client = new OFCClientImpl(entry.getKey());
+				for (Map<String, Object> flow : entry.getValue()) {
+					client.deleteFlows(
+							(String)flow.get("datapathId"),
+							(Integer)flow.get("inPort"),
+							(String)flow.get("srcMac"),
+							(String)flow.get("dstMac"),
+							(Integer)flow.get("outPort"),
+							(String)flow.get("modSrcMac"),
+							(String)flow.get("modDstMac"),
+							(Boolean)flow.get("packetInFlg"),
+							(Boolean)flow.get("dropFlg"));
+				}
+			}
+			for (Entry<String, List<Map<String, Object>>> entry : augmentedFlows.entrySet()) {
+				OFCClient client = new OFCClientImpl(entry.getKey());
+				for (Map<String, Object> flow : entry.getValue()) {
+					client.setFlows(
+							(String)flow.get("datapathId"),
+							(Integer)flow.get("inPort"),
+							(String)flow.get("srcMac"),
+							(String)flow.get("dstMac"),
+							(Integer)flow.get("outPort"),
+							(String)flow.get("modSrcMac"),
+							(String)flow.get("modDstMac"),
+							(Boolean)flow.get("packetInFlg"),
+							(Boolean)flow.get("dropFlg"));
+				}
+			}
+		} catch (OFCClientException e) {
+			StringWriter sw = new StringWriter();
+			e.printStackTrace(new PrintWriter(sw));
+			logger.error(e);
+			logger.error(sw.toString());
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+			String ret = res.toString();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
+
+		String ret = res.toJson();
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+		}
+		return ret;
 	}
 
 	public int notifyNcs(String tokenId, List<String> deviceNames, List<Integer> portNames) {
@@ -963,8 +986,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		PortData inPort  = link.getLink().get(0);
 
 		/* get patch wiring, and check it is exist. */
-		List<Map<String, Object>> patchDocList = dao.getPatchWiringsFromDeviceNamePortName(conn, inPort.getDeviceName(), inPort.getPortName());
-		if (patchDocList == null || patchDocList.isEmpty()) {
+		List<Map<String, Object>> patchMapList = dao.getPatchWiringsFromDeviceNamePortName(conn, inPort.getDeviceName(), inPort.getPortName());
+		if (patchMapList == null || patchMapList.isEmpty()) {
 			throw new RuntimeException(String.format(NOT_FOUND, "patchWiring=" + link));
 		}
 
@@ -974,8 +997,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			throw new RuntimeException(String.format(COULD_NOT_DELETE, "patchWiring=" + link));
 		}
 
-		Map<String, Object> txPatchMap = patchDocList.get(0);
-		Map<String, Object> rxPatchMap = patchDocList.get(patchDocList.size() - 1);
+		Map<String, Object> txPatchMap = patchMapList.get(0);
+		Map<String, Object> rxPatchMap = patchMapList.get(patchMapList.size() - 1);
 		/* calc patch band width */
 		long band = 0L;
 		{
@@ -992,7 +1015,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		/* update link-used-value and make patch link for ofc */
 		List<String> alreadyProcCable = new ArrayList<String>();
-		for (Map<String, Object> patchDoc : patchDocList) {
+		for (Map<String, Object> patchDoc : patchMapList) {
 			String inPortRid  = (String)patchDoc.get("in");
 			Map<String, Object> inLink = dao.getCableLinkFromPortRid(conn, inPortRid);
 			String inCableRid = (String)inLink.get("rid");
@@ -1012,45 +1035,76 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 		}
 		/* make flow edge-switch tx side */
+		Map<String, Object> txOfpsMap = null;
+		Map<String, Object> txInPortMap = null;
 		{
-			Map<String, Object> ofpsMap = dao.getDeviceInfoFromDeviceRid(conn, (String)txPatchMap.get("parent"));
-			String ofcIp = (String)ofpsMap.get("ofcIp");
+			txOfpsMap = dao.getDeviceInfoFromDeviceRid(conn, (String)txPatchMap.get("parent"));
+			String dpid  = (String)txOfpsMap.get("datapathId");
+			String ofcIp = (String)txOfpsMap.get("ofcIp");
 
-			Map<String, Object> portMap = dao.getPortInfoFromPortRid(conn, (String)txPatchMap.get("in"));
+			txInPortMap = dao.getPortInfoFromPortRid(conn, (String)txPatchMap.get("in"));
 			Map<String, Object> flow = new HashMap<String, Object>();
-			flow.put("datapathId", ofpsMap.get("datapathId"));
-			flow.put("inPort", portMap.get("number"));
-			flow.put("dropFlg", false);
+			flow.put("datapathId", dpid);
+			flow.put("inPort", txInPortMap.get("number"));
+			flow.put("dropFlg", true);
 			ret.add(ofcIp, flow);
 
-			portMap = dao.getPortInfoFromPortRid(conn, (String)txPatchMap.get("out"));
+			Map<String, Object> txOutPortMap = dao.getPortInfoFromPortRid(conn, (String)txPatchMap.get("out"));
 			flow = new HashMap<String, Object>();
-			flow.put("datapathId", ofpsMap.get("datapathId"));
-			flow.put("inPort", portMap.get("number"));
-			flow.put("dropFlg", false);
+			flow.put("datapathId", dpid);
+			flow.put("inPort", txOutPortMap.get("number"));
+			flow.put("dropFlg", true);
 			ret.add(ofcIp, flow);
 		}
 		/* make flow edge-switch rx side */
+		Map<String, Object> rxOfpsMap = null;
+		Map<String, Object> rxOutPortMap = null;
 		{
-			Map<String, Object> ofpsMap = dao.getDeviceInfoFromDeviceRid(conn, (String)rxPatchMap.get("parent"));
-			String ofcIp = (String)ofpsMap.get("ofcIp");
+			rxOfpsMap = dao.getDeviceInfoFromDeviceRid(conn, (String)rxPatchMap.get("parent"));
+			String dpid  = (String)rxOfpsMap.get("datapathId");
+			String ofcIp = (String)rxOfpsMap.get("ofcIp");
 
-			Map<String, Object> portMap = dao.getPortInfoFromPortRid(conn, (String)rxPatchMap.get("out"));
+			rxOutPortMap = dao.getPortInfoFromPortRid(conn, (String)rxPatchMap.get("out"));
 			Map<String, Object> flow = new HashMap<String, Object>();
-			flow.put("datapathId", ofpsMap.get("datapathId"));
-			flow.put("inPort", portMap.get("number"));
-			flow.put("dropFlg", false);
+			flow.put("datapathId", dpid);
+			flow.put("inPort", rxOutPortMap.get("number"));
+			flow.put("dropFlg", true);
 			ret.add(ofcIp, flow);
 
-			portMap = dao.getPortInfoFromPortRid(conn, (String)rxPatchMap.get("in"));
+			Map<String, Object> rxInPortMap = dao.getPortInfoFromPortRid(conn, (String)rxPatchMap.get("in"));
 			flow = new HashMap<String, Object>();
-			flow.put("datapathId", ofpsMap.get("datapathId"));
-			flow.put("inPort", portMap.get("number"));
-			flow.put("dropFlg", false);
+			flow.put("datapathId", dpid);
+			flow.put("inPort", rxInPortMap.get("number"));
+			flow.put("dropFlg", true);
 			ret.add(ofcIp, flow);
 		}
+		/* make flow internal switch */
+		{
+			List<String> txInterMacList = dao.getInternalMacListFromDeviceNameInPort(conn, (String)txOfpsMap.get("name"), ((Integer)txInPortMap.get("number")).toString());
+			List<String> rxInterMacList = dao.getInternalMacListFromDeviceNameInPort(conn, (String)rxOfpsMap.get("name"), ((Integer)rxOutPortMap.get("number")).toString());
+			for (int i = 1; i < patchMapList.size() - 1; i++) {
+				String rid = (String)patchMapList.get(i).get("parent");
 
-		// TODO: delete mac address record
+				Map<String, Object> ofpsMap = dao.getDeviceInfoFromDeviceRid(conn, rid);
+				String dpid  = (String)ofpsMap.get("datapathId");
+				String ofcIp = (String)ofpsMap.get("ofcIp");
+
+				for (String txInterMac : txInterMacList) {
+					Map<String, Object> flow = new HashMap<String, Object>();
+					flow.put("datapathId", dpid);
+					flow.put("srcMac", txInterMac);
+					flow.put("dropFlg", true);
+					ret.add(ofcIp, flow);
+				}
+				for (String rxInterMac : rxInterMacList) {
+					Map<String, Object> flow = new HashMap<String, Object>();
+					flow.put("datapathId", dpid);
+					flow.put("srcMac", rxInterMac);
+					flow.put("dropFlg", true);
+					ret.add(ofcIp, flow);
+				}
+			}
+		}
 		return ret;
 	}
 

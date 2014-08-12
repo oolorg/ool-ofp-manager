@@ -1787,4 +1787,30 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getInternalMacListFromDeviceNameInPort(java.sql.Connection, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public List<String> getInternalMacListFromDeviceNameInPort(Connection conn, String deviceName, String inPort) throws SQLException {
+		final String fname = "getInternalMacListFromDeviceNameInPort";
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s, deviceName=%s, inPort=%s) - start", fname, conn, deviceName, inPort));
+		}
+		try {
+			List<String> ret = new ArrayList<String>();
+			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_INTERNALMAC_LIST_FROM_DEVICENAME_INPORT, new MapListHandler("internalMac"), deviceName, inPort);
+			for (int i = 0; i < records.size(); i++) {
+				Map<String, Object> record = records.get(i);
+				ret.add((String)record.get("internalMac"));
+			}
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", ret));
+			}
+			return ret;
+		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		}
+	}
 }
