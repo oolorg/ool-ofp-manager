@@ -1303,13 +1303,13 @@ public class DaoImpl implements Dao {
 	@Override
 	public List<Map<String, Object>> getCableLinksFromDeviceName(Connection conn, String deviceName) throws SQLException {
 		final String fname = "getCableLinks";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, deviceName=%s) - start", fname, conn, deviceName));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, deviceName=%s) - start", fname, conn, deviceName));
 		}
 		try {
 			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_CABLE_LINKS, new MapListHandler(), deviceName);
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, maps));;
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, maps));;
 			}
 			return maps;
 		} catch (IndexOutOfBoundsException e) {
@@ -1326,13 +1326,13 @@ public class DaoImpl implements Dao {
 	@Override
 	public List<Map<String, Object>> getPatchWiringsFromDeviceName(Connection conn, String deviceName) throws SQLException {
 		final String fname = "getPatchWirings";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, deviceName=%s) - start", fname, conn, deviceName));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, deviceName=%s) - start", fname, conn, deviceName));
 		}
 		try {
 			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME, new MapListHandler(), deviceName);
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, maps));;
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, maps));;
 			}
 			return maps;
 		} catch (Exception e) {
@@ -1347,14 +1347,14 @@ public class DaoImpl implements Dao {
 	@Override
 	public List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(Connection conn, String deviceName, String portName) throws SQLException {
 		final String fname = "getPatchWiringsFromDeviceNamePortName";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
 		try {
 			MapListHandler rsh = new MapListHandler("in", "out", "parent", "inDeviceName", "inPortName", "outDeviceName", "outPortName");
 			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME_PORT_NAME, rsh, deviceName, portName);
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, maps));
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, maps));
 			}
 			return maps;
 		} catch (Exception e) {
@@ -1369,8 +1369,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public boolean isContainsPatchWiringFromDeviceNamePortName(Connection conn, String deviceName, String portName) throws SQLException {
 		final String fname = "isContainsPatchWiringFromDeviceNamePortName";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
 		try {
 			boolean ret = true;
@@ -1379,8 +1379,8 @@ public class DaoImpl implements Dao {
 			if (maps == null || maps.isEmpty()) {
 				ret = false;
 			}
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 			}
 			return ret;
 		} catch (Exception e) {
@@ -1395,8 +1395,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public int deletePatchWiring(Connection conn, String deviceName, String portName) throws SQLException {
 		final String fname = "deletePatchWiring";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
 		int ret = 0;
 		try {
@@ -1405,8 +1405,8 @@ public class DaoImpl implements Dao {
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 		}
 		return ret;
 	}
@@ -1418,8 +1418,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public Map<String, Object> getCableLinkFromPortRid(Connection conn, String portRid) throws SQLException {
 		final String fname = "getCableLinkFromPortRid";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, inPortRid=%s) - start", fname, conn, portRid));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, inPortRid=%s) - start", fname, conn, portRid));
 		}
 		Map<String, Object> ret = null;
 		try {
@@ -1430,8 +1430,8 @@ public class DaoImpl implements Dao {
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 		}
 		return ret;
 	}
@@ -1443,8 +1443,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public void updateCableLinkUsedFromPortRid(Connection conn, String portRid, long newUsed) throws SQLException {
 		final String fname = "updateCableLinkUsedFromPortRid";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, portRid=%s, newUsed=%s) - start", fname, conn, portRid, newUsed));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, portRid=%s, newUsed=%s) - start", fname, conn, portRid, newUsed));
 		}
 		try {
 			Object[] params = {newUsed, portRid, portRid};
@@ -1455,8 +1455,8 @@ public class DaoImpl implements Dao {
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s() - end", fname));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s() - end", fname));
 		}
 	}
 
@@ -1467,8 +1467,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public List<Map<String, Object>> getShortestPath(Connection conn, String ridA, String ridZ) throws SQLException {
 		final String fname = "getShortestPath";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, ridA=%s, ridZ=%s) - start", fname, conn, ridA, ridZ));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, ridA=%s, ridZ=%s) - start", fname, conn, ridA, ridZ));
 		}
 		List<Map<String, Object>> ret = null;
 		try {
@@ -1478,8 +1478,8 @@ public class DaoImpl implements Dao {
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 		}
 		return ret;
 	}
@@ -1491,8 +1491,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public int insertPatchWiring(Connection conn, String ofpRid, String in, String out, String inDeviceName, String inPortName, String outDeviceName, String outPortName, int sequence) throws SQLException {
 		final String fname = "insertPatchWiring";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, ofpRid=%s, in=%s, out=%s, inDeviceName=%s, inPortName=%s, outDeviceName=%s, outPortName=%s, sequence=%s) - start",
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, ofpRid=%s, in=%s, out=%s, inDeviceName=%s, inPortName=%s, outDeviceName=%s, outPortName=%s, sequence=%s) - start",
 					fname, conn, ofpRid, in, out, inDeviceName, inPortName, outDeviceName, outPortName, sequence));
 		}
 		int ret = DB_RESPONSE_STATUS_OK;
@@ -1505,8 +1505,8 @@ public class DaoImpl implements Dao {
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 		}
 		return ret;
 	}
@@ -1518,8 +1518,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public Map<String, Object> getNodeInfoFromDeviceName(Connection conn, String deviceName) throws SQLException {
 		final String fname = "getDeviceInfo";
-		if (logger.isDebugEnabled()){
-			logger.debug(String.format("%s(conn=%s, deviceName=%s) - start", fname, conn, deviceName));
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s, deviceName=%s) - start", fname, conn, deviceName));
 		}
 		Map<String, Object> map = null;
 		try {
@@ -1527,8 +1527,8 @@ public class DaoImpl implements Dao {
 			if (!maps.isEmpty()) {
 				map = maps.get(0);
 			}
-			if (logger.isDebugEnabled()){
-				logger.debug(String.format("%s(ret=%s) - end", fname, map));
+			if (logger.isTraceEnabled()){
+				logger.trace(String.format("%s(ret=%s) - end", fname, map));
 			}
 			return map;
 		} catch (Exception e){
@@ -1543,8 +1543,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public Map<String, Object> getNodeInfoFromDeviceRid(Connection conn, String nodeRid) throws SQLException {
 		final String fname = "getDeviceInfoFromDeviceRid";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, nodeRid=%s) - start", fname, conn, nodeRid));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, nodeRid=%s) - start", fname, conn, nodeRid));
 		}
 		Map<String, Object> map = null;
 		try {
@@ -1552,8 +1552,8 @@ public class DaoImpl implements Dao {
 			if (!maps.isEmpty()) {
 				map = maps.get(0);
 			}
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, map));
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, map));
 			}
 			return map;
 		} catch (Exception e) {
@@ -1568,8 +1568,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public int createNodeInfo(Connection conn, String deviceName, String deviceType, String datapathId, String ofcIp) throws SQLException {
 		final String fname = "createNodeInfo";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, deviceName=%s, deviceType=%s, datapathId=%s, ofcIp=%s) - start", fname, conn, deviceName, deviceType, datapathId, ofcIp));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, deviceName=%s, deviceType=%s, datapathId=%s, ofcIp=%s) - start", fname, conn, deviceName, deviceType, datapathId, ofcIp));
 		}
 		int ret = DB_RESPONSE_STATUS_OK;
 		try {
@@ -1579,8 +1579,8 @@ public class DaoImpl implements Dao {
 			if (nRecords == 0) {
 				return DB_RESPONSE_STATUS_EXIST;
 			}
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 			}
 			return ret;
 		} catch (Exception e) {
@@ -1595,8 +1595,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public int createPortInfo(Connection conn, String portName, int portNumber, String deviceName) throws SQLException {
 		final String fname = "createPortInfo";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, portName=%s, portNumber=%s, deviceName=%s) - start", fname, conn, portName, portNumber, deviceName));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, portName=%s, portNumber=%s, deviceName=%s) - start", fname, conn, portName, portNumber, deviceName));
 		}
 		int ret = DB_RESPONSE_STATUS_OK;
 		try {
@@ -1610,8 +1610,8 @@ public class DaoImpl implements Dao {
 			if (nRecords == 0) {
 				return DB_RESPONSE_STATUS_EXIST;
 			}
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 			}
 			return ret;
 		} catch (Exception e) {
@@ -1626,16 +1626,16 @@ public class DaoImpl implements Dao {
 	@Override
 	public int updateNodeInfo(Connection conn, String keyDeviceName, String deviceName, String datapathId, String ofcIp) throws SQLException {
 		final String fname = "updateNodeInfo";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(conn=%s, keyDeviceName=%s, newDeviceName=%s, datapathId=%s, ofcIp=%s) - start", fname, conn, keyDeviceName, deviceName, datapathId, ofcIp));
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, keyDeviceName=%s, newDeviceName=%s, datapathId=%s, ofcIp=%s) - start", fname, conn, keyDeviceName, deviceName, datapathId, ofcIp));
 		}
 		int ret = DB_RESPONSE_STATUS_OK;
 		try {
 			Map<String, Object> current = this.getNodeInfoFromDeviceName(conn, keyDeviceName);
 			if (current == null) {
 				ret = DB_RESPONSE_STATUS_NOT_FOUND;
-				if (logger.isDebugEnabled()){
-					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				if (logger.isTraceEnabled()){
+					logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 				}
 			}
 
@@ -1664,8 +1664,8 @@ public class DaoImpl implements Dao {
 			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_IN_DEVICE, updDevNamePara);
 			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_OUT_DEVICE, updDevNamePara);
 
-			if (logger.isDebugEnabled()){
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			if (logger.isTraceEnabled()){
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 			}
 			return ret;
 		} catch (Exception e){
@@ -1680,8 +1680,8 @@ public class DaoImpl implements Dao {
 	@Override
 	public Map<String, Object> getPortInfoFromPortName(Connection conn, String deviceName, String portName) throws SQLException {
 		final String fname = "getPortInfoFromPortName";
-		if (logger.isDebugEnabled()){
-			logger.debug(String.format("%s(conn=%s, deviceName=%s, portName=%s) - start", fname, conn, deviceName, portName));
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s, deviceName=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
 		Map<String, Object> map = null;
 		try {
@@ -1689,8 +1689,8 @@ public class DaoImpl implements Dao {
 			if (!maps.isEmpty()) {
 				map = maps.get(0);
 			}
-			if (logger.isDebugEnabled()){
-				logger.debug(String.format("%s(ret=%s) - end", fname, map));
+			if (logger.isTraceEnabled()){
+				logger.trace(String.format("%s(ret=%s) - end", fname, map));
 			}
 			return map;
 		} catch (Exception e){
@@ -1711,12 +1711,12 @@ public class DaoImpl implements Dao {
 			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_PORT_INFO_FROM_PORTRID,
                     new MapListHandler(), rid);
 			if (records.size() <= 0) {
-                // error
+                String msg = String.format(NOT_FOUND, "port(" + rid + ")");
 			}
 			Map<String, Object> record = records.get(0);
 
 			if (logger.isTraceEnabled()){
-				//logger.trace(String.format("getPortInfo(ret=%s) - end", documents.get(0)));
+				logger.trace(String.format("getPortInfo(ret=%s) - end", documents.get(0)));
 			}
 			return record;
 		} catch (Exception e) {
@@ -1737,12 +1737,13 @@ public class DaoImpl implements Dao {
 			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_DEVICE_INFO_FROM_DEVICERID,
                     new MapListHandler(), rid);
 			if (records.size() <= 0) {
-                // error
+				String msg = String.format(NOT_FOUND, "node(" + rid + ")");
+                throw new SQLException(msg);
 			}
 			Map<String, Object> record = records.get(0);
 
 			if (logger.isTraceEnabled()){
-				//logger.trace(String.format("getPortInfo(ret=%s) - end", documents.get(0)));
+				logger.trace(String.format("%s(ret=%s) - end", fname, documents.get(0)));
 			}
 			return record;
 		} catch (Exception e) {
