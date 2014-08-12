@@ -8,6 +8,8 @@ import ool.com.ofpm.json.device.Node;
 import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.device.PortInfo;
 
+import org.apache.commons.lang3.ObjectUtils;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -138,7 +140,7 @@ public class LogicalTopology implements Cloneable {
 			if (obj == null) return false;
 			if (obj.getClass() != this.getClass()) return false;
 			OfpConPortInfo other = (OfpConPortInfo)obj;
-			if (!other.ofpPortLink.equals(other.ofpPortLink)) return false;
+			if (!ObjectUtils.equals(other.ofpPortLink, this.ofpPortLink)) return false;
 			return super.equals(obj);
 		}
 		@Override
