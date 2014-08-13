@@ -42,4 +42,14 @@ public class OrientJdbcConnection extends com.orientechnologies.orient.jdbc.Orie
 			database.begin(TXTYPE.NOTX);
 		}
 	}
+
+	@Override
+	public void commit() {
+		database.commit(true);
+	}
+
+	@Override
+	public void rollback() {
+		database.rollback(true);
+	}
 }

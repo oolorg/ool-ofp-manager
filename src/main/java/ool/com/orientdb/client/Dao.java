@@ -461,6 +461,15 @@ public interface Dao {
 	 */
 	int updateNodeInfo(Connection conn, String keyDeviceName, String deviceName, String datapathId, String ofcIp) throws SQLException;
 
+	/**
+	 * Delete DeviceInfo
+	 * @param conn
+	 * @param deviceName deleted device name
+	 * @return
+	 * @throws SQLException
+	 */
+	int deleteNodeInfo(Connection conn, String deviceName) throws SQLException;
+
 
 	/*================ | _|    |_ |
 	 *  PortInfo I/F   ||        ||
@@ -474,6 +483,18 @@ public interface Dao {
 	 * @return
 	 */
 	int createPortInfo(Connection conn, String portName, int portNumber, String deviceName) throws SQLException;
+
+	/**
+	 * Update PortInfo
+	 * @param conn
+	 * @param keyPortName
+	 * @param keyDeviceName
+	 * @param portName
+	 * @param portNumber
+	 * @return
+	 * @throws SQLException
+	 */
+	int updatePortInfo(Connection conn, String keyPortName, String keyDeviceName, String portName, int portNumber) throws SQLException;
 
 	/**
 	 * Get port info from device name and port name.

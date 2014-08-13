@@ -82,7 +82,7 @@ public class OrientDBDefinition {
 	public static final String SQL_INSERT_NODE      = "create vertex node set name = '%s', type = '%s', datapathId = '%s', ofcIp = '%s'";
 	public static final String SQL_INSERT_NODE_INFO = "create vertex node set name = ?, type = ?, datapathId = ?, ofcIp = ?";
 	public static final String SQL_INSERT_PORT      = "create vertex port set name = '%s', number = %s, deviceName = '%s'";
-	public static final String SQL_INSERT_PORT_INFO = "create vertex port set name = ?, number = ?, devicename = ?";
+	public static final String SQL_INSERT_PORT_INFO = "create vertex port set name = ?, number = ?, deviceName = ?";
 	public static final String SQL_INSERT_LINK = "create edge link from %s to %s set band = %s, used = %s";
 
 	public static final String SQL_INSERT_INTERNALMAC = "insert into internalMacMap(deviceName, inPort, srcMac, dstMac, internalMac) values (?, ?, ?, ?, ?)";
@@ -99,10 +99,16 @@ public class OrientDBDefinition {
 	/* update */
 	public static final String SQL_UPDATE_WEIGHT_TO_LINK = "update link set band = %s where out = %s and in = %s";
 	public static final String SQL_UPDATE_NODE = "update node set name = '%s', datapathId = '%s', ofcIp = '%s' where @RID = %s";
-	public static final String SQL_UPDATE_NODE_INFO = "update node set name = ?, datapathid = ? , ofcIp = ? where @RID = ?";
+	public static final String SQL_UPDATE_NODE_INFO_FROM_RID = "update node set name = ?, datapathId = ? , ofcIp = ? where @RID = ?";
 	public static final String SQL_UPDATE_PORT_DEVICE_NAME = "update port set deviceName = '%s' where deviceName = '%s'";
+	public static final String SQL_UPDATE_PORT_INFO_FROM_RID = "update port set name = ?, number = ? where @RID = ?";
 	public static final String SQL_UPDATE_PATCH_WIRING_IN_DEVICE  = "update patchWiring set  inDeviceName = '%s' where  inDeviceName = '%s'";
 	public static final String SQL_UPDATE_PATCH_WIRING_OUT_DEVICE = "update patchWiring set outDeviceName = '%s' where outDeviceName = '%s'";
+	public static final String SQL_UPDATE_PORT_DEVICENAME = "update port set deviceName = ? where deviceName = ?";
+	public static final String SQL_UPDATE_PATCH_WIRING_INDEVICENAME  = "update patchWiring set  inDeviceName = ? where  inDeviceName = ?";
+	public static final String SQL_UPDATE_PATCH_WIRING_OUTDEVICENAME = "update patchWiring set outDeviceName = ? where outDeviceName = ?";
+	public static final String SQL_UPDATE_PATCH_WIRING_INPORTNAME  = "update patchWiring set  inPortName = ? where  inPortName = ? and  inDeviceName = ?";
+	public static final String SQL_UPDATE_PATCH_WIRING_OUTPORTNAME = "update patchWiring set outPortName = ? where outPortName = ? and outDeviceName = ?";
 	public static final String SQL_UPDATE_PORT = "update port set name = '%s', number = %s where @RID = %s";
 	public static final String SQL_UPDATE_CALBE_LINK_USED_VALUE_FROM_PORT_RID = "update link set used = ? where out.@class='port' and in.@class='port' and (in.@RID = ? or out.@RID = ?)";
 

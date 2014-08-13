@@ -1575,38 +1575,6 @@ public class DaoImpl implements Dao {
 		try {
 			Object[] params = {deviceName, deviceType, datapathId, ofcIp};
 			int nRecords = utilsJdbc.update(conn, SQL_INSERT_NODE_INFO, params);
-//			int nRecords = utilsJdbc.query(conn, SQL_INSERT_NODE_INFO, new MapListHandler(), params).size();
-			if (nRecords == 0) {
-				return DB_RESPONSE_STATUS_EXIST;
-			}
-			if (logger.isTraceEnabled()) {
-				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
-			}
-			return ret;
-		} catch (Exception e) {
-			throw new SQLException(e.getMessage());
-		}
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * @see ool.com.orientdb.client.Dao#createPortInfo(java.sql.Connection, java.lang.String, int, java.lang.String)
-	 */
-	@Override
-	public int createPortInfo(Connection conn, String portName, int portNumber, String deviceName) throws SQLException {
-		final String fname = "createPortInfo";
-		if (logger.isTraceEnabled()) {
-			logger.trace(String.format("%s(conn=%s, portName=%s, portNumber=%s, deviceName=%s) - start", fname, conn, portName, portNumber, deviceName));
-		}
-		int ret = DB_RESPONSE_STATUS_OK;
-		try {
-			Map<String, Object> map = this.getNodeInfoFromDeviceName(conn, deviceName);
-			if (map == null) {
-				return DB_RESPONSE_STATUS_NOT_FOUND;
-			}
-
-			Object[] params = {portName, portNumber, deviceName};
-			int nRecords = utilsJdbc.update(conn, SQL_INSERT_PORT_INFO, params);
 			if (nRecords == 0) {
 				return DB_RESPONSE_STATUS_EXIST;
 			}
@@ -1637,6 +1605,7 @@ public class DaoImpl implements Dao {
 				if (logger.isTraceEnabled()){
 					logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 				}
+				return ret;
 			}
 
 			String nodeRid = (String)current.get("rid");
@@ -1651,24 +1620,124 @@ public class DaoImpl implements Dao {
 			}
 
 			Object[] params = {deviceName, datapathId, ofcIp, nodeRid};
-			int result = utilsJdbc.update(conn, SQL_UPDATE_NODE_INFO, params);
+			int result = utilsJdbc.update(conn, SQL_UPDATE_NODE_INFO_FROM_RID, params);
 			if (result == 0) {
 				ret = DB_RESPONSE_STATUS_EXIST;
-				if (logger.isDebugEnabled()){
-					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				if (logger.isTraceEnabled()) {
+					logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 				}
+				return ret;
 			}
 
 			Object[] updDevNamePara = {deviceName, keyDeviceName};
-			utilsJdbc.update(conn, SQL_UPDATE_PORT_DEVICE_NAME, updDevNamePara);
-			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_IN_DEVICE, updDevNamePara);
-			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_OUT_DEVICE, updDevNamePara);
+			utilsJdbc.update(conn, SQL_UPDATE_PORT_DEVICENAME, updDevNamePara);
+			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_INDEVICENAME,  updDevNamePara);
+			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_OUTDEVICENAME, updDevNamePara);
 
 			if (logger.isTraceEnabled()){
 				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
 			}
 			return ret;
 		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		}
+	}
+
+	public int deleteNodeInfo(Connection conn, String deviceName) {
+		final String fname = "createNodeInfo";
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, deviceName=%s) - start", fname, conn, deviceName));
+		}
+		int ret = DB_RESPONSE_STATUS_OK;
+//		try {
+//			if (logger.isTraceEnabled()) {
+//				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+//			}
+			return ret;
+//		} catch (Exception e) {
+//			throw new SQLException(e.getMessage());
+//		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#createPortInfo(java.sql.Connection, java.lang.String, int, java.lang.String)
+	 */
+	@Override
+	public int createPortInfo(Connection conn, String portName, int portNumber, String deviceName) throws SQLException {
+		final String fname = "createPortInfo";
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, portName=%s, portNumber=%s, deviceName=%s) - start", fname, conn, portName, portNumber, deviceName));
+		}
+		int ret = DB_RESPONSE_STATUS_OK;
+		try {
+			Map<String, Object> map = this.getNodeInfoFromDeviceName(conn, deviceName);
+			if (map == null) {
+				return DB_RESPONSE_STATUS_NOT_FOUND;
+			}
+
+			Object[] params = {portName, portNumber, deviceName};
+			int nRecords = utilsJdbc.update(conn, SQL_INSERT_PORT_INFO, params);
+			if (nRecords == 0) {
+				ret = DB_RESPONSE_STATUS_EXIST;
+			}
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#updatePortInfo(java.sql.Connection, java.lang.String, java.lang.String, java.lang.String, int)
+	 */
+	@Override
+	public int updatePortInfo(Connection conn, String keyPortName, String keyDeviceName, String portName, int portNumber) throws SQLException {
+		final String fname = "updatePortInfo";
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, keyPortName=%s, keyDeviceName=%s, portName=%s, portNumber=%s) - start", fname, conn, keyPortName, keyDeviceName, portName, portNumber));
+		}
+		int ret = DB_RESPONSE_STATUS_OK;
+		try {
+			Map<String, Object> current = this.getPortInfoFromPortName(conn, keyDeviceName, keyPortName);
+			if (current == null) {
+				ret = DB_RESPONSE_STATUS_NOT_FOUND;
+				if (logger.isTraceEnabled()){
+					logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+				}
+				return ret;
+			}
+
+			String portRid = (String)current.get("rid");
+			if (StringUtils.isBlank(portName)) {
+				portName = (String)current.get("name");
+			}
+			if (portNumber == 0) {
+				portNumber = (Integer)current.get("portNumber");
+			}
+
+			Object[] params = {portName, portNumber, portRid};
+			int result = utilsJdbc.update(conn, SQL_UPDATE_PORT_INFO_FROM_RID, params);
+			if (result == 0) {
+				ret = DB_RESPONSE_STATUS_EXIST;
+				if (logger.isTraceEnabled()) {
+					logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+				}
+				return ret;
+			}
+
+			Object[] updPortNamePara = {portName, keyPortName, keyDeviceName};
+			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_INPORTNAME, updPortNamePara);
+			utilsJdbc.update(conn, SQL_UPDATE_PATCH_WIRING_OUTPORTNAME, updPortNamePara);
+
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
 	}
@@ -1804,7 +1873,8 @@ public class DaoImpl implements Dao {
 			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_INTERNALMAC_LIST_FROM_DEVICENAME_INPORT, new MapListHandler("internalMac"), deviceName, inPort);
 			for (int i = 0; i < records.size(); i++) {
 				Map<String, Object> record = records.get(i);
-				ret.add((String)record.get("internalMac"));
+				Long internalMac = Long.parseLong(record.get("internalMac").toString());
+				ret.add(OFPMUtils.longToMacAddress(internalMac));
 			}
 			if (logger.isTraceEnabled()) {
 				logger.trace(String.format("%s(ret=%s) - end", ret));

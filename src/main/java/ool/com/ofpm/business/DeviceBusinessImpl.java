@@ -5,6 +5,7 @@ import static ool.com.constants.OfpmDefinition.*;
 import static ool.com.constants.OrientDBDefinition.*;
 
 import java.lang.reflect.Type;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import ool.com.ofpm.json.device.PortInfoCreateJsonIn;
 import ool.com.ofpm.json.device.PortInfoUpdateJsonIn;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
+import ool.com.ofpm.utils.OFPMUtils;
 import ool.com.ofpm.validate.common.BaseValidate;
 import ool.com.ofpm.validate.device.DeviceInfoCreateJsonInValidate;
 import ool.com.ofpm.validate.device.DeviceInfoUpdateJsonInValidate;
@@ -24,6 +26,8 @@ import ool.com.ofpm.validate.device.PortInfoCreateJsonInValidate;
 import ool.com.ofpm.validate.device.PortInfoUpdateJsonInValidate;
 import ool.com.orientdb.client.ConnectionUtils;
 import ool.com.orientdb.client.ConnectionUtilsImpl;
+import ool.com.orientdb.client.ConnectionUtilsJdbc;
+import ool.com.orientdb.client.ConnectionUtilsJdbcImpl;
 import ool.com.orientdb.client.Dao;
 import ool.com.orientdb.client.DaoImpl;
 
@@ -40,64 +44,82 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 	Config conf = new ConfigImpl();
 
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.business.DeviceBusiness#createDevice(java.lang.String)
+	 */
 	public String createDevice(String newDeviceInfoJson) {
 		String fname = "createDevice";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(newDeviceInfoJson=%s) - start", fname, newDeviceInfoJson));
 		}
-
 		BaseResponse res = new BaseResponse();
-		Dao dao = null;
 
+		/* PHASE 1: Convert to DeviceInfoCreateJsonIn from json and validation check. */
+		DeviceInfoCreateJsonIn deviceInfo = null;
 		try {
-			DeviceInfoCreateJsonIn deviceInfo = DeviceInfoCreateJsonIn.fromJson(newDeviceInfoJson);
-
+			deviceInfo = DeviceInfoCreateJsonIn.fromJson(newDeviceInfoJson);
 			DeviceInfoCreateJsonInValidate validator = new DeviceInfoCreateJsonInValidate();
 			validator.checkValidation(deviceInfo);
-
-			ConnectionUtils utils = new ConnectionUtilsImpl();
-			dao = new DaoImpl(utils);
-			if (dao.createNodeInfo(deviceInfo.getDeviceName(), deviceInfo.getDeviceType(), deviceInfo.getDatapathId(), deviceInfo.getOfcIp()) == DB_RESPONSE_STATUS_EXIST) {
-				res.setStatus(STATUS_BAD_REQUEST);
-				res.setMessage(String.format(ALREADY_EXIST, deviceInfo.getDeviceName()));
-			} else {
-				res.setStatus(STATUS_CREATED);
-			}
-		} catch (JsonSyntaxException jse) {
-			logger.error(jse);
+		} catch (JsonSyntaxException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(INVALID_JSON);
 
-		} catch (ValidateException ve) {
-			logger.error(ve);
-			res.setStatus(STATUS_BAD_REQUEST);
-			res.setMessage(ve.getMessage());
-
-		} catch (SQLException e) {
-    		logger.error(e.getMessage());
-    		res.setStatus(STATUS_INTERNAL_ERROR);
-    		res.setMessage(e.getMessage());
-		}  catch (RuntimeException re) {
-			logger.error(re.getMessage());
-			res.setStatus(STATUS_INTERNAL_ERROR);
-			res.setMessage(re.getMessage());
-		} finally {
-			try {
-				if(dao != null) {
-					dao.close();
-				}
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-				res.setStatus(STATUS_INTERNAL_ERROR);
-				res.setMessage(e.getMessage());
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 			}
+			return res.toString();
+		} catch (ValidateException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(e.getMessage());
+
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return res.toString();
+		}
+
+		/* PHASE 2: Add node info to ofpdb */
+		ConnectionUtilsJdbc utils = null;
+		Connection conn = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn = utils.getConnection(false);
+
+			Dao dao = new DaoImpl(utils);
+			int stat = dao.createNodeInfo(
+					conn,
+					deviceInfo.getDeviceName(),
+					deviceInfo.getDeviceType(),
+					deviceInfo.getDatapathId(),
+					deviceInfo.getOfcIp());
+			if (stat == DB_RESPONSE_STATUS_EXIST) {
+				res.setStatus(STATUS_BAD_REQUEST);
+				res.setMessage(String.format(ALREADY_EXIST, deviceInfo.getDeviceName()));
+				utils.rollback(conn);
+			} else {
+				res.setStatus(STATUS_CREATED);
+				utils.commit(conn);
+			}
+
+		} catch (SQLException | RuntimeException e) {
+			utils.rollback(conn);
+
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+		} finally {
+			utils.close(conn);
 		}
 
 		String ret = res.toJson();
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 		}
-
 		return ret;
 	}
 
@@ -108,14 +130,28 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		}
 
 		BaseResponse res = new BaseResponse();
-		Dao dao = null;
 
 		try {
 			BaseValidate.checkStringBlank(deviceName);
+		} catch (ValidateException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(e.getMessage());
 
-			ConnectionUtils utils = new ConnectionUtilsImpl();
-			dao = new DaoImpl(utils);
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
 
+		ConnectionUtilsJdbc utils = null;
+		Connection conn = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn  = utils.getConnection(false);
+
+			Dao dao = new DaoImpl(utils);
 			int status = dao.deleteDeviceInfo(deviceName);
 			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
@@ -127,35 +163,24 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				res.setStatus(STATUS_SUCCESS);
 			}
 
-		} catch (ValidateException ve) {
-			String message = String.format(IS_BLANK, "deviceName");
-			logger.error(ve.getClass().getName() + ": " + message);
-			res.setStatus(STATUS_BAD_REQUEST);
-			res.setMessage(message);
+			if (status == DB_RESPONSE_STATUS_OK) {
+				utils.commit(conn);
+			} else {
+				utils.rollback(conn);
+			}
+		} catch (SQLException | RuntimeException e) {
+			utils.rollback(conn);
 
-		} catch (SQLException e) {
-    		logger.error(e.getMessage());
+			OFPMUtils.logErrorStackTrace(logger, e);
     		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
-		}  catch (RuntimeException re) {
-			logger.error(re.getMessage());
-			res.setStatus(STATUS_INTERNAL_ERROR);
-			res.setMessage(re.getMessage());
 		} finally {
-			try {
-				if(dao != null) {
-					dao.close();
-				}
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-				res.setStatus(STATUS_INTERNAL_ERROR);
-				res.setMessage(e.getMessage());
-			}
+			utils.close(conn);
 		}
 
 		String ret = res.toJson();
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			logger.debug(String.format("%s(ret=%s) - end", fname, res));
 		}
 		return ret;
 	}
@@ -166,58 +191,71 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceName=%s, newDeviceInfoJson=%s) - start", fname, deviceName, updateDeviceInfoJson));
 		}
-
 		BaseResponse res = new BaseResponse();
-		Dao dao = null;
-		try {
-			DeviceInfoUpdateJsonIn newDeviceInfo = DeviceInfoUpdateJsonIn.fromJson(updateDeviceInfoJson);
 
+		/* PHASE 1: json -> DeviceInfoUpdateJosnIn and check validation */
+		DeviceInfoUpdateJsonIn newDeviceInfo = null;
+		try {
+			newDeviceInfo = DeviceInfoUpdateJsonIn.fromJson(updateDeviceInfoJson);
 			DeviceInfoUpdateJsonInValidate validator = new DeviceInfoUpdateJsonInValidate();
 			validator.checkValidation(deviceName, newDeviceInfo);
+		} catch (JsonSyntaxException jse) {
+			logger.error(jse);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		} catch (ValidateException ve) {
+			logger.error(ve);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(ve.getMessage());
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
 
-			ConnectionUtils utils = new ConnectionUtilsImpl();
-			dao = new DaoImpl(utils);
+		ConnectionUtilsJdbc utils = null;
+		Connection conn = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn  = utils.getConnection(false);
+
+			Dao dao = new DaoImpl(utils);
 
 			int status = dao.updateNodeInfo(
+					conn,
 					deviceName,
 					newDeviceInfo.getDeviceName(),
 					newDeviceInfo.getDatapathId(),
 					newDeviceInfo.getOfcIp());
 			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(STATUS_NOTFOUND);
-				res.setMessage(String.format(NOT_FOUND, newDeviceInfo.getDeviceName()));
+				res.setMessage(String.format(NOT_FOUND, deviceName));
 			} else if (status == DB_RESPONSE_STATUS_EXIST) {
 				res.setStatus(STATUS_CONFLICT);
 				res.setMessage(String.format(ALREADY_EXIST, newDeviceInfo.getDeviceName()));
 			} else {
 				res.setStatus(STATUS_SUCCESS);
 			}
-		} catch (JsonSyntaxException jse) {
-			logger.error(jse);
-			res.setStatus(STATUS_BAD_REQUEST);
-			res.setMessage(INVALID_JSON);
-		} catch (ValidateException ve) {
-			logger.error(ve);
-			res.setStatus(STATUS_BAD_REQUEST);
-			res.setMessage(ve.getMessage());
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
+
+			if (status == STATUS_SUCCESS) {
+				utils.commit(conn);
+			} else {
+				utils.rollback(conn);
+			}
+		} catch (SQLException | RuntimeException e) {
+			utils.rollback(conn);
+
+			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
-		}  catch (RuntimeException re) {
-			logger.error(re.getMessage());
-			res.setStatus(STATUS_INTERNAL_ERROR);
-			res.setMessage(re.getMessage());
 		} finally {
-			try {
-				if(dao != null) {
-					dao.close();
-				}
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-				res.setStatus(STATUS_INTERNAL_ERROR);
-				res.setMessage(e.getMessage());
-			}
+			utils.close(conn);
 		}
 
 		String ret = res.toJson();
@@ -232,55 +270,70 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(newPortInfoJson=%s) - start", fname, newPortInfoJson));
 		}
-
 		BaseResponse res = new BaseResponse();
-		Dao dao = null;
-		try {
-			PortInfoCreateJsonIn portInfo = PortInfoCreateJsonIn.fromJson(newPortInfoJson);
 
+		/* PHASE 1: json -> obj and validation check */
+		PortInfoCreateJsonIn portInfo = null;
+		try {
+			portInfo = PortInfoCreateJsonIn.fromJson(newPortInfoJson);
 			PortInfoCreateJsonInValidate validator = new PortInfoCreateJsonInValidate();
 			validator.checkValidation(deviceName ,portInfo);
+		} catch (JsonSyntaxException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		} catch (ValidateException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(e.getMessage());
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
 
-			ConnectionUtils utils = new ConnectionUtilsImpl();
-			dao = new DaoImpl(utils);
-			int status = dao.createPortInfo(portInfo.getPortName(), portInfo.getPortNumber(), deviceName);
+		/* PHASE 2: */
+		ConnectionUtilsJdbc utils = null;
+		Connection conn = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn  = utils.getConnection(false);
 
+			Dao dao = new DaoImpl(utils);
+			int status = dao.createPortInfo(
+					conn,
+					portInfo.getPortName(),
+					portInfo.getPortNumber(),
+					deviceName);
 			if ( status == DB_RESPONSE_STATUS_EXIST) {
 				res.setStatus(STATUS_BAD_REQUEST);
 				res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));
 			} else if ( status == DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(STATUS_NOTFOUND);
 				res.setMessage(String.format(NOT_FOUND, deviceName));
-			}
-			else {
+			} else {
 				res.setStatus(STATUS_CREATED);
 			}
-		} catch (JsonSyntaxException jse) {
-			logger.error(jse);
-			res.setStatus(STATUS_BAD_REQUEST);
-			res.setMessage(INVALID_JSON);
-		} catch (ValidateException ve) {
-			logger.error(ve);
-			res.setStatus(STATUS_BAD_REQUEST);
-			res.setMessage(ve.getMessage());
-		} catch (SQLException e) {
-    		logger.error(e.getMessage());
+
+			if (status == DB_RESPONSE_STATUS_OK) {
+				utils.commit(conn);
+			} else {
+				utils.rollback(conn);
+			}
+		} catch (SQLException | RuntimeException e) {
+			utils.rollback(conn);
+
+    		OFPMUtils.logErrorStackTrace(logger, e);
     		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
-		}  catch (RuntimeException re) {
-			logger.error(re.getMessage());
-			res.setStatus(STATUS_INTERNAL_ERROR);
-			res.setMessage(re.getMessage());
 		} finally {
-			try {
-				if(dao != null) {
-					dao.close();
-				}
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-				res.setStatus(STATUS_INTERNAL_ERROR);
-				res.setMessage(e.getMessage());
-			}
+			utils.close(conn);
 		}
 
 		String ret = res.toJson();
@@ -356,19 +409,44 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceName=%s, portName=%s, updatePortInfoJson=%s) - start", fname, deviceName, portName, updatePortInfoJson));
 		}
-
 		BaseResponse res = new BaseResponse();
-		Dao dao = null;
-		try {
-			PortInfoUpdateJsonIn portInfo = PortInfoUpdateJsonIn.fromJson(updatePortInfoJson);
 
+		/* PHASE 1: json -> obj and check validation */
+		PortInfoUpdateJsonIn portInfo = null;
+		try {
+			portInfo = PortInfoUpdateJsonIn.fromJson(updatePortInfoJson);
 			PortInfoUpdateJsonInValidate validator = new PortInfoUpdateJsonInValidate();
 			validator.checkValidation(deviceName, portName, portInfo);
+		} catch (JsonSyntaxException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(INVALID_JSON);
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		} catch (ValidateException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(e.getMessage());
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
 
-			ConnectionUtils utils = new ConnectionUtilsImpl();
-			dao = new DaoImpl(utils);
+		/* PHASE 2: update port info */
+		ConnectionUtilsJdbc utils = null;
+		Connection conn = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn  = utils.getConnection(false);
 
+			Dao dao = new DaoImpl(utils);
 			int status = dao.updatePortInfo(
+					conn,
 					portName,
 					deviceName,
 					portInfo.getPortName(),
@@ -383,32 +461,20 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			} else {
 				res.setStatus(STATUS_SUCCESS);
 			}
-		} catch (JsonSyntaxException jse) {
-			logger.error(jse);
-			res.setStatus(STATUS_BAD_REQUEST);
-			res.setMessage(INVALID_JSON);
-		} catch (ValidateException ve) {
-			logger.error(ve);
-			res.setStatus(STATUS_BAD_REQUEST);
-			res.setMessage(ve.getMessage());
-		} catch (SQLException e) {
-    		logger.error(e.getMessage());
+
+			if (status == DB_RESPONSE_STATUS_OK) {
+				utils.commit(conn);
+			} else {
+				utils.rollback(conn);
+			}
+		} catch (SQLException | RuntimeException e) {
+			utils.rollback(conn);
+
+    		OFPMUtils.logErrorStackTrace(logger, e);
     		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
-		}  catch (RuntimeException re) {
-			logger.error(re.getMessage());
-			res.setStatus(STATUS_INTERNAL_ERROR);
-			res.setMessage(re.getMessage());
 		} finally {
-			try {
-				if(dao != null) {
-					dao.close();
-				}
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-				res.setStatus(STATUS_INTERNAL_ERROR);
-				res.setMessage(e.getMessage());
-			}
+			utils.close(conn);
 		}
 
 		String ret = res.toJson();

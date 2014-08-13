@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 //public class OrientJdbcDriver implements java.sql.Driver {
 public class OrientJdbcDriver extends com.orientechnologies.orient.jdbc.OrientJdbcDriver {
@@ -28,6 +29,7 @@ public class OrientJdbcDriver extends com.orientechnologies.orient.jdbc.OrientJd
 			} catch (SQLException e) {
 				OLogManager.instance().error(null, "Error Could not registering the JDBC Driver ");
 			}
+			OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
 		}
 	}
 

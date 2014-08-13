@@ -3,6 +3,8 @@ package ool.com.ofpm.utils;
 import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OfpmDefinition.*;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.IllegalFormatException;
 import java.util.regex.Matcher;
@@ -11,6 +13,8 @@ import java.util.regex.Pattern;
 import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConDeviceInfo;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConPortInfo;
+
+import org.apache.log4j.Logger;
 
 public class OFPMUtils {
 
@@ -104,5 +108,17 @@ public class OFPMUtils {
 			value *= 1152921504606846976L;
 		}
 		return value;
+	}
+
+	/**
+	 * Logging stack-trace when error happend.
+	 * @param logger
+	 * @param t
+	 */
+	public static void logErrorStackTrace(Logger logger, Throwable t) {
+		StringWriter sw = new StringWriter();
+		t.printStackTrace(new PrintWriter(sw));
+		logger.error(t);
+		logger.error(sw.toString());
 	}
 }
