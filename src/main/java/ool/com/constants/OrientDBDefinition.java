@@ -70,7 +70,7 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PATCH_INFO_FROM_PATCHWIRING_DEVICENAME_PORTNAME = "select out, in, parent, sequence from patchWiring where inDeviceName = ? and inPortName = ? and "
 			+ "outDeviceName = ? and outPortName = ? order by sequence desc";
 	public static final String SQL_GET_PORT_INFO_FROM_PORTRID = "select from port where @RID = ?";
-	public static final String SQL_GET_DEVICE_INFO_FROM_DEVICERID = "select from node where @RID = ?";
+	public static final String SQL_GET_DEVICE_INFO_FROM_DEVICERID = "select name, type, datapathId, ofcIp from node where @RID = ?";
 	public static final String SQL_GET_INTERNALMAC_FROM_SRCMAC_DSTMAC_INPORT_DEVICENAME = "select internalMac from internalMacMap where deviceName = ? and inPort = ? and "
 			+ "srcMac = ? and dstMac = ?";
 	public static final String SQL_GET_MAX_INTERNALMAC = "select max(internalMac) as maxInternalMac from internalMacMap";
