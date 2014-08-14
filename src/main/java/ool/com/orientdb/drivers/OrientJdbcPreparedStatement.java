@@ -1,6 +1,7 @@
 package ool.com.orientdb.drivers;
 
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ public class OrientJdbcPreparedStatement extends com.orientechnologies.orient.jd
 	}
 
 	@Override
-	public int executeUpdate() throws SQLSyntaxErrorException {
+	public int executeUpdate() throws SQLException {
 		try {
 			Field field = null;
 			field = com.orientechnologies.orient.jdbc.OrientJdbcPreparedStatement.class.getDeclaredField("params");
@@ -47,6 +48,8 @@ public class OrientJdbcPreparedStatement extends com.orientechnologies.orient.jd
 			}
 		} catch (OQueryParsingException e) {
 			throw new SQLSyntaxErrorException("Error on parsing the command", e);
+//		} catch (ORecordDuplicatedException e) {
+//			throw new SQLException("制約に違反しています。", query.toString(), DB_RESPONSE_STATUS_EXIST);
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}

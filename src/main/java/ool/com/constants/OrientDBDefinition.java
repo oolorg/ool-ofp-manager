@@ -10,6 +10,7 @@ public class OrientDBDefinition {
 	/* Routing */
 	public static final int DIJKSTRA_WEIGHT_NO_ROUTE = 100;
 	public static final int DIJKSTRA_WEIGHT_AVAILABLE_ROUTE = 1;
+	public static final long USED_BLOCKING_VALUE = 9999999999999999L;
 
 	/* Node Type */
 	public static final String NODE_TYPE_SERVER = "Server";
@@ -23,6 +24,7 @@ public class OrientDBDefinition {
 	public static final int DB_RESPONSE_STATUS_NOT_FOUND = 404;
 	public static final int DB_RESPONSE_STATUS_USED = 220;
 	public static final int DB_RESPONSE_STATUS_FORBIDDEN = 403;
+	public static final int DB_RESPONSE_STATUS_FAIL = 500;
 
 	/* SQL Node Key */
 	public static final String SQL_NODE_KEY_NAME = "name";
@@ -33,6 +35,7 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_DEVICE = "select from node where name='%s'";
 	public static final String SQL_GET_NODE_INFO_FROM_DEVICE_NAME = "select @rid.asString(), name, type, datapathId, ofcIp from node where name=?";
 	public static final String SQL_GET_NODE_INFO_FROM_DEVICE_RID  = "select @rid.asString(), name, type, datapathId, ofcIp from node where @rid=?";
+	public static final String SQL_GET_NODE_RID_FROM_DEVICENAME   = "select @rid.asString() from node where name=?";
 	public static final String SQL_GET_DEVICE_LIST = "select from node %s";
 	public static final String SQL_GET_CONNECTED_NODE = "select from (traverse * from %s) where @class='node' and $depth=6";
 	public static final String SQL_GET_PATCHPORT_RID = "select from (traverse * from %s) where @class='port' and $depth=4";
@@ -46,6 +49,7 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PORT_INFO = "select from port where name = '%s' and deviceName = '%s'";
 	public static final String SQL_GET_PORT_INFO2 = "select from port where number = %s and deviceName = '%s'";
 	public static final String SQL_GET_PORT_INFO_FROM_PORT_NAME = "select @rid.asString(), name, number, deviceName from port where name = ? and deviceName = ?";
+	public static final String SQL_GET_PORT_RID_FROM_DEVICENAME_PORTNAME = "select @rid.asString() from port where name = ? and deviceName = ?";
 	public static final String SQL_GET_LINK = "select from link where out = %s and in = %s";
 
 	public static final String SQL_GET_CABLE_LINK_FROM_PORT_RID = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
@@ -54,8 +58,10 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_CABLE_LINKS    = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
 			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @RID, band, used "
 			+ "from link where in.deviceName = ? and out.@class = 'port'";
-	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME           = "select from patchWiring where inDeviceName=?";
-	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICE_NAME_PORT_NAME = "select from patchWiring where inDeviceName=? and inPortName=?";
+	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICENAME           = "select from patchWiring where inDeviceName=?";
+	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICENAME_PORTNAME = "select from patchWiring where inDeviceName=? and inPortName=?";
+	public static final String SQL_GET_PATCH_WIRINGS_FROM_NODERID = "select from patchWiring where parent=?";
+	public static final String SQL_GET_PATCH_WIRINGS_FROM_PORTRID = "select from patchWiring where out=? or in=?";
 	public static final String SQL_GET_CONNECTED_LINK = "select from link where in = %s";
 	public static final String SQL_IS_HAD_PATCH_WIRING = "select from patchWiring where parent = %s";
 	public static final String SQL_IS_CONNECTED_PATCH_WIRING = "select from patchWiring where out = %s or in = %s";
@@ -83,6 +89,8 @@ public class OrientDBDefinition {
 	public static final String SQL_INSERT_NODE_INFO = "create vertex node set name = ?, type = ?, datapathId = ?, ofcIp = ?";
 	public static final String SQL_INSERT_PORT      = "create vertex port set name = '%s', number = %s, deviceName = '%s'";
 	public static final String SQL_INSERT_PORT_INFO = "create vertex port set name = ?, number = ?, deviceName = ?";
+	public static final String SQL_INSERT_UBUS = "create edge ubus from ? to ? set used = ?";
+	public static final String SQL_INSERT_DBUS = "create edge dbus from ? to ? set used = ?";
 	public static final String SQL_INSERT_LINK = "create edge link from %s to %s set band = %s, used = %s";
 
 	public static final String SQL_INSERT_INTERNALMAC = "insert into internalMacMap(deviceName, inPort, srcMac, dstMac, internalMac) values (?, ?, ?, ?, ?)";
@@ -91,9 +99,14 @@ public class OrientDBDefinition {
 	public static final String SQL_DELETE_PATCH_WIRING = "delete from patchWiring where outDeviceName = '%s' and inDeviceName = '%s'";
 	public static final String SQL_DELETE_LINK = "delete edge link where out = %s and in = %s";
 	public static final String SQL_DELETE_LINK_CONNECTED_PORT = "delete edge link where out = %s or in = %s";
+	public static final String SQL_DELETE_BUS_LINK_FROM_ONE_PORTRID = "delete edge bus where out = ? or in = ?";
+	public static final String SQL_DELETE_CABLE_LINK_FROM_ONE_PORTRID = "delete edge cable where out = ? or in = ?";
 	public static final String SQL_DELETE_PORT = "delete vertex port where name = '%s' and deviceName = '%s'";
 	public static final String SQL_DELETE_PORT_DEViCE_NAME = "delete vertex port where deviceName = '%s'";
+	public static final String SQL_DELETE_PORT_FROM_PORTRID = "delete vertex port where @RID = ?";
 	public static final String SQL_DELETE_NODE = "delete vertex node where name = '%s'";
+	public static final String SQL_DELETE_PORT_FROM_DEVICENAME = "delete vertex port where deviceName = ?";
+	public static final String SQL_DELETE_NODE_FROM_NODERID = "delete vertex node where @RID = ?";
 	public static final String SQL_DELETE_PATCH_WIRING_FROM_DEVICE_NAME_PORT_NAME = "delete from patchWiring where (inDeviceName=? and inPortName=?) or (outDeviceName=? and outPortName=?)";
 
 	/* update */

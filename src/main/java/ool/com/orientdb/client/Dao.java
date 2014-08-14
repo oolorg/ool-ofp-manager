@@ -338,6 +338,33 @@ public interface Dao {
 	boolean isContainsPatchWiringFromDeviceNamePortName(Connection conn, String deviceName, String portName) throws SQLException;
 
 	/**
+	 * Check if contains device name into patchWirings inDeviceName or outDeviceName
+	 * @param conn
+	 * @param deviceName
+	 * @return
+	 * @throws SQLException
+	 */
+	boolean isDeviceNameContainedIntoPatchWiring(Connection conn, String deviceName) throws SQLException;
+
+	/**
+	 * Check if contains device rid into patchWirings parent
+	 * @param conn
+	 * @param nodeRid
+	 * @return
+	 * @throws SQLException
+	 */
+	boolean isNodeRidContainedIntoPatchWiring(Connection conn, String nodeRid) throws SQLException;
+
+	/**
+	 * Check if containts port rid into patchWirings in or out.
+	 * @param conn
+	 * @param portRid
+	 * @return
+	 * @throws SQLException
+	 */
+	boolean isPortRidContainedIntoPatchWiring(Connection conn, String portRid) throws SQLException;
+
+	/**
 	 * Insert patch-wiring infromation into db.
 	 * @param ofpRid RID of of-patch switch.
 	 * @param in RID of of-patchs in port.
@@ -346,7 +373,7 @@ public interface Dao {
 	 * @param inPortName
 	 * @param outDeviceName
 	 * @param outPortName
-	 * @param sequence TODO
+	 * @param sequence
 	 * @param Connection conn
 	 * @throws SQLException
 	 */
@@ -439,6 +466,15 @@ public interface Dao {
 	Map<String, Object> getNodeInfoFromDeviceRid(Connection conn, String ofpRid) throws SQLException;
 
 	/**
+	 * Get node rid from device name.
+	 * @param conn
+	 * @param deviceName
+	 * @return
+	 * @throws SQLException
+	 */
+	String getNodeRidFromDeviceName(Connection conn, String deviceName) throws SQLException;
+
+	/**
 	 * Create DeviceInfo.
 	 * @param conn
 	 * @param deviceName
@@ -497,6 +533,16 @@ public interface Dao {
 	int updatePortInfo(Connection conn, String keyPortName, String keyDeviceName, String portName, int portNumber) throws SQLException;
 
 	/**
+	 * Delete PortInfo
+	 * @param conn
+	 * @param portName
+	 * @param deviceName
+	 * @return
+	 * @throws SQLException
+	 */
+	int deletePortInfo(Connection conn, String portName, String deviceName) throws SQLException;
+
+	/**
 	 * Get port info from device name and port name.
 	 * @param conn
 	 * @param deviceName
@@ -525,4 +571,13 @@ public interface Dao {
 	Map<String, Object> getDeviceInfoFromDeviceRid(Connection conn, String rid) throws SQLException;
 
 
+	/**
+	 * Get port rid from device name and port name
+	 * @param conn
+	 * @param deviceName
+	 * @param portName
+	 * @return
+	 * @throws SQLException
+	 */
+	String getPortRidFromDeviceNamePortName(Connection conn, String deviceName, String portName) throws SQLException;
 }

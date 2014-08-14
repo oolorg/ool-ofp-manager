@@ -123,14 +123,18 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		return ret;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.business.DeviceBusiness#deleteDevice(java.lang.String)
+	 */
 	public String deleteDevice(String deviceName) {
 		String fname = "deleteDevice";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
 		}
-
 		BaseResponse res = new BaseResponse();
 
+		/* PHASE 1: check validation */
 		try {
 			BaseValidate.checkStringBlank(deviceName);
 		} catch (ValidateException e) {
@@ -145,6 +149,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			return ret;
 		}
 
+		/* PHASE 2: Delete node from ofp db */
 		ConnectionUtilsJdbc utils = null;
 		Connection conn = null;
 		try {
@@ -152,14 +157,17 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			conn  = utils.getConnection(false);
 
 			Dao dao = new DaoImpl(utils);
-			int status = dao.deleteDeviceInfo(deviceName);
+			int status = dao.deleteNodeInfo(conn, deviceName);
 			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
 				res.setMessage(String.format(NOT_FOUND, deviceName));
 			} else if (status == STATUS_FORBIDDEN) {
 				res.setStatus(STATUS_FORBIDDEN);
 				res.setMessage(String.format(IS_PATCHED, deviceName));
-			} else {
+			} else if (status == DB_RESPONSE_STATUS_FAIL) {
+				res.setStatus(STATUS_INTERNAL_ERROR);
+				res.setMessage(String.format(COULD_NOT_DELETE, deviceName));
+			}  else {
 				res.setStatus(STATUS_SUCCESS);
 			}
 
@@ -185,6 +193,10 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		return ret;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.business.DeviceBusiness#updateDevice(java.lang.String, java.lang.String)
+	 */
 	public String updateDevice(String deviceName, String updateDeviceInfoJson) {
 
 		String fname = "updateDevice";
@@ -265,6 +277,10 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		return ret;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.business.DeviceBusiness#createPort(java.lang.String, java.lang.String)
+	 */
 	public String createPort(String deviceName, String newPortInfoJson) {
 		String fname = "createPort";
 		if (logger.isDebugEnabled()) {
@@ -320,7 +336,6 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			} else {
 				res.setStatus(STATUS_CREATED);
 			}
-
 			if (status == DB_RESPONSE_STATUS_OK) {
 				utils.commit(conn);
 			} else {
@@ -343,58 +358,66 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		return ret;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.business.DeviceBusiness#deletePort(java.lang.String, java.lang.String)
+	 */
 	public String deletePort(String deviceName, String portName) {
 		String fname = "deletePort";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceName=%s, portName=%s) - start", fname, deviceName, portName));
 		}
-
 		BaseResponse res = new BaseResponse();
-		Dao dao = null;
+
+		/* PHASE 1: check validation */
 		try {
 			BaseValidate.checkStringBlank(deviceName);
 			BaseValidate.checkStringBlank(portName);
-
-			ConnectionUtils utils = new ConnectionUtilsImpl();
-			dao = new DaoImpl(utils);
-
-			int status = dao.deletePortInfo(portName, deviceName);
-			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
-				res.setMessage(String.format(NOT_FOUND, portName));
-			} else if (status == DB_RESPONSE_STATUS_FORBIDDEN) {
-				res.setStatus(DB_RESPONSE_STATUS_FORBIDDEN);
-				res.setMessage(String.format(IS_PATCHED, portName));
-			} else {
-				res.setStatus(STATUS_SUCCESS);
-			}
-		} catch (JsonSyntaxException jse) {
-			logger.error(jse);
-			res.setStatus(STATUS_BAD_REQUEST);
-			res.setMessage(INVALID_JSON);
 		} catch (ValidateException ve) {
 			String message = String.format(IS_BLANK, "portName or deviceName");
 			logger.error(ve.getClass().getName() + ": " + message);
 			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(message);
-		} catch (SQLException e) {
-			logger.error(e.getMessage());
+		}
+
+		/* PHASE 2: Delete port from ofp db */
+		ConnectionUtilsJdbc utils = null;
+		Connection conn = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn  = utils.getConnection(false);
+
+			Dao dao = new DaoImpl(utils);
+			int status = dao.deletePortInfo(
+					conn,
+					portName,
+					deviceName);
+			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
+				res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
+				res.setMessage(String.format(NOT_FOUND, deviceName + "." + portName));
+			} else if (status == DB_RESPONSE_STATUS_FORBIDDEN) {
+				res.setStatus(STATUS_FORBIDDEN);
+				res.setMessage(String.format(IS_PATCHED, deviceName + "." + portName));
+			} else if (status == DB_RESPONSE_STATUS_FAIL) {
+				res.setStatus(STATUS_INTERNAL_ERROR);
+				res.setMessage(String.format(COULD_NOT_DELETE, deviceName + "." + portName));
+			} else {
+				res.setStatus(STATUS_SUCCESS);
+			}
+
+			if (status == STATUS_SUCCESS) {
+				utils.commit(conn);
+			} else {
+				utils.rollback(conn);
+			}
+		} catch (SQLException | RuntimeException e) {
+			utils.rollback(conn);
+
+			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
-		}  catch (RuntimeException re) {
-			logger.error(re.getMessage());
-			res.setStatus(STATUS_INTERNAL_ERROR);
-			res.setMessage(re.getMessage());
 		} finally {
-			try {
-				if(dao != null) {
-					dao.close();
-				}
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-				res.setStatus(STATUS_INTERNAL_ERROR);
-				res.setMessage(e.getMessage());
-			}
+			utils.close(conn);
 		}
 
 		String ret = res.toJson();
@@ -404,6 +427,10 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		return ret;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.business.DeviceBusiness#updatePort(java.lang.String, java.lang.String, java.lang.String)
+	 */
 	public String updatePort(String deviceName, String portName, String updatePortInfoJson) {
 		String fname = "updatePort";
 		if (logger.isDebugEnabled()) {
@@ -454,7 +481,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
 				res.setStatus(STATUS_NOTFOUND);
-				res.setMessage(String.format(NOT_FOUND, portInfo.getPortName()));
+				res.setMessage(String.format(NOT_FOUND, portName));
 			} else if (status == DB_RESPONSE_STATUS_EXIST) {
 				res.setStatus(STATUS_CONFLICT);
 				res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));

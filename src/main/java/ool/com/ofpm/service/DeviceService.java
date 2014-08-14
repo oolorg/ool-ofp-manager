@@ -81,7 +81,6 @@ public interface DeviceService {
 	 * @param updatePortInfoJson String
 	 * @return Http Response
 	 */
-//	@RequestMapping(value = "/device_mng/port/{deviceName}/**", method = RequestMethod.PUT)
 	@PUT
 	@Path("/port/{deviceName}/{portName}")
 	@Consumes({ MediaType.APPLICATION_JSON })
