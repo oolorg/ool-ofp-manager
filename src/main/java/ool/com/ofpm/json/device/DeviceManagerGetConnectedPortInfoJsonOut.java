@@ -5,12 +5,15 @@
  */
 package ool.com.ofpm.json.device;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import ool.com.ofpm.json.common.BaseResponse;
 
+import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * @author 1131080355959
@@ -31,6 +34,17 @@ public class DeviceManagerGetConnectedPortInfoJsonOut extends BaseResponse {
 
 	public void addResultData(final ResultData resultData) {
 		this.resultData.add(resultData);
+	}
+
+	@Override
+	public String toJson() {
+		Gson gson = new Gson();
+		Type type = new TypeToken<DeviceManagerGetConnectedPortInfoJsonOut>() {}.getType();
+		return gson.toJson(this, type);
+	}
+	@Override
+	public String toString() {
+		return this.toJson();
 	}
 
 	public class ResultData {

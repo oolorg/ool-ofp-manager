@@ -2015,18 +2015,21 @@ public class DaoImpl implements Dao {
 		if (logger.isTraceEnabled()){
 			logger.trace(String.format("%s(rid=%s) - start", fname, rid));
 		}
+		Map<String, Object> ret = null;
 		try {
-			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_PORT_INFO_FROM_PORTRID,
-                    new MapListHandler(), rid);
-			if (records.size() <= 0) {
-                String msg = String.format(NOT_FOUND, "port(" + rid + ")");
+			List<Map<String, Object>> records = utilsJdbc.query(
+					conn,
+					SQL_GET_PORT_INFO_FROM_PORTRID,
+                    new MapListHandler(),
+                    rid);
+			if (records != null && !records.isEmpty()) {
+				ret = records.get(0);
 			}
-			Map<String, Object> record = records.get(0);
 
 			if (logger.isTraceEnabled()){
-				logger.trace(String.format("getPortInfo(ret=%s) - end", documents.get(0)));
+				logger.trace(String.format("getPortInfo(ret=%s) - end", ret));
 			}
-			return record;
+			return ret;
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		}
@@ -2049,8 +2052,61 @@ public class DaoImpl implements Dao {
 					SQL_GET_PORT_RID_FROM_DEVICENAME_PORTNAME,
 					new MapListHandler("rid"),
 					portName, deviceName);
-			if (!records.isEmpty() && records.get(0) != null) {
+			if (records != null && !records.isEmpty() && records.get(0) != null) {
 				ret = (String) records.get(0).get("rid");
+			}
+			return ret;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (logger.isTraceEnabled()){
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getPortInfoListFromDeviceName(java.sql.Connection, java.lang.String)
+	 */
+	@Override
+	public List<Map<String, Object>> getPortInfoListFromDeviceName(Connection conn, String deviceName) throws SQLException {
+		final String fname = "getPortInfoListFromDeviceName";
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s, deviceName=%s) - start", fname, deviceName));
+		}
+		List<Map<String, Object>> ret = null;
+		try {
+			ret = utilsJdbc.query(
+					conn,
+					SQL_GET_PORT_INFO_FROM_DEVICENAME,
+					new MapListHandler(),
+					deviceName);
+			return ret;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (logger.isTraceEnabled()){
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+			}
+		}
+	}
+
+	@Override
+	public Map<String, Object> getNeighborPortFromPortRid(Connection conn, String portRid) throws SQLException {
+		final String fname = "getPortInfoListFromDeviceName";
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s, portRid=%s) - start", fname, portRid));
+		}
+		Map<String, Object> ret = null;
+		try {
+			List<Map<String, Object>> records = utilsJdbc.query(
+					conn,
+					SQL_GET_NEIGHBOR_PORT_INFO_FROM_PORT_RID,
+					new MapListHandler(),
+					portRid);
+			if (records != null && !records.isEmpty()) {
+				ret = records.get(0);
 			}
 			return ret;
 		} catch (Exception e) {

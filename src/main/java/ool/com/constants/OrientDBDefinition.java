@@ -50,6 +50,8 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PORT_INFO2 = "select from port where number = %s and deviceName = '%s'";
 	public static final String SQL_GET_PORT_INFO_FROM_PORT_NAME = "select @rid.asString(), name, number, deviceName from port where name = ? and deviceName = ?";
 	public static final String SQL_GET_PORT_RID_FROM_DEVICENAME_PORTNAME = "select @rid.asString() from port where name = ? and deviceName = ?";
+	public static final String SQL_GET_PORT_INFO_FROM_DEVICENAME = "select @rid.asString(), name, number, deviceName from port where deviceName=?";
+	public static final String SQL_GET_NEIGHBOR_PORT_INFO_FROM_PORT_RID = "select out.@rid.asString() as rid, out.name as name, out.deviceName as deviceName, out.number as number from cable where in.@RID = ?";
 	public static final String SQL_GET_LINK = "select from link where out = %s and in = %s";
 
 	public static final String SQL_GET_CABLE_LINK_FROM_PORT_RID = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "

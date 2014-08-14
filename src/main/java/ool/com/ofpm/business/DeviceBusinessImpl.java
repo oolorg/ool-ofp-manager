@@ -4,10 +4,12 @@ import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OfpmDefinition.*;
 import static ool.com.constants.OrientDBDefinition.*;
 
-import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
@@ -24,19 +26,15 @@ import ool.com.ofpm.validate.device.DeviceInfoCreateJsonInValidate;
 import ool.com.ofpm.validate.device.DeviceInfoUpdateJsonInValidate;
 import ool.com.ofpm.validate.device.PortInfoCreateJsonInValidate;
 import ool.com.ofpm.validate.device.PortInfoUpdateJsonInValidate;
-import ool.com.orientdb.client.ConnectionUtils;
-import ool.com.orientdb.client.ConnectionUtilsImpl;
 import ool.com.orientdb.client.ConnectionUtilsJdbc;
 import ool.com.orientdb.client.ConnectionUtilsJdbcImpl;
 import ool.com.orientdb.client.Dao;
 import ool.com.orientdb.client.DaoImpl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 
 public class DeviceBusinessImpl implements DeviceBusiness {
@@ -517,95 +515,114 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 	 */
 	@Override
 	public String getConnectedPortInfo(String deviceName) {
-    	if (logger.isDebugEnabled()) {
-    		logger.debug(String.format("getConnectedPortInfo(params=%s) - start ", deviceName));
-    	}
-
-    	Gson gson = new Gson();
-
-		String ret = "";
-		Dao dao = null;
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("getConnectedPortInfo(params=%s) - start ", deviceName));
+		}
 		DeviceManagerGetConnectedPortInfoJsonOut outPara = new DeviceManagerGetConnectedPortInfoJsonOut();
-		DeviceManagerGetConnectedPortInfoJsonOut.ResultData resultData;
-		DeviceManagerGetConnectedPortInfoJsonOut.ResultData.LinkData linkData;
 
 		try {
-        	ConnectionUtils utils = new ConnectionUtilsImpl();
-        	dao = new DaoImpl(utils);
+			BaseValidate.checkStringBlank(deviceName);
+		} catch (ValidateException e) {
+			String message = String.format(IS_BLANK, "portName or deviceName");
+			logger.error(e.getClass().getName() + ": " + message);
+			outPara.setStatus(STATUS_BAD_REQUEST);
+			outPara.setMessage(message);
+		}
 
-        	List<ODocument> documents = dao.getPortList(deviceName);
+		ConnectionUtilsJdbc utils = null;
+		Connection conn = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn  = utils.getConnection(false);
 
-        	ODocument targetNodeInfo = dao.getDeviceInfo(deviceName);
+			Dao dao = new DaoImpl(utils);
+			DeviceManagerGetConnectedPortInfoJsonOut.ResultData resultData = null;
+			DeviceManagerGetConnectedPortInfoJsonOut.ResultData.LinkData linkData = null;
 
-        	for (ODocument document : documents) {
-        		// list connected port with target device
-        		List<ODocument> connectedPorts = dao.getConnectedLinks(document.getIdentity().toString());
-        		// check connected port num
-        		// if 1, no connected
-        		if (connectedPorts.size() <= 1) {
-        			continue;
-        		}
+			Map<String, Object> devMap = dao.getNodeInfoFromDeviceName(conn, deviceName);
+			if (devMap == null) {
+				outPara.setStatus(STATUS_NOTFOUND);
+				outPara.setMessage(String.format(NOT_FOUND, deviceName));
+				return outPara.toJson();
+			}
+			String devName = (String) devMap.get("name");
+			String devType = (String) devMap.get("type");
+			List<Map<String, Object>> portMapList = dao.getPortInfoListFromDeviceName(conn, deviceName);
+			if (portMapList == null) {
+				portMapList = new ArrayList<Map<String, Object>>();
+			}
 
-        		resultData = outPara.new ResultData();
-        		linkData = resultData.new LinkData();
+			Map<String, Map<String, Object>> devCache = new HashMap<String, Map<String, Object>>();
+			for (Map<String, Object> portMap: portMapList) {
+				Map<String, Object> nghbrPortMap = dao.getNeighborPortFromPortRid(conn, (String)portMap.get("rid"));
+				if (nghbrPortMap == null) {
+					continue;
+				}
+				String nghbrDevName = (String) nghbrPortMap.get("deviceName");
+				Map<String, Object> nghbrDevMap = devCache.get(nghbrDevName);
+				if (nghbrDevMap == null) {
+					nghbrDevMap = dao.getNodeInfoFromDeviceName(conn, nghbrDevName);
+					if (nghbrDevMap == null) {
+						outPara.setStatus(STATUS_NOTFOUND);
+						outPara.setMessage(String.format(NOT_FOUND, deviceName));
+						return outPara.toJson();
+					}
+					devCache.put(nghbrDevName, nghbrDevMap);
+				}
 
-            	linkData.setDeviceName(targetNodeInfo.field("name").toString());
-    			linkData.setDeviceType(targetNodeInfo.field("type").toString());
-    			linkData.setOfpFlag(targetNodeInfo.field("ofpFlag").toString());
-    			linkData.setPortName(document.field("name").toString());
-    			linkData.setPortNumber(Integer.parseInt(document.field("number").toString()));
-    			resultData.addLinkData(linkData);
+				resultData = outPara.new ResultData();
 
-        		for (ODocument connectedPort : connectedPorts) {
-        			try {
-        				ODocument port = connectedPort.field("out");
-        				ODocument portInfo = dao.getPortInfo(port.getIdentity().toString());
+				linkData = resultData.new LinkData();
+				linkData.setDeviceName(devName);
+				linkData.setDeviceType(devType);
+				linkData.setPortName((String)portMap.get("name"));
+				linkData.setPortNumber((Integer)portMap.get("number"));
+				if (StringUtils.equals(devType, NODE_TYPE_LEAF) || StringUtils.endsWith(devType, NODE_TYPE_SPINE)) {
+					linkData.setOfpFlag(OFP_FLAG_TRUE);
+				} else {
+					linkData.setOfpFlag(OFP_FLAG_FALSE);
+				}
+				resultData.addLinkData(linkData);
 
-        				linkData = resultData.new LinkData();
-        				linkData.setPortName(portInfo.field("name").toString());
-        				linkData.setPortNumber(Integer.parseInt(portInfo.field("number").toString()));
-        				ODocument nodeInfo = dao.getDeviceInfo(portInfo.field("deviceName").toString());
-        				linkData.setDeviceName(nodeInfo.field("name").toString());
-        				linkData.setDeviceType(nodeInfo.field("type").toString());
-        				linkData.setOfpFlag(nodeInfo.field("ofpFlag").toString());
-        				resultData.addLinkData(linkData);
-        			} catch (SQLException sqlex) {
-        				if (sqlex.getCause() == null) {
-        					throw sqlex;
-        				}
-        			}
-        		}
-        		outPara.addResultData(resultData);
-        	}
-        	outPara.setStatus(STATUS_SUCCESS);
-    	} catch (SQLException e) {
-    		logger.error(e.getMessage());
+				String nghbrDevType = (String) nghbrDevMap.get("type");
+				linkData = resultData.new LinkData();
+				linkData.setDeviceName(nghbrDevName);
+				linkData.setDeviceType(nghbrDevType);
+				linkData.setPortName((String)nghbrPortMap.get("name"));
+				linkData.setPortNumber((Integer)nghbrPortMap.get("number"));
+				if (StringUtils.equals(nghbrDevType, NODE_TYPE_LEAF) || StringUtils.equals(nghbrDevType, NODE_TYPE_SPINE)) {
+					linkData.setOfpFlag(OFP_FLAG_TRUE);
+				} else {
+					linkData.setOfpFlag(OFP_FLAG_FALSE);
+				}
+				resultData.addLinkData(linkData);
+
+				outPara.addResultData(resultData);
+			}
+			outPara.setStatus(STATUS_SUCCESS);
+			return outPara.toJson();
+		}catch (SQLException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
 			if (e.getCause() == null) {
 				outPara.setStatus(STATUS_INTERNAL_ERROR);
 			} else {
 				outPara.setStatus(STATUS_NOTFOUND);
 			}
     		outPara.setMessage(e.getMessage());
+			return outPara.toJson();
 		}  catch (RuntimeException re) {
-			logger.error(re.getMessage());
+			OFPMUtils.logErrorStackTrace(logger, re);
 			outPara.setStatus(STATUS_INTERNAL_ERROR);
 			outPara.setMessage(re.getMessage());
-		} finally {
-			try {
-				if(dao != null) {
-					dao.close();
-				}
-			} catch (SQLException e) {
-				logger.error(e.getMessage());
-				outPara.setStatus(STATUS_INTERNAL_ERROR);
-				outPara.setMessage(e.getMessage());
+			return outPara.toJson();
+		}  finally {
+			utils.rollback(conn);
+			utils.close(conn);
+
+			String ret = outPara.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("getConnectedPortInfo(ret=%s) - end ", ret));
 			}
-			Type type = new TypeToken<DeviceManagerGetConnectedPortInfoJsonOut>(){}.getType();
-	        ret = gson.toJson(outPara, type);
 		}
-		if (logger.isDebugEnabled()) {
-    		logger.debug(String.format("getConnectedPortInfo(ret=%s) - end ", ret));
-    	}
-		return ret;
 	}
 }

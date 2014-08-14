@@ -562,6 +562,24 @@ public interface Dao {
 	Map<String, Object> getPortInfoFromPortRid(Connection conn, String rid) throws SQLException;
 
 	/**
+	 * Get port info from device name.
+	 * @param conn
+	 * @param deviceName
+	 * @return
+	 * @throws SQLException
+	 */
+	List<Map<String, Object>> getPortInfoListFromDeviceName(Connection conn, String deviceName) throws SQLException;
+
+	/**
+	 * Get neighbor port from port rid.
+	 * @param conn
+	 * @param portRid
+	 * @return
+	 * @throws SQLException
+	 */
+	Map<String, Object> getNeighborPortFromPortRid(Connection conn, String portRid) throws SQLException;
+
+	/**
 	 * Get node info from rid.
 	 * @param conn
 	 * @param rid

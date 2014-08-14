@@ -1302,7 +1302,4 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 		return ret;
 	}
-
-	//TODO: Usedの更新はDaoで行わせるべき(OrientDBの都合でUsedの値がふらついているため)
-	//TODO: もしそうでないのなら、device_mng周りの処理はDaoで行うべきではない
 }
