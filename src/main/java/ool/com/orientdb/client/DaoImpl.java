@@ -502,7 +502,7 @@ public class DaoImpl implements Dao {
 		}
 		try {
 			try {
-				ODocument document = getDeviceInfo(name);
+				getDeviceInfo(name);
 				return DB_RESPONSE_STATUS_EXIST; //duplicate error
 			} catch (SQLException se) {
 				if (se.getCause() == null) {
@@ -679,7 +679,7 @@ public class DaoImpl implements Dao {
 		}
 		try {
 			try {
-				ODocument document = getLinkInfo(outRid, inRid);
+				getLinkInfo(outRid, inRid);
 			}
 			catch(SQLException se){
 				if (se.getCause() == null) {
@@ -894,7 +894,7 @@ public class DaoImpl implements Dao {
 					return DB_RESPONSE_STATUS_NOT_FOUND;
 				}
 			}
-			if (type.equals(NODE_TYPE_LEAF) || type.equals(NODE_TYPE_SPINE)) {
+			if (OFPMUtils.isNodeTypeOfpSwitch(type)) {
 				if (isConnectedPatchWiring(portRid)) {
 					return DB_RESPONSE_STATUS_FORBIDDEN;
 				}
@@ -979,7 +979,7 @@ public class DaoImpl implements Dao {
 					return DB_RESPONSE_STATUS_NOT_FOUND;
 				}
 			}
-			if (type.equals(NODE_TYPE_LEAF) || type.equals(NODE_TYPE_SPINE)) {
+			if (OFPMUtils.isNodeTypeOfpSwitch(type)) {
 				if (isPatched(nodeRid)) {
 					return DB_RESPONSE_STATUS_FORBIDDEN;
 				}
@@ -1531,6 +1531,143 @@ public class DaoImpl implements Dao {
 
 	/*
 	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#createCableLink(java.sql.Connection, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public int createCableLink(Connection conn, String deviceName0, String portName0, String deviceName1, String portName1) throws SQLException {
+		final String fname = "createCableLink";
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, deviceName0=%s, portName0=%s, deviceName1=%s, portName1=%s) - start",
+					fname, conn, deviceName0, portName0, deviceName1, portName1));
+		}
+		int ret = DB_RESPONSE_STATUS_OK;
+		try {
+			String port0Rid = this.getPortRidFromDeviceNamePortName(conn, deviceName0, portName0);
+			if (StringUtils.isBlank(port0Rid)) {
+				ret = DB_RESPONSE_STATUS_NOT_FOUND;
+				return ret;
+			}
+			String port1Rid = this.getPortRidFromDeviceNamePortName(conn, deviceName1, portName1);
+			if (StringUtils.isBlank(port1Rid)) {
+				ret = DB_RESPONSE_STATUS_NOT_FOUND;
+				return ret;
+			}
+
+			String sql = SQL_INSERT_CABLE;
+			sql = sql.replaceFirst("\\?", port0Rid);
+			sql = sql.replaceFirst("\\?", port1Rid);
+			int result = utilsJdbc.update(conn, sql);
+			if (result != 1) {
+				ret = DB_RESPONSE_STATUS_EXIST;
+				return ret;
+			}
+
+			sql = SQL_INSERT_CABLE;
+			sql = sql.replaceFirst("\\?", port1Rid);
+			sql = sql.replaceFirst("\\?", port0Rid);
+			result = utilsJdbc.update(conn, sql);
+			if (result != 1) {
+				ret = DB_RESPONSE_STATUS_EXIST;
+				return ret;
+			}
+
+			return ret;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#deleteCableLink(java.sql.Connection, java.lang.String, java.lang.String, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public int deleteCableLink(Connection conn, String deviceName0, String portName0, String deviceName1, String portName1) throws SQLException {
+		final String fname = "deleteCableLink";
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, deviceName0=%s, portName0=%s, deviceName1=%s, portName1=%s) - start",
+					fname, conn, deviceName0, portName0, deviceName1, portName1));
+		}
+		int ret = DB_RESPONSE_STATUS_OK;
+		try {
+			boolean contain = false;
+			contain = this.isContainsPatchWiringFromDeviceNamePortName(conn, deviceName0, portName0);
+			if (contain) {
+				ret = DB_RESPONSE_STATUS_USED;
+				return ret;
+			}
+
+			contain = this.isContainsPatchWiringFromDeviceNamePortName(conn, deviceName1, portName1);
+			if (contain) {
+				ret = DB_RESPONSE_STATUS_USED;
+				return ret;
+			}
+
+			String port0Rid = this.getPortRidFromDeviceNamePortName(conn, deviceName0, portName0);
+			if (StringUtils.isBlank(port0Rid)) {
+				ret = DB_RESPONSE_STATUS_NOT_FOUND;
+				return ret;
+			}
+			String port1Rid = this.getPortRidFromDeviceNamePortName(conn, deviceName1, portName1);
+			if (StringUtils.isBlank(port1Rid)) {
+				ret = DB_RESPONSE_STATUS_NOT_FOUND;
+				return ret;
+			}
+
+			contain = this.isPortRidContainedIntoPatchWiring(conn, port0Rid);
+			if (contain) {
+				ret = DB_RESPONSE_STATUS_USED;
+				return ret;
+			}
+
+			contain = this.isPortRidContainedIntoPatchWiring(conn, port1Rid);
+			if (contain) {
+				ret = DB_RESPONSE_STATUS_USED;
+				return ret;
+			}
+
+			String sql = SQL_DELETE_CABLE_FROM_ONE_PORTRID;
+			sql = sql.replaceFirst("\\?", port0Rid);
+			sql = sql.replaceFirst("\\?", port1Rid);
+			int result = utilsJdbc.update(conn, sql);
+			if (result == 0) {
+				ret = DB_RESPONSE_STATUS_NOT_FOUND;
+				return ret;
+			}
+			if (result != 1) {
+				ret = DB_RESPONSE_STATUS_FAIL;
+				return ret;
+			}
+
+			sql = SQL_DELETE_CABLE_FROM_ONE_PORTRID;
+			sql = sql.replaceFirst("\\?", port1Rid);
+			sql = sql.replaceFirst("\\?", port0Rid);
+			result = utilsJdbc.update(conn, sql);
+			if (result == 0) {
+				ret = DB_RESPONSE_STATUS_NOT_FOUND;
+				return ret;
+			}
+			if (result != 1) {
+				ret = DB_RESPONSE_STATUS_FAIL;
+				return ret;
+			}
+
+			return ret;
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see ool.com.orientdb.client.Dao#updateCableLinkUsedFromPortRid(java.sql.Connection, java.lang.String, int)
 	 */
 	@Override
@@ -1849,7 +1986,7 @@ public class DaoImpl implements Dao {
 			/* Might you think 'why is it implemented in here', might you think 'this process is have to implement with top-side Method'. */
 			/* If we use gremlin or cypher, not need set high value to Used-value. */
 			Long used = USED_BLOCKING_VALUE;
-			if (StringUtils.equals(devType, NODE_TYPE_LEAF) || StringUtils.equals(devType, NODE_TYPE_SPINE)) {
+			if (OFPMUtils.isNodeTypeOfpSwitch(devType)) {
 				used = 0L;
 			}
 

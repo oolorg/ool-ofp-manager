@@ -1,13 +1,11 @@
 /**
  * @author OOL 1131080355959
  * @date 2014/07/25
- * @TODO 
+ * @TODO
  */
 package ool.com.ofpm.json.ofc;
 
 import java.lang.reflect.Type;
-
-import ool.com.ofpm.json.device.DeviceInfoCreateJsonIn;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -21,7 +19,7 @@ public class SetFlowIn {
 	private String inPort;
 	private String srcMac;
 	private String dstMac;
-	
+
 	public String getDpId() {
 		return dpid;
 	}
@@ -46,7 +44,7 @@ public class SetFlowIn {
 	public void setDstMac(String dstMac) {
 		this.dstMac = dstMac;
 	}
-	
+
 	public static SetFlowIn fromJson(String json) {
 		Gson gson = new Gson();
 		Type type = new TypeToken<SetFlowIn>(){}.getType();

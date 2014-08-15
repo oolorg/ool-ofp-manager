@@ -1,14 +1,14 @@
 package ool.com.orientdb.client;
 
+import static ool.com.constants.OfpmDefinition.*;
+import static org.apache.commons.lang.StringUtils.*;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
 
 import javax.sql.DataSource;
-
-import static ool.com.constants.OfpmDefinition.*;
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
@@ -20,16 +20,15 @@ import org.apache.commons.dbcp.PoolingDataSource;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
-import org.apache.log4j.Logger;
 
 public class ConnectionManagerJdbc {
 
     private static ConnectionManagerJdbc dbAccessManager = null;
 
     private static DataSource dataSource = null;
-    
+
     private static String driverUrl = null;
-    
+
     /**
      * @param config
      */
@@ -61,7 +60,8 @@ public class ConnectionManagerJdbc {
         }
 
         // コネクションをプールするDataSource を作成する
-        ObjectPool pool = new GenericObjectPool();
+        @SuppressWarnings("rawtypes")
+		ObjectPool pool = new GenericObjectPool();
         driverUrl = config.getString(CONFIG_KEY_DB_URL);
         ConnectionFactory connFactory = new DriverManagerConnectionFactory(driverUrl, params);
         new PoolableConnectionFactory(connFactory, pool, null,
@@ -134,7 +134,7 @@ public class ConnectionManagerJdbc {
             DbUtils.close(conn);
         }
     }
-    
+
     synchronized public void close(ResultSet rs) throws SQLException {
         if (rs != null && !rs.isClosed()) {
             DbUtils.close(rs);

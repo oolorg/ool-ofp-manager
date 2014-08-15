@@ -2,6 +2,7 @@ package ool.com.ofpm.utils;
 
 import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OfpmDefinition.*;
+import static ool.com.constants.OrientDBDefinition.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -14,6 +15,7 @@ import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConDeviceInfo;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConPortInfo;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 public class OFPMUtils {
@@ -120,5 +122,9 @@ public class OFPMUtils {
 		t.printStackTrace(new PrintWriter(sw));
 		logger.error(t);
 		logger.error(sw.toString());
+	}
+
+	public static boolean isNodeTypeOfpSwitch(String nodeType) {
+		return (StringUtils.equals(nodeType, NODE_TYPE_LEAF) || StringUtils.equals(nodeType, NODE_TYPE_SPINE));
 	}
 }

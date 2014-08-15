@@ -422,6 +422,32 @@ public interface Dao {
 	Map<String, Object> getCableLinkFromPortRid(Connection conn, String portRid) throws SQLException;
 
 	/**
+	 * Create cable link by device name and port name.
+	 * Used value set to 0.
+	 * @param conn
+	 * @param deviceName0
+	 * @param portName0
+	 * @param deviceName1
+	 * @param portName1
+	 * @return
+	 * @throws SQLException
+	 */
+	int createCableLink(Connection conn, String deviceName0, String portName0, String deviceName1, String portName1) throws SQLException;
+
+	/**
+	 * Delete cable link by device name and port name.
+	 * If cable link is used to patchWiring, not delete.
+	 * @param conn
+	 * @param deviceName0
+	 * @param portName0
+	 * @param deviceName1
+	 * @param portName1
+	 * @return
+	 * @throws SQLException
+	 */
+	int deleteCableLink(Connection conn, String deviceName0, String portName0, String deviceName1, String portName1) throws SQLException;
+
+	/**
 	 * Modify used-value of cable-link that include ports-rid.
 	 * Calbe-link represent LAN-Cable, SFP-Cable.
 	 * @param conn

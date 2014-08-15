@@ -16,6 +16,8 @@ import ool.com.ofpm.json.common.BaseResponse;
 import ool.com.ofpm.json.device.DeviceInfoCreateJsonIn;
 import ool.com.ofpm.json.device.DeviceInfoUpdateJsonIn;
 import ool.com.ofpm.json.device.DeviceManagerGetConnectedPortInfoJsonOut;
+import ool.com.ofpm.json.device.DeviceManagerGetConnectedPortInfoJsonOut.ResultData;
+import ool.com.ofpm.json.device.DeviceManagerGetConnectedPortInfoJsonOut.ResultData.LinkData;
 import ool.com.ofpm.json.device.PortInfoCreateJsonIn;
 import ool.com.ofpm.json.device.PortInfoUpdateJsonIn;
 import ool.com.ofpm.utils.Config;
@@ -31,7 +33,6 @@ import ool.com.orientdb.client.ConnectionUtilsJdbcImpl;
 import ool.com.orientdb.client.Dao;
 import ool.com.orientdb.client.DaoImpl;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.google.gson.JsonSyntaxException;
@@ -83,42 +84,41 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 		/* PHASE 2: Add node info to ofpdb */
 		ConnectionUtilsJdbc utils = null;
-		Connection conn = null;
+		Connection           conn = null;
 		try {
 			utils = new ConnectionUtilsJdbcImpl();
 			conn = utils.getConnection(false);
 
 			Dao dao = new DaoImpl(utils);
-			int stat = dao.createNodeInfo(
+			int status = dao.createNodeInfo(
 					conn,
 					deviceInfo.getDeviceName(),
 					deviceInfo.getDeviceType(),
 					deviceInfo.getDatapathId(),
 					deviceInfo.getOfcIp());
-			if (stat == DB_RESPONSE_STATUS_EXIST) {
+
+			if (status == DB_RESPONSE_STATUS_EXIST) {
+				utils.rollback(conn);
 				res.setStatus(STATUS_BAD_REQUEST);
 				res.setMessage(String.format(ALREADY_EXIST, deviceInfo.getDeviceName()));
-				utils.rollback(conn);
-			} else {
-				res.setStatus(STATUS_CREATED);
-				utils.commit(conn);
+				return res.toJson();
 			}
 
+			utils.commit(conn);
+			res.setStatus(STATUS_CREATED);
+			return res.toJson();
 		} catch (SQLException | RuntimeException e) {
 			utils.rollback(conn);
-
 			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
+			return res.toJson();
 		} finally {
 			utils.close(conn);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			}
 		}
-
-		String ret = res.toJson();
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-		}
-		return ret;
 	}
 
 	/*
@@ -149,46 +149,49 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 		/* PHASE 2: Delete node from ofp db */
 		ConnectionUtilsJdbc utils = null;
-		Connection conn = null;
+		Connection           conn = null;
 		try {
 			utils = new ConnectionUtilsJdbcImpl();
 			conn  = utils.getConnection(false);
 
 			Dao dao = new DaoImpl(utils);
 			int status = dao.deleteNodeInfo(conn, deviceName);
-			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
-				res.setMessage(String.format(NOT_FOUND, deviceName));
-			} else if (status == STATUS_FORBIDDEN) {
-				res.setStatus(STATUS_FORBIDDEN);
-				res.setMessage(String.format(IS_PATCHED, deviceName));
-			} else if (status == DB_RESPONSE_STATUS_FAIL) {
-				res.setStatus(STATUS_INTERNAL_ERROR);
-				res.setMessage(String.format(COULD_NOT_DELETE, deviceName));
-			}  else {
-				res.setStatus(STATUS_SUCCESS);
+
+			switch (status) {
+				case DB_RESPONSE_STATUS_NOT_FOUND:
+					utils.rollback(conn);
+					res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
+					res.setMessage(String.format(NOT_FOUND, deviceName));
+					return res.toJson();
+
+				case STATUS_FORBIDDEN:
+					utils.rollback(conn);
+					res.setStatus(STATUS_FORBIDDEN);
+					res.setMessage(String.format(IS_PATCHED, deviceName));
+					return res.toJson();
+
+				case DB_RESPONSE_STATUS_FAIL:
+					utils.rollback(conn);
+					res.setStatus(STATUS_INTERNAL_ERROR);
+					res.setMessage(String.format(COULD_NOT_DELETE, deviceName));
+					return res.toJson();
 			}
 
-			if (status == DB_RESPONSE_STATUS_OK) {
-				utils.commit(conn);
-			} else {
-				utils.rollback(conn);
-			}
+			utils.commit(conn);
+			res.setStatus(STATUS_SUCCESS);
+			return res.toJson();
 		} catch (SQLException | RuntimeException e) {
 			utils.rollback(conn);
-
 			OFPMUtils.logErrorStackTrace(logger, e);
     		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
+    		return res.toJson();
 		} finally {
 			utils.close(conn);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			}
 		}
-
-		String ret = res.toJson();
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, res));
-		}
-		return ret;
 	}
 
 	/*
@@ -230,7 +233,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 		}
 
 		ConnectionUtilsJdbc utils = null;
-		Connection conn = null;
+		Connection           conn = null;
 		try {
 			utils = new ConnectionUtilsJdbcImpl();
 			conn  = utils.getConnection(false);
@@ -243,36 +246,37 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 					newDeviceInfo.getDeviceName(),
 					newDeviceInfo.getDatapathId(),
 					newDeviceInfo.getOfcIp());
-			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(STATUS_NOTFOUND);
-				res.setMessage(String.format(NOT_FOUND, deviceName));
-			} else if (status == DB_RESPONSE_STATUS_EXIST) {
-				res.setStatus(STATUS_CONFLICT);
-				res.setMessage(String.format(ALREADY_EXIST, newDeviceInfo.getDeviceName()));
-			} else {
-				res.setStatus(STATUS_SUCCESS);
+
+			switch (status) {
+				case DB_RESPONSE_STATUS_NOT_FOUND:
+					utils.rollback(conn);
+					res.setStatus(STATUS_NOTFOUND);
+					res.setMessage(String.format(NOT_FOUND, deviceName));
+					return res.toJson();
+
+				case DB_RESPONSE_STATUS_EXIST:
+					utils.rollback(conn);
+					res.setStatus(STATUS_CONFLICT);
+					res.setMessage(String.format(ALREADY_EXIST, newDeviceInfo.getDeviceName()));
+					return res.toJson();
 			}
 
-			if (status == STATUS_SUCCESS) {
-				utils.commit(conn);
-			} else {
-				utils.rollback(conn);
-			}
+			utils.commit(conn);
+			res.setStatus(STATUS_SUCCESS);
+			return res.toJson();
 		} catch (SQLException | RuntimeException e) {
 			utils.rollback(conn);
-
 			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
+			return res.toJson();
 		} finally {
 			utils.close(conn);
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
 		}
-
-		String ret = res.toJson();
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-		}
-		return ret;
 	}
 
 	/*
@@ -314,7 +318,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 		/* PHASE 2: */
 		ConnectionUtilsJdbc utils = null;
-		Connection conn = null;
+		Connection           conn = null;
 		try {
 			utils = new ConnectionUtilsJdbcImpl();
 			conn  = utils.getConnection(false);
@@ -325,35 +329,37 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 					portInfo.getPortName(),
 					portInfo.getPortNumber(),
 					deviceName);
-			if ( status == DB_RESPONSE_STATUS_EXIST) {
-				res.setStatus(STATUS_BAD_REQUEST);
-				res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));
-			} else if ( status == DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(STATUS_NOTFOUND);
-				res.setMessage(String.format(NOT_FOUND, deviceName));
-			} else {
-				res.setStatus(STATUS_CREATED);
+
+			switch (status) {
+				case DB_RESPONSE_STATUS_EXIST:
+					utils.rollback(conn);
+					res.setStatus(STATUS_BAD_REQUEST);
+					res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));
+		    		return res.toJson();
+
+				case DB_RESPONSE_STATUS_NOT_FOUND:
+					utils.rollback(conn);
+					res.setStatus(STATUS_NOTFOUND);
+					res.setMessage(String.format(NOT_FOUND, deviceName));
+		    		return res.toJson();
 			}
-			if (status == DB_RESPONSE_STATUS_OK) {
-				utils.commit(conn);
-			} else {
-				utils.rollback(conn);
-			}
+
+			utils.commit(conn);
+			res.setStatus(STATUS_CREATED);
+			return res.toJson();
 		} catch (SQLException | RuntimeException e) {
 			utils.rollback(conn);
-
     		OFPMUtils.logErrorStackTrace(logger, e);
     		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
+    		return res.toJson();
 		} finally {
 			utils.close(conn);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			}
 		}
 
-		String ret = res.toJson();
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-		}
-		return ret;
 	}
 
 	/*
@@ -380,7 +386,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 		/* PHASE 2: Delete port from ofp db */
 		ConnectionUtilsJdbc utils = null;
-		Connection conn = null;
+		Connection           conn = null;
 		try {
 			utils = new ConnectionUtilsJdbcImpl();
 			conn  = utils.getConnection(false);
@@ -390,39 +396,42 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 					conn,
 					portName,
 					deviceName);
-			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
-				res.setMessage(String.format(NOT_FOUND, deviceName + "." + portName));
-			} else if (status == DB_RESPONSE_STATUS_FORBIDDEN) {
-				res.setStatus(STATUS_FORBIDDEN);
-				res.setMessage(String.format(IS_PATCHED, deviceName + "." + portName));
-			} else if (status == DB_RESPONSE_STATUS_FAIL) {
-				res.setStatus(STATUS_INTERNAL_ERROR);
-				res.setMessage(String.format(COULD_NOT_DELETE, deviceName + "." + portName));
-			} else {
-				res.setStatus(STATUS_SUCCESS);
+
+			switch (status) {
+				case DB_RESPONSE_STATUS_NOT_FOUND:
+					utils.rollback(conn);
+					res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
+					res.setMessage(String.format(NOT_FOUND, deviceName + "." + portName));
+					return res.toJson();
+
+				case DB_RESPONSE_STATUS_FORBIDDEN:
+					utils.rollback(conn);
+					res.setStatus(STATUS_FORBIDDEN);
+					res.setMessage(String.format(IS_PATCHED, deviceName + "." + portName));
+					return res.toJson();
+
+				case DB_RESPONSE_STATUS_FAIL:
+					utils.rollback(conn);
+					res.setStatus(STATUS_INTERNAL_ERROR);
+					res.setMessage(String.format(COULD_NOT_DELETE, deviceName + "." + portName));
+					return res.toJson();
 			}
 
-			if (status == STATUS_SUCCESS) {
-				utils.commit(conn);
-			} else {
-				utils.rollback(conn);
-			}
+			utils.commit(conn);
+			res.setStatus(STATUS_SUCCESS);
+			return res.toJson();
 		} catch (SQLException | RuntimeException e) {
 			utils.rollback(conn);
-
 			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
+			return res.toJson();
 		} finally {
 			utils.close(conn);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			}
 		}
-
-		String ret = res.toJson();
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-		}
-		return ret;
 	}
 
 	/*
@@ -464,7 +473,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 
 		/* PHASE 2: update port info */
 		ConnectionUtilsJdbc utils = null;
-		Connection conn = null;
+		Connection           conn = null;
 		try {
 			utils = new ConnectionUtilsJdbcImpl();
 			conn  = utils.getConnection(false);
@@ -477,76 +486,79 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 					portInfo.getPortName(),
 					portInfo.getPortNumber());
 
-			if (status == DB_RESPONSE_STATUS_NOT_FOUND) {
-				res.setStatus(STATUS_NOTFOUND);
-				res.setMessage(String.format(NOT_FOUND, portName));
-			} else if (status == DB_RESPONSE_STATUS_EXIST) {
-				res.setStatus(STATUS_CONFLICT);
-				res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));
-			} else {
-				res.setStatus(STATUS_SUCCESS);
+			switch (status) {
+				case DB_RESPONSE_STATUS_NOT_FOUND:
+					utils.rollback(conn);
+					res.setStatus(STATUS_NOTFOUND);
+					res.setMessage(String.format(NOT_FOUND, portName));
+		    		return res.toJson();
+
+				case DB_RESPONSE_STATUS_EXIST:
+					utils.rollback(conn);
+					res.setStatus(STATUS_CONFLICT);
+					res.setMessage(String.format(ALREADY_EXIST, portInfo.getPortName()));
+		    		return res.toJson();
 			}
 
-			if (status == DB_RESPONSE_STATUS_OK) {
-				utils.commit(conn);
-			} else {
-				utils.rollback(conn);
-			}
+			utils.commit(conn);
+			res.setStatus(STATUS_SUCCESS);
+	    	return res.toJson();
 		} catch (SQLException | RuntimeException e) {
 			utils.rollback(conn);
-
     		OFPMUtils.logErrorStackTrace(logger, e);
     		res.setStatus(STATUS_INTERNAL_ERROR);
     		res.setMessage(e.getMessage());
+    		return res.toJson();
 		} finally {
 			utils.close(conn);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			}
 		}
-
-		String ret = res.toJson();
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-		}
-		return ret;
 	}
 
 
 	/* (non-Javadoc)
 	 * @see ool.com.orientdb.business.DeviceManagerBusiness#getConnectedPortInfo(java.lang.String)
 	 */
+	@SuppressWarnings("resource")
 	@Override
 	public String getConnectedPortInfo(String deviceName) {
+		final String fname = "getConnectedPortInfo";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("getConnectedPortInfo(params=%s) - start ", deviceName));
+			logger.debug(String.format("%s(params=%s) - start ", fname, deviceName));
 		}
-		DeviceManagerGetConnectedPortInfoJsonOut outPara = new DeviceManagerGetConnectedPortInfoJsonOut();
+		DeviceManagerGetConnectedPortInfoJsonOut res = new DeviceManagerGetConnectedPortInfoJsonOut();
 
+		/* PHASE 1: validation check */
 		try {
 			BaseValidate.checkStringBlank(deviceName);
 		} catch (ValidateException e) {
 			String message = String.format(IS_BLANK, "portName or deviceName");
 			logger.error(e.getClass().getName() + ": " + message);
-			outPara.setStatus(STATUS_BAD_REQUEST);
-			outPara.setMessage(message);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(message);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			}
+			return res.toJson();
 		}
 
+		/* PHASE 2: connected calcuration */
 		ConnectionUtilsJdbc utils = null;
-		Connection conn = null;
+		Connection           conn = null;
 		try {
 			utils = new ConnectionUtilsJdbcImpl();
 			conn  = utils.getConnection(false);
 
 			Dao dao = new DaoImpl(utils);
-			DeviceManagerGetConnectedPortInfoJsonOut.ResultData resultData = null;
-			DeviceManagerGetConnectedPortInfoJsonOut.ResultData.LinkData linkData = null;
 
 			Map<String, Object> devMap = dao.getNodeInfoFromDeviceName(conn, deviceName);
 			if (devMap == null) {
-				outPara.setStatus(STATUS_NOTFOUND);
-				outPara.setMessage(String.format(NOT_FOUND, deviceName));
-				return outPara.toJson();
+				res.setStatus(STATUS_NOTFOUND);
+				res.setMessage(String.format(NOT_FOUND, deviceName));
+				return res.toJson();
 			}
-			String devName = (String) devMap.get("name");
-			String devType = (String) devMap.get("type");
 			List<Map<String, Object>> portMapList = dao.getPortInfoListFromDeviceName(conn, deviceName);
 			if (portMapList == null) {
 				portMapList = new ArrayList<Map<String, Object>>();
@@ -558,71 +570,65 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 				if (nghbrPortMap == null) {
 					continue;
 				}
+
+				/* Get neighbor device info from map. However, if the device info is null, get neighbor device info from ofp db */
 				String nghbrDevName = (String) nghbrPortMap.get("deviceName");
 				Map<String, Object> nghbrDevMap = devCache.get(nghbrDevName);
 				if (nghbrDevMap == null) {
 					nghbrDevMap = dao.getNodeInfoFromDeviceName(conn, nghbrDevName);
 					if (nghbrDevMap == null) {
-						outPara.setStatus(STATUS_NOTFOUND);
-						outPara.setMessage(String.format(NOT_FOUND, deviceName));
-						return outPara.toJson();
+						res.setStatus(STATUS_NOTFOUND);
+						res.setMessage(String.format(NOT_FOUND, deviceName));
+						return res.toJson();
 					}
 					devCache.put(nghbrDevName, nghbrDevMap);
 				}
 
-				resultData = outPara.new ResultData();
-
-				linkData = resultData.new LinkData();
-				linkData.setDeviceName(devName);
-				linkData.setDeviceType(devType);
-				linkData.setPortName((String)portMap.get("name"));
-				linkData.setPortNumber((Integer)portMap.get("number"));
-				if (StringUtils.equals(devType, NODE_TYPE_LEAF) || StringUtils.endsWith(devType, NODE_TYPE_SPINE)) {
-					linkData.setOfpFlag(OFP_FLAG_TRUE);
-				} else {
-					linkData.setOfpFlag(OFP_FLAG_FALSE);
-				}
-				resultData.addLinkData(linkData);
-
-				String nghbrDevType = (String) nghbrDevMap.get("type");
-				linkData = resultData.new LinkData();
-				linkData.setDeviceName(nghbrDevName);
-				linkData.setDeviceType(nghbrDevType);
-				linkData.setPortName((String)nghbrPortMap.get("name"));
-				linkData.setPortNumber((Integer)nghbrPortMap.get("number"));
-				if (StringUtils.equals(nghbrDevType, NODE_TYPE_LEAF) || StringUtils.equals(nghbrDevType, NODE_TYPE_SPINE)) {
-					linkData.setOfpFlag(OFP_FLAG_TRUE);
-				} else {
-					linkData.setOfpFlag(OFP_FLAG_FALSE);
-				}
-				resultData.addLinkData(linkData);
-
-				outPara.addResultData(resultData);
+				/* Make LinkData and add to ResultData. finally ResultData add to outPara. */
+				ResultData resultData = res.new ResultData();
+				this.addLinkDataToResultData(resultData,      devMap,      portMap);
+				this.addLinkDataToResultData(resultData, nghbrDevMap, nghbrPortMap);
+				res.addResultData(resultData);
 			}
-			outPara.setStatus(STATUS_SUCCESS);
-			return outPara.toJson();
-		}catch (SQLException e) {
+
+			res.setStatus(STATUS_SUCCESS);
+			return res.toJson();
+		} catch (SQLException | RuntimeException e) {
 			OFPMUtils.logErrorStackTrace(logger, e);
-			if (e.getCause() == null) {
-				outPara.setStatus(STATUS_INTERNAL_ERROR);
-			} else {
-				outPara.setStatus(STATUS_NOTFOUND);
-			}
-    		outPara.setMessage(e.getMessage());
-			return outPara.toJson();
-		}  catch (RuntimeException re) {
-			OFPMUtils.logErrorStackTrace(logger, re);
-			outPara.setStatus(STATUS_INTERNAL_ERROR);
-			outPara.setMessage(re.getMessage());
-			return outPara.toJson();
-		}  finally {
+			res.setStatus(STATUS_INTERNAL_ERROR);
+    		res.setMessage(e.getMessage());
+			return res.toJson();
+		} finally {
 			utils.rollback(conn);
 			utils.close(conn);
-
-			String ret = outPara.toJson();
+			String ret = res.toJson();
 			if (logger.isDebugEnabled()) {
 				logger.debug(String.format("getConnectedPortInfo(ret=%s) - end ", ret));
 			}
 		}
+	}
+
+	/**
+	 * Make LinkData for ResultData(this is used getConnectedPort) and add to ResultData object.
+	 * @param resultData
+	 * @param nodeInfoMap
+	 * @param portInfoMap
+	 */
+	private void addLinkDataToResultData(ResultData resultData, Map<String, Object> nodeInfoMap, Map<String, Object> portInfoMap) {
+		String  nodeName = (String)  nodeInfoMap.get("name");
+		String  nodeType = (String)  nodeInfoMap.get("type");
+		String  portName = (String)  portInfoMap.get("port");
+		Integer number   = (Integer) portInfoMap.get("number");
+		LinkData linkData = resultData.new LinkData();
+		linkData.setDeviceName(nodeName);
+		linkData.setDeviceType(nodeType);
+		linkData.setPortName(  portName);
+		linkData.setPortNumber(number);
+		if (OFPMUtils.isNodeTypeOfpSwitch(nodeType)) {
+			linkData.setOfpFlag(OFP_FLAG_TRUE);
+		} else {
+			linkData.setOfpFlag(OFP_FLAG_FALSE);
+		}
+		resultData.addLinkData(linkData);
 	}
 }

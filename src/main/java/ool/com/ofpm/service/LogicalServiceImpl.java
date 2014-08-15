@@ -8,14 +8,11 @@ import ool.com.ofpm.business.LogicalBusinessImpl;
 
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
 
 @Component
 public class LogicalServiceImpl implements LogicalService {
@@ -78,7 +75,7 @@ public class LogicalServiceImpl implements LogicalService {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(requestedData=%s) - start", fname, requestedData));
 		}
-		
+
 		//Client c = Client.create();
 		//WebResource r = c.resource("http://172.16.1.85:28080/ofc/ryu/ctrl/test");
 		//String html = r.post(String.class, "{}");
@@ -91,7 +88,7 @@ public class LogicalServiceImpl implements LogicalService {
 		});
 		LogicalServiceImpl main = this.injector.getInstance(LogicalServiceImpl.class);
 		String resLogiBiz = main.logiBiz.setFlow(requestedData);
-		
+
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));
 		}

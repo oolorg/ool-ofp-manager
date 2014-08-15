@@ -91,8 +91,9 @@ public class OrientDBDefinition {
 	public static final String SQL_INSERT_NODE_INFO = "create vertex node set name = ?, type = ?, datapathId = ?, ofcIp = ?";
 	public static final String SQL_INSERT_PORT      = "create vertex port set name = '%s', number = %s, deviceName = '%s'";
 	public static final String SQL_INSERT_PORT_INFO = "create vertex port set name = ?, number = ?, deviceName = ?";
-	public static final String SQL_INSERT_UBUS = "create edge ubus from ? to ? set used = ?";
-	public static final String SQL_INSERT_DBUS = "create edge dbus from ? to ? set used = ?";
+	public static final String SQL_INSERT_UBUS  = "create edge ubus from ? to ? set used = ?";
+	public static final String SQL_INSERT_DBUS  = "create edge dbus from ? to ? set used = ?";
+	public static final String SQL_INSERT_CABLE = "create edge cable from ? to ? set used = 0";
 	public static final String SQL_INSERT_LINK = "create edge link from %s to %s set band = %s, used = %s";
 
 	public static final String SQL_INSERT_INTERNALMAC = "insert into internalMacMap(deviceName, inPort, srcMac, dstMac, internalMac) values (?, ?, ?, ?, ?)";
@@ -101,8 +102,8 @@ public class OrientDBDefinition {
 	public static final String SQL_DELETE_PATCH_WIRING = "delete from patchWiring where outDeviceName = '%s' and inDeviceName = '%s'";
 	public static final String SQL_DELETE_LINK = "delete edge link where out = %s and in = %s";
 	public static final String SQL_DELETE_LINK_CONNECTED_PORT = "delete edge link where out = %s or in = %s";
-	public static final String SQL_DELETE_BUS_LINK_FROM_ONE_PORTRID = "delete edge bus where out = ? or in = ?";
-	public static final String SQL_DELETE_CABLE_LINK_FROM_ONE_PORTRID = "delete edge cable where out = ? or in = ?";
+	public static final String SQL_DELETE_BUS_FROM_ONE_PORTRID = "delete edge bus where out = ? or in = ?";
+	public static final String SQL_DELETE_CABLE_FROM_ONE_PORTRID = "delete edge cable where out = ? and in = ?";
 	public static final String SQL_DELETE_PORT = "delete vertex port where name = '%s' and deviceName = '%s'";
 	public static final String SQL_DELETE_PORT_DEViCE_NAME = "delete vertex port where deviceName = '%s'";
 	public static final String SQL_DELETE_PORT_FROM_PORTRID = "delete vertex port where @RID = ?";

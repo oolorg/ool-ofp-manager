@@ -35,7 +35,7 @@ public class PhysicalServiceImpl implements PhysicalService {
 				bind(PhysicalBusiness.class).to(PhysicalBusinessImpl.class);
 			}
 		});
-		PhysicalServiceImpl main = this.injector.getInstance(PhysicalServiceImpl.class);
+//		PhysicalServiceImpl main = this.injector.getInstance(PhysicalServiceImpl.class);
 		String resPhysBiz = null;//main.physBiz.getPhysicalTopology(deviceNamesCSV, tokenId);
 
 		if (logger.isDebugEnabled()) {
@@ -57,7 +57,7 @@ public class PhysicalServiceImpl implements PhysicalService {
 				bind(PhysicalBusiness.class).to(PhysicalBusinessImpl.class);
 			}
 		});
-		PhysicalServiceImpl main = this.injector.getInstance(PhysicalServiceImpl.class);
+//		PhysicalServiceImpl main = this.injector.getInstance(PhysicalServiceImpl.class);
 		String resPhysBiz = null;//main.physBiz.updatePhysicalTopology(requestedTopologyJson);
 
 		if (logger.isDebugEnabled()) {

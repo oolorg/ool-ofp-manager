@@ -4,8 +4,6 @@ import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OfpmDefinition.*;
 import static ool.com.constants.OrientDBDefinition.*;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -41,7 +39,6 @@ import ool.com.ofpm.client.NetworkConfigSetupperClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
 import ool.com.ofpm.client.OFCClient;
 import ool.com.ofpm.client.OFCClientImpl;
-import ool.com.ofpm.exception.AgentManagerException;
 import ool.com.ofpm.exception.OFCClientException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
@@ -50,9 +47,6 @@ import ool.com.ofpm.json.device.ConnectedPortGetJsonOut;
 import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperInData;
-import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq;
-import ool.com.ofpm.json.ofc.AgentClientUpdateFlowReq.AgentUpdateFlowData;
-import ool.com.ofpm.json.ofc.PatchLink;
 import ool.com.ofpm.json.ofc.SetFlowIn;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
 import ool.com.ofpm.json.topology.logical.LogicalTopology;
@@ -84,8 +78,8 @@ import com.google.gson.JsonSyntaxException;
 public class LogicalBusinessImpl implements LogicalBusiness {
 	private static final Logger logger = Logger.getLogger(LogicalBusinessImpl.class);
 
-	private AgentManager agentManager;
-	private AgentClientUpdateFlowReq agentFlowJson = new AgentClientUpdateFlowReq();
+//	private AgentManager agentManager;
+//	private AgentClientUpdateFlowReq agentFlowJson = new AgentClientUpdateFlowReq();
 
 	Config conf = new ConfigImpl();
 
@@ -126,7 +120,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				if (isOfpSw == null) {
 					Map<String, Object> outDevDoc = dao.getNodeInfoFromDeviceName(conn, neiDevName);
 					String outDevType = (String)outDevDoc.get("type");
-					isOfpSw = StringUtils.equals(outDevType, NODE_TYPE_LEAF);
+					isOfpSw = OFPMUtils.isNodeTypeOfpSwitch(outDevType);
 					devTypeMap.put(neiDevName, isOfpSw);
 				}
 				if (!isOfpSw) {
@@ -267,7 +261,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceNames=%s, tokenId%s) - start", fname, deviceNamesCSV, tokenId));
 		}
-
 		LogicalTopologyGetJsonOut res = new LogicalTopologyGetJsonOut();
 
 		/* PHASE 1: Authentication */
@@ -310,14 +303,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			BaseValidate.checkStringBlank(tokenId);
 			// TODO: check user tenant(by used-info from DMDB).
 		} catch (ValidateException e) {
-			logger.error(e.getMessage());
+			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(e.getMessage());
-			String ret = res.toJson();
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
 			}
-			return ret;
+			return res.toJson();
 		}
 
 		/* PHASE 3: Get logical topology */
@@ -329,8 +321,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			dao = new DaoImpl(utilsJdbc);
 
 			List<OfpConDeviceInfo> nodeList = new ArrayList<OfpConDeviceInfo>();
-			List<LogicalLink> linkList = new ArrayList<LogicalLink>();
-			Set<LogicalLink> linkSet = new HashSet<LogicalLink>();
+			List<LogicalLink>      linkList = new ArrayList<LogicalLink>();
+			Set<LogicalLink>       linkSet  = new HashSet<LogicalLink>();
 			for (String devName : deviceNames) {
 				OfpConDeviceInfo node = this.getLogicalNode(conn, devName);
 				if (node == null) {
@@ -345,7 +337,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				linkSet.addAll(links);
 			}
 			linkList.addAll(linkSet);
-			this.normalizeLogicalNode(conn, nodeList);
+			this.normalizeLogicalNode(conn,     nodeList);
 			this.normalizeLogicalLink(nodeList, linkList);
 
 			LogicalTopology topology = new LogicalTopology();
@@ -356,7 +348,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			res.setResult(topology);
 			res.setStatus(STATUS_SUCCESS);
 		} catch (Exception e) {
-			logger.error(e);
+			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
 		} finally {
@@ -371,12 +363,15 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		return ret;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.business.LogicalBusiness#updateLogicalTopology(java.lang.String)
+	 */
 	public String updateLogicalTopology(String requestedTopologyJson) {
 		String fname = "updateLogicalTopology";
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(requestedTopology=%s) - start", fname, requestedTopologyJson));
 		}
-
 		BaseResponse res = new BaseResponse();
 		res.setStatus(STATUS_SUCCESS);
 
@@ -433,62 +428,52 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			validator.checkValidationRequestIn(requestedTopology);
 			// TODO: check user tenant (by used-info in DMDB).
 		} catch (ValidateException ve) {
-			StringWriter sw = new StringWriter();
-			ve.printStackTrace(new PrintWriter(sw));
-			logger.error(ve);
-			logger.error(sw.toString());
+			OFPMUtils.logErrorStackTrace(logger, ve);
 			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(ve.getMessage());
-			String ret = res.toString();
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
 			}
-			return ret;
+			return res.toJson();
 		}
 
 		/* PHASE 3: Get Auth token */
 		String ofpmToken = null;
 		try {
-			String url = conf.getString(OPEN_AM_URL);
+			String url  = conf.getString(OPEN_AM_URL);
 			String user = conf.getString(CONFIG_KEY_AUTH_USERNAME);
 			String pass = conf.getString(CONFIG_KEY_AUTH_PASSWORD);
-			OpenAmClient client = new OpenAmClientImpl(url);
-			TokenIdOut tokenInfo = client.authenticate(user, pass);
+			OpenAmClient client    = new OpenAmClientImpl(url);
+			TokenIdOut   tokenInfo = client.authenticate(user, pass);
 			ofpmToken = tokenInfo.getTokenId();
 		} catch (OpenAmClientException e) {
-			StringWriter sw = new StringWriter();
-			e.printStackTrace(new PrintWriter(sw));
-			logger.error(e);
-			logger.error(sw.toString());
+			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
-			String ret = res.toString();
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
 			}
-			return ret;
+			return res.toJson();
 		}
 
 		/* PHASE 4: Update topology */
-		MultivaluedMap<String, Map<String, Object>> reducedFlows = new MultivaluedHashMap<String, Map<String, Object>>();
+		MultivaluedMap<String, Map<String, Object>> reducedFlows   = new MultivaluedHashMap<String, Map<String, Object>>();
 		MultivaluedMap<String, Map<String, Object>> augmentedFlows = new MultivaluedHashMap<String, Map<String, Object>>();
 		ConnectionUtilsJdbc utilsJdbc = null;
-		Connection conn = null;
+		Connection          conn      = null;
 		try {
 			/* initialize db connectors */
-			{
-				utilsJdbc = new ConnectionUtilsJdbcImpl();
-				conn = utilsJdbc.getConnection(false);
-				dao = new DaoImpl(utilsJdbc);
-			}
+			utilsJdbc = new ConnectionUtilsJdbcImpl();
+			conn = utilsJdbc.getConnection(false);
+			dao  = new DaoImpl(utilsJdbc);
 
 			/* compute Inclement/Declement LogicalLink */
 			List<LogicalLink> incLinkList = new ArrayList<LogicalLink>();
 			List<LogicalLink> decLinkList = new ArrayList<LogicalLink>();
 			{
-				List<OfpConDeviceInfo> requestedNodes = requestedTopology.getNodes();
-				List<LogicalLink> requestedLinkList = requestedTopology.getLinks();
-				Set<LogicalLink> currentLinkList = new HashSet<LogicalLink>();
+				List<OfpConDeviceInfo> requestedNodes    = requestedTopology.getNodes();
+				List<LogicalLink>      requestedLinkList = requestedTopology.getLinks();
+				Set<LogicalLink>       currentLinkList   = new HashSet<LogicalLink>();
 
 				/* Create current links */
 				for (OfpConDeviceInfo requestedNode : requestedNodes) {
@@ -511,16 +496,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			/* update patch wiring and make patch link */
 			DMDBClient client = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
 			for (LogicalLink link : decLinkList) {
-				MultivaluedMap<String, Map<String, Object>> buf = this.declementLogicalLink(conn, link, client, ofpmToken);
-				for (Entry<String, List<Map<String, Object>>> entry : buf.entrySet()) {
-					reducedFlows.addAll(entry.getKey(), entry.getValue());
-				}
+				this.addDeclementLogicalLink(conn, link, client, ofpmToken, reducedFlows);
 			}
 			for (LogicalLink link : incLinkList) {
-				MultivaluedMap<String, Map<String, Object>> buf = this.inclementLogicalLink(conn, link, client, ofpmToken);
-				for (Entry<String, List<Map<String, Object>>> entry : buf.entrySet()) {
-					augmentedFlows.addAll(entry.getKey(), entry.getValue());
-				}
+				this.addInclementLogicalLink(conn, link, client, ofpmToken, augmentedFlows);
 				/* Notify NCS */
 //				List<String> deviceNames = link.getDeviceName();
 //				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
@@ -532,26 +511,21 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 //				}
 			}
 
-//			utilsJdbc.commit(conn);
-
+			utilsJdbc.commit(conn);
 //		} catch (AgentManagerException ame) {
 //			logger.error(ame);
 //			res.setStatus(STATUS_INTERNAL_ERROR);
 //			res.setMessage(UNEXPECTED_ERROR);
 //			return res.toJson();
 		} catch (Exception e) {
-//			utilsJdbc.rollback(conn);
-			StringWriter sw = new StringWriter();
-			e.printStackTrace(new PrintWriter(sw));
-			logger.error(e);
-			logger.error(sw.toString());
+			utilsJdbc.rollback(conn);
+			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
-			String ret = res.toJson();
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
 			}
-			return ret;
+			return res.toJson();
 		} finally {
 			utilsJdbc.close(conn);
 		}
@@ -590,17 +564,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 			}
 		} catch (OFCClientException e) {
-			StringWriter sw = new StringWriter();
-			e.printStackTrace(new PrintWriter(sw));
-			logger.error(e);
-			logger.error(sw.toString());
+			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
-			String ret = res.toString();
 			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
 			}
-			return ret;
+			return res.toJson();
 		}
 
 		String ret = res.toJson();
@@ -672,65 +642,65 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		return ret;
 	}
+//
+//	private Map<OFCClient, List<AgentUpdateFlowData>> makeAgentUpdateFlowList(List<PatchLink> updatedLinks, String type) throws AgentManagerException {
+//		String fname = "makeAgentUpdateFlowList";
+//		if (logger.isDebugEnabled()) {
+//			logger.debug(String.format("%s(updatedLinks=%s, type=%s) - start", fname, updatedLinks, type));
+//		}
+//
+//		Map<OFCClient, List<AgentUpdateFlowData>> pairAgentClient_UpdateFlowDataList = new HashMap<OFCClient, List<AgentUpdateFlowData>>();
+//		for (PatchLink link : updatedLinks) {
+//			String switchIp = agentManager.getSwitchIp(link.getDeviceName());
+//			String ofcUrl = agentManager.getOfcUrl(switchIp);
+//
+//			AgentUpdateFlowData newUpdateFlowData = agentFlowJson.new AgentUpdateFlowData();
+//			newUpdateFlowData.setIp(switchIp);
+//			newUpdateFlowData.setType(type);
+//			newUpdateFlowData.setPort(link.getPortName());
+//			newUpdateFlowData.setOfcUrl(ofcUrl);
+//
+//			OFCClient agentClient = agentManager.getAgentClient(switchIp);
+//			if (!pairAgentClient_UpdateFlowDataList.containsKey(agentClient)) {
+//				pairAgentClient_UpdateFlowDataList.put(agentClient, new ArrayList<AgentUpdateFlowData>());
+//			}
+//			List<AgentUpdateFlowData> agentClientFlowDataList = pairAgentClient_UpdateFlowDataList.get(agentClient);
+//			agentClientFlowDataList.add(newUpdateFlowData);
+//		}
+//
+//		if (logger.isDebugEnabled()) {
+//			logger.debug(String.format("%s(ret=%s) - end", fname, pairAgentClient_UpdateFlowDataList));
+//		}
+//		return pairAgentClient_UpdateFlowDataList;
+//	}
 
-	private Map<OFCClient, List<AgentUpdateFlowData>> makeAgentUpdateFlowList(List<PatchLink> updatedLinks, String type) throws AgentManagerException {
-		String fname = "makeAgentUpdateFlowList";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(updatedLinks=%s, type=%s) - start", fname, updatedLinks, type));
-		}
-
-		Map<OFCClient, List<AgentUpdateFlowData>> pairAgentClient_UpdateFlowDataList = new HashMap<OFCClient, List<AgentUpdateFlowData>>();
-		for (PatchLink link : updatedLinks) {
-			String switchIp = agentManager.getSwitchIp(link.getDeviceName());
-			String ofcUrl = agentManager.getOfcUrl(switchIp);
-
-			AgentUpdateFlowData newUpdateFlowData = agentFlowJson.new AgentUpdateFlowData();
-			newUpdateFlowData.setIp(switchIp);
-			newUpdateFlowData.setType(type);
-			newUpdateFlowData.setPort(link.getPortName());
-			newUpdateFlowData.setOfcUrl(ofcUrl);
-
-			OFCClient agentClient = agentManager.getAgentClient(switchIp);
-			if (!pairAgentClient_UpdateFlowDataList.containsKey(agentClient)) {
-				pairAgentClient_UpdateFlowDataList.put(agentClient, new ArrayList<AgentUpdateFlowData>());
-			}
-			List<AgentUpdateFlowData> agentClientFlowDataList = pairAgentClient_UpdateFlowDataList.get(agentClient);
-			agentClientFlowDataList.add(newUpdateFlowData);
-		}
-
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, pairAgentClient_UpdateFlowDataList));
-		}
-		return pairAgentClient_UpdateFlowDataList;
-	}
-
-	private boolean isOverlap(List<List<String>> dataList, List<String> data) {
-		if (logger.isDebugEnabled()) {
-    		logger.debug(String.format("isOverlap(dataList=%s, data=%s) - start ", dataList, data));
-    	}
-		boolean oneWordOverlapFlg = false;
-		for (List<String> dataSet : dataList) {
-			oneWordOverlapFlg = false;
-			for ( String str : data) {
-				if (!dataSet.contains(str)) {
-					break;
-				} else {
-					if (oneWordOverlapFlg) {
-						if (logger.isDebugEnabled()) {
-				    		logger.debug(String.format("isOverlap(ret=%s) - end ", true));
-				    	}
-						return true;
-					} else {
-						oneWordOverlapFlg = true;
-					}
-				}
-			}
-		}
-		if (logger.isDebugEnabled()) {
-    		logger.debug(String.format("isOverlap(ret=%s) - end ", false));
-    	}
-		return false;
-	}
+//	private boolean isOverlap(List<List<String>> dataList, List<String> data) {
+//		if (logger.isDebugEnabled()) {
+//    		logger.debug(String.format("isOverlap(dataList=%s, data=%s) - start ", dataList, data));
+//    	}
+//		boolean oneWordOverlapFlg = false;
+//		for (List<String> dataSet : dataList) {
+//			oneWordOverlapFlg = false;
+//			for ( String str : data) {
+//				if (!dataSet.contains(str)) {
+//					break;
+//				} else {
+//					if (oneWordOverlapFlg) {
+//						if (logger.isDebugEnabled()) {
+//				    		logger.debug(String.format("isOverlap(ret=%s) - end ", true));
+//				    	}
+//						return true;
+//					} else {
+//						oneWordOverlapFlg = true;
+//					}
+//				}
+//			}
+//		}
+//		if (logger.isDebugEnabled()) {
+//    		logger.debug(String.format("isOverlap(ret=%s) - end ", false));
+//    	}
+//		return false;
+//	}
 
 	/* (non-Javadoc)
 	 * @see ool.com.ofpm.business.LogicalBusiness#setFlow(java.lang.String)
@@ -977,12 +947,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * Delete logical link, in fact remove patch wiring and update links used value.
 	 * @param conn
 	 * @param link
-	 * @return
 	 * @throws SQLException
 	 * @throws DMDBClientException
 	 */
-	private MultivaluedMap<String, Map<String, Object>> declementLogicalLink(Connection conn, LogicalLink link, DMDBClient client, String ofpmToken) throws SQLException, DMDBClientException {
-		MultivaluedMap<String, Map<String, Object>> ret = new MultivaluedHashMap<String, Map<String, Object>>();
+	private void addDeclementLogicalLink(Connection conn, LogicalLink link, DMDBClient client, String ofpmToken, MultivaluedMap<String, Map<String, Object>> reducedFlows) throws SQLException, DMDBClientException {
 		PortData inPort  = link.getLink().get(0);
 
 		/* get patch wiring, and check it is exist. */
@@ -1047,14 +1015,14 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			flow.put("datapathId", dpid);
 			flow.put("inPort", txInPortMap.get("number"));
 			flow.put("dropFlg", true);
-			ret.add(ofcIp, flow);
+			reducedFlows.add(ofcIp, flow);
 
 			Map<String, Object> txOutPortMap = dao.getPortInfoFromPortRid(conn, (String)txPatchMap.get("out"));
 			flow = new HashMap<String, Object>();
 			flow.put("datapathId", dpid);
 			flow.put("inPort", txOutPortMap.get("number"));
 			flow.put("dropFlg", true);
-			ret.add(ofcIp, flow);
+			reducedFlows.add(ofcIp, flow);
 		}
 		/* make flow edge-switch rx side */
 		Map<String, Object> rxOfpsMap = null;
@@ -1069,14 +1037,14 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			flow.put("datapathId", dpid);
 			flow.put("inPort", rxOutPortMap.get("number"));
 			flow.put("dropFlg", true);
-			ret.add(ofcIp, flow);
+			reducedFlows.add(ofcIp, flow);
 
 			Map<String, Object> rxInPortMap = dao.getPortInfoFromPortRid(conn, (String)rxPatchMap.get("in"));
 			flow = new HashMap<String, Object>();
 			flow.put("datapathId", dpid);
 			flow.put("inPort", rxInPortMap.get("number"));
 			flow.put("dropFlg", true);
-			ret.add(ofcIp, flow);
+			reducedFlows.add(ofcIp, flow);
 		}
 		/* make flow internal switch */
 		{
@@ -1094,18 +1062,18 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 					flow.put("datapathId", dpid);
 					flow.put("srcMac", txInterMac);
 					flow.put("dropFlg", true);
-					ret.add(ofcIp, flow);
+					reducedFlows.add(ofcIp, flow);
 				}
 				for (String rxInterMac : rxInterMacList) {
 					Map<String, Object> flow = new HashMap<String, Object>();
 					flow.put("datapathId", dpid);
 					flow.put("srcMac", rxInterMac);
 					flow.put("dropFlg", true);
-					ret.add(ofcIp, flow);
+					reducedFlows.add(ofcIp, flow);
 				}
 			}
 		}
-		return ret;
+		return;
 	}
 
 	/**
@@ -1113,14 +1081,12 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @param conn
 	 * @param link
 	 * @param client
-	 * @param token
-	 * @return
+	 * @param ofpmToken
+	 * @param augmentedFlows
 	 * @throws SQLException
 	 * @throws DMDBClientException
 	 */
-	private MultivaluedMap<String, Map<String, Object>> inclementLogicalLink(Connection conn, LogicalLink link, DMDBClient client, String token) throws SQLException, DMDBClientException {
-		MultivaluedMap<String, Map<String, Object>> ret = new MultivaluedHashMap<String, Map<String, Object>>();
-
+	private void addInclementLogicalLink(Connection conn, LogicalLink link, DMDBClient client, String ofpmToken, MultivaluedMap<String, Map<String, Object>> augmentedFlows) throws SQLException, DMDBClientException {
 		PortData tx = link.getLink().get(0);
 		PortData rx = link.getLink().get(1);
 		/* get rid of txPort/rxPort */
@@ -1161,7 +1127,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		Map<Map<String, Object>, Long> portBandMap = new HashMap<Map<String, Object>, Long>();
 		for (Map<String, Object> current : path) {
 			if (StringUtils.equals((String)current.get("class"), "port")) {
-				long band = this.getBandWidth(conn, (String)current.get("deviceName"), (String)current.get("name"), client, token);
+				long band = this.getBandWidth(conn, (String)current.get("deviceName"), (String)current.get("name"), client, ofpmToken);
 				portBandMap.put(current, band);
 			}
 		}
@@ -1265,16 +1231,16 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			flow.put("inPort", inPortDataMap.get("number"));
 			flow.put("outPort", outPortDataMap.get("number"));
 			flow.put("packetInFlg", false);
-			ret.add((String)ofpNodeDataMap.get("ofcIp"), flow);
+			augmentedFlows.add((String)ofpNodeDataMap.get("ofcIp"), flow);
 
 			flow = new HashMap<String, Object>();
 			flow.put("datapathId", ofpNodeDataMap.get("datapathId"));
 			flow.put("inPort", outPortDataMap.get("number"));
 			flow.put("outPort", inPortDataMap.get("number"));
 			flow.put("packetInFlg", false);
-			ret.add((String)ofpNodeDataMap.get("ofcIp"), flow);
+			augmentedFlows.add((String)ofpNodeDataMap.get("ofcIp"), flow);
 
-			return ret;
+			return;
 		}
 		/* the first ofps flow */
 		{
@@ -1286,7 +1252,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			flow.put("datapathId", ofpNodeDataMap.get("datapathId"));
 			flow.put("inPort", inPortDataMap.get("number"));
 			flow.put("packetInFlg", true);
-			ret.add((String)ofpNodeDataMap.get("ofcIp"), flow);
+			augmentedFlows.add((String)ofpNodeDataMap.get("ofcIp"), flow);
 		}
 		/* the final ofps flow */
 		{
@@ -1298,8 +1264,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			flow.put("datapathId", ofpNodeDataMap.get("datapathId"));
 			flow.put("inPort", inPortDataMap.get("number"));
 			flow.put("packetInFlg", true);
-			ret.add((String)ofpNodeDataMap.get("ofcIp"), flow);
+			augmentedFlows.add((String)ofpNodeDataMap.get("ofcIp"), flow);
 		}
-		return ret;
+		return;
 	}
 }
