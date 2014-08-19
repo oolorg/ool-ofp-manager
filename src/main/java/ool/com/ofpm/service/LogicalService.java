@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Path("/logical_topology")
 public interface LogicalService {
 	/**
-	 * Get LogicalTopology 
+	 * Get LogicalTopology
 	 * @param deviceNamesCSV String list of deviceName split comma
 	 * @param tokenId String auth key
 	 * @return Http Response
@@ -29,10 +29,16 @@ public interface LogicalService {
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	public Response updateLogicalTopology(@RequestBody String requestedTopologyJson);
-	
+
 	@POST
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Path("/setFlow")
 	public Response setFlow(@RequestBody String requestedData);
+
+	@POST
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Path("/initFlow")
+	public Response initFlow(@RequestBody String requestedData);
 }

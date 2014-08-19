@@ -1367,7 +1367,7 @@ public class DaoImpl implements Dao {
 			logger.trace(String.format("%s(conn=%s, devicename=%s, portName=%s) - start", fname, conn, deviceName, portName));
 		}
 		try {
-			MapListHandler rsh = new MapListHandler("in", "out", "parent", "inDeviceName", "inPortName", "outDeviceName", "outPortName");
+			MapListHandler rsh = new MapListHandler("in", "out", "parent", "inDeviceName", "inPortName", "outDeviceName", "outPortName", "sequence");
 			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_PATCH_WIRINGS_FROM_DEVICENAME_PORTNAME, rsh, deviceName, portName);
 			if (logger.isTraceEnabled()) {
 				logger.trace(String.format("%s(ret=%s) - end", fname, maps));
@@ -1375,6 +1375,34 @@ public class DaoImpl implements Dao {
 			return maps;
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
+		}
+	}
+
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getPatchWiringsFromParentRid(java.sql.Connection, java.lang.String)
+	 */
+	@Override
+	public List<Map<String, Object>> getPatchWiringsFromParentRid(Connection conn, String parentRid) throws SQLException {
+		final String fname = "getPatchWiringsFromParentRid";
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s, parentRid=%s) - start", fname, conn, parentRid));
+		}
+		List<Map<String, Object>> ret = null;
+		try {
+			ret = utilsJdbc.query(
+					conn,
+					SQL_GET_PATCH_WIRINGS_FROM_PARENTRID,
+					new MapListHandler("in", "out", "parent", "inDeviceName", "inPortName", "outDeviceName", "outPortName", "sequence"),
+					parentRid);
+			return ret;
+		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", ret));
+			}
 		}
 	}
 
@@ -2346,4 +2374,36 @@ public class DaoImpl implements Dao {
 			throw new SQLException(e.getMessage());
 		}
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getInternalMacInfoListFromDeviceNameInPort(java.sql.Connection, java.lang.String, java.lang.Integer)
+	 */
+	@Override
+	public List<Map<String, Object>> getInternalMacInfoListFromDeviceNameInPort(Connection conn, String deviceName, Integer portNumber) throws SQLException {
+		final String fname = "getInternalMacInfoListFromDeviceNameInPort";
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s, deviceName=%s, portNumber=%s) - start", fname, conn, deviceName, portNumber));
+		}
+		List<Map<String, Object>> ret = null;
+		try {
+			ret = utilsJdbc.query(
+					conn,
+					SQL_GET_INTERNALMAC_INFO_LIST_FROM_DEVICENAME_PORTNUMBER,
+					new MapListHandler("srcMac", "dstMac", "internalMac"),
+					deviceName,
+					portNumber);
+			if (ret == null) {
+				return new ArrayList<Map<String, Object>>();
+			}
+			return ret;
+		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", ret));
+			}
+		}
+	}
+
 }

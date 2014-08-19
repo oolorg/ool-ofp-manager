@@ -300,6 +300,16 @@ public interface Dao {
 	List<String> getInternalMacListFromDeviceNameInPort(Connection conn, String deviceName, String inPort) throws SQLException;
 
 	/**
+	 * Get internal-mac record list. if not exist, return empty list.
+	 * @param conn
+	 * @param deviceName
+	 * @param PortNumber
+	 * @return
+	 * @throws SQLException
+	 */
+	List<Map<String, Object>> getInternalMacInfoListFromDeviceNameInPort(Connection conn, String deviceName, Integer PortNumber) throws SQLException;
+
+	/**
 	 *
 	 * @param outRid
 	 * @param inRid
@@ -397,6 +407,15 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	List<Map<String, Object>> getPatchWiringsFromDeviceNamePortName(Connection conn, String deviceName, String portName) throws SQLException;
+
+	/**
+	 * Ge patchWiring-list from parent rid.
+	 * @param conn
+	 * @param parentRid
+	 * @return
+	 * @throws SQLException
+	 */
+	List<Map<String, Object>> getPatchWiringsFromParentRid(Connection conn, String parentRid) throws SQLException;
 
 
 	/*============= __     __

@@ -25,6 +25,11 @@ public class LogicalServiceImpl implements LogicalService {
 	@Override
 	public Response getLogicalTopology(String deviceNamesCSV, String tokenId) {
 		final String fname = "getLogicalTopology";
+		long time = 0L;
+		if (logger.isInfoEnabled()) {
+			time = System.currentTimeMillis();
+			logger.info(String.format("###  REQUESTED ### %s ###", fname));
+		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(deviceNamesCSV=%s, tokenId=%s) - start", fname, deviceNamesCSV, tokenId));
 		}
@@ -38,8 +43,13 @@ public class LogicalServiceImpl implements LogicalService {
 		LogicalServiceImpl main = this.injector.getInstance(LogicalServiceImpl.class);
 		String resLogiBiz = main.logiBiz.getLogicalTopology(deviceNamesCSV, tokenId);
 
+
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));
+		}
+		if (logger.isInfoEnabled()) {
+			time = System.currentTimeMillis() - time;
+			logger.info(String.format("###     END    ### %s ### %s[ms] ###", fname, time));
 		}
 		return Response.ok(resLogiBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
@@ -47,6 +57,11 @@ public class LogicalServiceImpl implements LogicalService {
 	@Override
 	public Response updateLogicalTopology(String requestedTopologyJson) {
 		final String fname = "updateLogicalTopology";
+		long time = 0L;
+		if (logger.isInfoEnabled()) {
+			time = System.currentTimeMillis();
+			logger.info(String.format("###  REQUESTED ### %s ###", fname));
+		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(requestedTopologyJson=%s) - start", fname, requestedTopologyJson));
 		}
@@ -62,6 +77,10 @@ public class LogicalServiceImpl implements LogicalService {
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));
+		}
+		if (logger.isInfoEnabled()) {
+			time = System.currentTimeMillis() - time;
+			logger.info(String.format("###     END    ### %s ### %s[ms] ###", fname, time));
 		}
 		return Response.ok(resLogiBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
 	}
@@ -88,6 +107,31 @@ public class LogicalServiceImpl implements LogicalService {
 		});
 		LogicalServiceImpl main = this.injector.getInstance(LogicalServiceImpl.class);
 		String resLogiBiz = main.logiBiz.setFlow(requestedData);
+
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));
+		}
+		return Response.ok(resLogiBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
+	}
+
+
+	/*
+	 * @Override(non-Javadoc)
+	 * @see ool.com.ofpm.service.LogicalService#initFlow(java.lang.String)
+	 */
+	public Response initFlow(String requestedData) {
+		final String fname = "initFlow";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(requestedData=%s) - start", fname, requestedData));
+		}
+		this.injector = Guice.createInjector(new AbstractModule() {
+			@Override
+			protected void configure() {
+				bind(LogicalBusiness.class).to(LogicalBusinessImpl.class);
+			}
+		});
+		LogicalServiceImpl main = this.injector.getInstance(LogicalServiceImpl.class);
+		String resLogiBiz = main.logiBiz.initFlow(requestedData);
 
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resLogiBiz));

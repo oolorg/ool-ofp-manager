@@ -47,6 +47,7 @@ import ool.com.ofpm.json.device.ConnectedPortGetJsonOut;
 import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperIn;
 import ool.com.ofpm.json.ncs.NetworkConfigSetupperInData;
+import ool.com.ofpm.json.ofc.InitFlowIn;
 import ool.com.ofpm.json.ofc.SetFlowIn;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
 import ool.com.ofpm.json.topology.logical.LogicalTopology;
@@ -59,6 +60,7 @@ import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.GraphDBUtil;
 import ool.com.ofpm.utils.OFPMUtils;
 import ool.com.ofpm.validate.common.BaseValidate;
+import ool.com.ofpm.validate.ofc.InitFlowInValidate;
 import ool.com.ofpm.validate.topology.logical.LogicalTopologyValidate;
 import ool.com.openam.client.OpenAmClient;
 import ool.com.openam.client.OpenAmClientException;
@@ -537,13 +539,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				OFCClient client = new OFCClientImpl(entry.getKey());
 				for (Map<String, Object> flow : entry.getValue()) {
 					client.deleteFlows(
-							(String)flow.get("datapathId"),
+							(String) flow.get("datapathId"),
 							(Integer)flow.get("inPort"),
-							(String)flow.get("srcMac"),
-							(String)flow.get("dstMac"),
+							(String) flow.get("srcMac"),
+							(String) flow.get("dstMac"),
 							(Integer)flow.get("outPort"),
-							(String)flow.get("modSrcMac"),
-							(String)flow.get("modDstMac"),
+							(String) flow.get("modSrcMac"),
+							(String) flow.get("modDstMac"),
 							(Boolean)flow.get("packetInFlg"),
 							(Boolean)flow.get("dropFlg"));
 				}
@@ -552,13 +554,13 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				OFCClient client = new OFCClientImpl(entry.getKey());
 				for (Map<String, Object> flow : entry.getValue()) {
 					client.setFlows(
-							(String)flow.get("datapathId"),
+							(String) flow.get("datapathId"),
 							(Integer)flow.get("inPort"),
-							(String)flow.get("srcMac"),
-							(String)flow.get("dstMac"),
+							(String) flow.get("srcMac"),
+							(String) flow.get("dstMac"),
 							(Integer)flow.get("outPort"),
-							(String)flow.get("modSrcMac"),
-							(String)flow.get("modDstMac"),
+							(String) flow.get("modSrcMac"),
+							(String) flow.get("modDstMac"),
 							(Boolean)flow.get("packetInFlg"),
 							(Boolean)flow.get("dropFlg"));
 				}
@@ -823,6 +825,133 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
 		}
 		return ret;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.business.LogicalBusiness#initFlow(java.lang.String)
+	 */
+	@Override
+	public String initFlow(String requestedData) {
+		final String fname = "initFlow";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(requestedData=%s)", fname, requestedData));
+		}
+		BaseResponse res = new BaseResponse();
+		res.setStatus(STATUS_SUCCESS);
+
+		/* PHASE 1: validation check */
+		InitFlowIn req = null;
+		try {
+			req = InitFlowIn.fromJson(requestedData);
+			InitFlowInValidate validator = new InitFlowInValidate();
+			validator.checkValidation(req);
+		} catch (Throwable t) {
+			OFPMUtils.logErrorStackTrace(logger, t);
+			{
+				if (t instanceof JsonSyntaxException) {
+					res.setStatus(STATUS_BAD_REQUEST);
+					res.setMessage(INVALID_JSON);
+				} else if (t instanceof ValidateException) {
+					res.setStatus(STATUS_BAD_REQUEST);
+					res.setMessage(t.getMessage());
+				} else {
+					res.setStatus(STATUS_INTERNAL_ERROR);
+					res.setMessage(t.getMessage());
+				}
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s)", fname, res));
+			}
+			return res.toJson();
+		}
+
+		/* PHASE 2:Set Flows into OFPS that is designated by datapathId. */
+		ConnectionUtilsJdbc utils = null;
+		Connection          conn  = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn  = utils.getConnection(false);
+
+			Dao dao = new DaoImpl(utils);
+			String dpid = req.getDatapathId();
+			String devName = dao.getDeviceNameFromDatapathId(conn, dpid);
+			Map<String, Object> devInfo = dao.getNodeInfoFromDeviceName(conn, devName);
+			OFCClient client = new OFCClientImpl((String) devInfo.get("ofcIp"));
+
+			List<Map<String, Object>> patchMapList = dao.getPatchWiringsFromParentRid(conn, (String) devInfo.get("rid"));
+			for (Map<String, Object> patchMap : patchMapList) {
+				List<Map<String, Object>> path = dao.getPatchWiringsFromDeviceNamePortName(
+						conn,
+						(String) patchMap.get("inDeviceName"),
+						(String) patchMap.get("inPortName"));
+				Integer sequence = (Integer) patchMap.get("sequence");
+
+				Map<String, Object>  inPortInfo = dao.getPortInfoFromPortRid(conn, (String) patchMap.get("in"));
+				Map<String, Object> outPortInfo = dao.getPortInfoFromPortRid(conn, (String) patchMap.get("out"));
+				Integer  inPort = (Integer)  inPortInfo.get("number");
+				Integer outPort = (Integer) outPortInfo.get("number");
+				/* port 2 port flow */
+				if (path.size() == 1) {
+					client.setFlows(dpid, inPort, null, null, outPort, null, null, null, null);
+					continue;
+				}
+
+				/* not port 2 prot flow */
+				Map<String, Object> firstOfpsPort = dao.getPortInfoFromPortRid(conn, (String) path.get(0).get("in"));
+				String  firstOfpsDevName    = (String)  firstOfpsPort.get("deviceName");
+				Integer firstOfpsPortNumber = (Integer) firstOfpsPort.get("number");
+
+				List<Map<String, Object>> macList = dao.getInternalMacInfoListFromDeviceNameInPort(
+						conn,
+						firstOfpsDevName,
+						firstOfpsPortNumber);
+				for (Map<String, Object> mac : macList) {
+					Long interMac = (Long)   mac.get("internalMac");
+					String srcMac = null;
+					String dstMac = null;
+					String modSrcMac = null;
+					String modDstMac = null;
+
+					if (sequence == 1) {
+						/* first patch switch */
+						srcMac = (String) mac.get("srcMac");
+						dstMac = (String) mac.get("dstMac");
+						modSrcMac = (OFPMUtils.longToMacAddress(interMac));
+						modDstMac = (OFPMUtils.longToMacAddress(~interMac));
+					} else if (sequence == path.size()) {
+						/* final patch switch */
+						srcMac = (OFPMUtils.longToMacAddress(interMac));
+						modSrcMac = (String) mac.get("srcMac");
+						modDstMac = (String) mac.get("dstMac");
+					} else {
+						/* relay patch swtich */
+						srcMac = (OFPMUtils.longToMacAddress(interMac));
+					}
+
+					client.setFlows(dpid, inPort, srcMac, dstMac, outPort, modSrcMac, modDstMac, null, null);
+				}
+
+				/* If the OFPS is first patch switch for the route, set Packet-In flow. */
+				if (sequence == 1) {
+					client.setFlows(dpid, inPort, null, null, null, null, null, true, null);
+				}
+			}
+
+		} catch (SQLException | OFCClientException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+		} finally {
+			utils.rollback(conn);
+			utils.close(conn);
+		}
+
+		String ret = res.toJson();
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s)", fname, ret));
+		}
+		return res.toJson();
 	}
 
 	/**
@@ -1139,7 +1268,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			long rxBand = portBandMap.get(rxPort);
 			long txNextBand = portBandMap.get(path.get(txPortIndex + 1));
 			long rxNextBand = portBandMap.get(path.get(rxPortIndex - 1));
-			needBand = (txBand < rxBand)? txBand: rxBand;
+			needBand = (  txBand <     rxBand)?   txBand:     rxBand;
 			needBand = (needBand < txNextBand)? needBand: txNextBand;
 			needBand = (needBand < rxNextBand)? needBand: rxNextBand;
 		}

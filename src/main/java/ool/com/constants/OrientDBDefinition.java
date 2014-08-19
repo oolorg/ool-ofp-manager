@@ -61,7 +61,7 @@ public class OrientDBDefinition {
 			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @RID, band, used "
 			+ "from link where in.deviceName = ? and out.@class = 'port'";
 	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICENAME           = "select from patchWiring where inDeviceName=?";
-	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICENAME_PORTNAME = "select from patchWiring where inDeviceName=? and inPortName=?";
+	public static final String SQL_GET_PATCH_WIRINGS_FROM_DEVICENAME_PORTNAME = "select from patchWiring where inDeviceName=? and inPortName=? order by sequence asc";
 	public static final String SQL_GET_PATCH_WIRINGS_FROM_NODERID = "select from patchWiring where parent=?";
 	public static final String SQL_GET_PATCH_WIRINGS_FROM_PORTRID = "select from patchWiring where out=? or in=?";
 	public static final String SQL_GET_CONNECTED_LINK = "select from link where in = %s";
@@ -77,12 +77,16 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_PATCH_INFO_FROM_PATCHWIRING_PORTRID = "select from patchWiring where in = ?";
 	public static final String SQL_GET_PATCH_INFO_FROM_PATCHWIRING_DEVICENAME_PORTNAME = "select out, in, parent, sequence from patchWiring where inDeviceName = ? and inPortName = ? and "
 			+ "outDeviceName = ? and outPortName = ? order by sequence desc";
+	public static final String SQL_GET_PATCH_WIRINGS_FROM_PARENTRID = "select out, in, parent, sequence, inDeviceName, inPortName, outDeviceName, outPortName" +
+			" from patchWiring where parent=? order by sequence asc limit=100000";
 	public static final String SQL_GET_PORT_INFO_FROM_PORTRID = "select from port where @RID = ?";
 	public static final String SQL_GET_DEVICE_INFO_FROM_DEVICERID = "select name, type, datapathId, ofcIp from node where @RID = ?";
-	public static final String SQL_GET_INTERNALMAC_FROM_SRCMAC_DSTMAC_INPORT_DEVICENAME = "select internalMac from internalMacMap where deviceName = ? and inPort = ? and "
-			+ "srcMac = ? and dstMac = ?";
+	public static final String SQL_GET_INTERNALMAC_FROM_SRCMAC_DSTMAC_INPORT_DEVICENAME =
+			"select internalMac from internalMacMap where deviceName = ? and inPort = ? and srcMac = ? and dstMac = ?";
 	public static final String SQL_GET_MAX_INTERNALMAC = "select max(internalMac) as maxInternalMac from internalMacMap";
 	public static final String SQL_GET_INTERNALMAC_LIST_FROM_DEVICENAME_INPORT = "select internalMac from internalMacMap where deviceName=? and inPort=?";
+	public static final String SQL_GET_INTERNALMAC_INFO_LIST_FROM_DEVICENAME_PORTNUMBER =
+			"select srcMac, dstMac, internalMac from internalMacMap where deviceName=? and inPort=? limit=100000";
 
 	/* insert */
 	public static final String SQL_INSERT_PATCH_WIRING   = "insert into patchWiring(out, in, parent, outDeviceName, inDeviceName) values (%s, %s, %s, '%s', '%s')";
