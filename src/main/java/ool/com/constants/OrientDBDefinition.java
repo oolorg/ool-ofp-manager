@@ -54,9 +54,12 @@ public class OrientDBDefinition {
 	public static final String SQL_GET_NEIGHBOR_PORT_INFO_FROM_PORT_RID = "select out.@rid.asString() as rid, out.name as name, out.deviceName as deviceName, out.number as number from cable where in.@RID = ?";
 	public static final String SQL_GET_LINK = "select from link where out = %s and in = %s";
 
-	public static final String SQL_GET_CABLE_LINK_FROM_PORT_RID = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
+	public static final String SQL_GET_CABLE_FROM_IN_PORTRID = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
 			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @RID.asString(), band, used "
 			+ "from link where in.@RID = ? and in.@class='port' and out.@class='port'";
+	public static final String SQL_GET_CABLE_FROM_OUT_PORTRID = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
+			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @RID.asString(), band, used "
+			+ "from link where out.@RID = ? and in.@class='port' and out.@class='port'";
 	public static final String SQL_GET_CABLE_LINKS    = "select in.deviceName as inDeviceName, in.name as inPortName, in.number as inPortNumber, "
 			+ "out.deviceName as outDeviceName, out.name as outPortName, out.number as outPortNumber, @RID, band, used "
 			+ "from link where in.deviceName = ? and out.@class = 'port'";

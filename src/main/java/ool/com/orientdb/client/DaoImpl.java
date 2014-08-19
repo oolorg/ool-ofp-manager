@@ -1534,17 +1534,42 @@ public class DaoImpl implements Dao {
 
 	/*
 	 * (non-Javadoc)
-	 * @see ool.com.orientdb.client.Dao#getCableLinkFromPortRid(java.sql.Connection, java.lang.String)
+	 * @see ool.com.orientdb.client.Dao#getCableLinkFromInPortRid(java.sql.Connection, java.lang.String)
 	 */
 	@Override
-	public Map<String, Object> getCableLinkFromPortRid(Connection conn, String portRid) throws SQLException {
-		final String fname = "getCableLinkFromPortRid";
+	public Map<String, Object> getCableLinkFromInPortRid(Connection conn, String inPortRid) throws SQLException {
+		final String fname = "getCableLinkFromInPortRid";
 		if (logger.isTraceEnabled()) {
-			logger.trace(String.format("%s(conn=%s, inPortRid=%s) - start", fname, conn, portRid));
+			logger.trace(String.format("%s(conn=%s, inPortRid=%s) - start", fname, conn, inPortRid));
 		}
 		Map<String, Object> ret = null;
 		try {
-			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_CABLE_LINK_FROM_PORT_RID, new MapListHandler(), portRid);
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_CABLE_FROM_IN_PORTRID, new MapListHandler(), inPortRid);
+			if (!maps.isEmpty()) {
+				ret = maps.get(0);
+			}
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		}
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+		}
+		return ret;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getCableLinkFromOutPortRid(java.sql.Connection, java.lang.String)
+	 */
+	@Override
+	public Map<String, Object> getCableLinkFromOutPortRid(Connection conn, String outPortRid) throws SQLException {
+		final String fname = "getCableLinkFromOutPortRid";
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, outPortRid=%s) - start", fname, conn, outPortRid));
+		}
+		Map<String, Object> ret = null;
+		try {
+			List<Map<String, Object>> maps = utilsJdbc.query(conn, SQL_GET_CABLE_FROM_OUT_PORTRID, new MapListHandler(), outPortRid);
 			if (!maps.isEmpty()) {
 				ret = maps.get(0);
 			}

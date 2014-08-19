@@ -431,14 +431,24 @@ public interface Dao {
 	List<Map<String, Object>> getCableLinksFromDeviceName(Connection conn, String deviceName) throws SQLException;
 
 	/**
-	 * Get link-list that is connected to other devices port from ports rid.
+	 * Get link-list that is connected to other devices port from in-ports rid.
 	 * The link is correspond to LAN-cable or SPF-cable.
 	 * @param conn
-	 * @param portRid
+	 * @param inPortRid
 	 * @return
 	 * @throws SQLException
 	 */
-	Map<String, Object> getCableLinkFromPortRid(Connection conn, String portRid) throws SQLException;
+	Map<String, Object> getCableLinkFromInPortRid(Connection conn, String inPortRid) throws SQLException;
+
+	/**
+	 * Get link-list that is connected to other devices port from out-ports rid.
+	 * The link is correspond to LAN-cable or SPF-cable.
+	 * @param conn
+	 * @param outPortRid
+	 * @return
+	 * @throws SQLException
+	 */
+	Map<String, Object> getCableLinkFromOutPortRid(Connection conn, String outPortRid) throws SQLException;
 
 	/**
 	 * Create cable link by device name and port name.

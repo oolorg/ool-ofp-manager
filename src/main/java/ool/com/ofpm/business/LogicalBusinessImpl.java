@@ -381,7 +381,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		try {
 			requestedTopology = LogicalTopologyUpdateJsonIn.fromJson(requestedTopologyJson);
 		} catch (JsonSyntaxException jse) {
-			logger.error(jse);
+			OFPMUtils.logErrorStackTrace(logger, jse);
 			res.setStatus(STATUS_BAD_REQUEST);
 			res.setMessage(INVALID_JSON);
 			String ret = res.toString();
@@ -981,7 +981,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		if (used < 0) {
 			used = 0;
 			// MEMO: output log message, however not throw exception. That's right?
-			logger.error(String.format("Used value was been under than zero, and the value modify zero. %s", link));
+			logger.warn(String.format("Used value was been under than zero, and the value modify zero. %s", link));
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, used));
@@ -1099,22 +1099,22 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		/* calc patch band width */
 		long band = 0L;
 		{
-			Map<String, Object> txLinkMap = dao.getCableLinkFromPortRid(conn, (String)txPatchMap.get("in"));
-			Map<String, Object> rxLinkMap = dao.getCableLinkFromPortRid(conn, (String)rxPatchMap.get("out"));
+			Map<String, Object> txLinkMap = dao.getCableLinkFromInPortRid(conn, (String)txPatchMap.get("in"));
+			Map<String, Object> rxLinkMap = dao.getCableLinkFromInPortRid(conn, (String)rxPatchMap.get("out"));
 			long txBand = this.getBandWidth(conn, (String)txLinkMap.get("inDeviceName"), (String)txLinkMap.get("inPortName"), client, ofpmToken);
 			long rxBand = this.getBandWidth(conn, (String)rxLinkMap.get("inDeviceName"), (String)rxLinkMap.get("inPortName"), client, ofpmToken);
 			long txOfpBand = this.getBandWidth(conn, (String)txLinkMap.get("outDeviceName"), (String)txLinkMap.get("outPortName"), client, ofpmToken);
 			long rxOfpBand = this.getBandWidth(conn, (String)rxLinkMap.get("outDeviceName"), (String)rxLinkMap.get("outPortName"), client, ofpmToken);
-			band = (txBand < rxBand)? txBand: rxBand;
-			band = (band < txOfpBand)? band: txOfpBand;
-			band = (band < rxOfpBand)? band: rxOfpBand;
+			band = (txBand < rxBand)   ? txBand:    rxBand;
+			band = (band   < txOfpBand)?   band: txOfpBand;
+			band = (band   < rxOfpBand)?   band: rxOfpBand;
 		}
 
 		/* update link-used-value and make patch link for ofc */
 		List<String> alreadyProcCable = new ArrayList<String>();
-		for (Map<String, Object> patchDoc : patchMapList) {
-			String inPortRid  = (String)patchDoc.get("in");
-			Map<String, Object> inLink = dao.getCableLinkFromPortRid(conn, inPortRid);
+		for (Map<String, Object> patchMap : patchMapList) {
+			String inPortRid  = (String)patchMap.get("in");
+			Map<String, Object> inLink = dao.getCableLinkFromInPortRid(conn, inPortRid);
 			String inCableRid = (String)inLink.get("rid");
 			if (!alreadyProcCable.contains(inCableRid)) {
 				long newUsed = this.calcReduceCableLinkUsed(conn, inLink, band, client, ofpmToken);
@@ -1122,8 +1122,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				alreadyProcCable.add(inCableRid);
 			}
 
-			String outPortRid = (String)patchDoc.get("out");
-			Map<String, Object> outLink = dao.getCableLinkFromPortRid(conn, outPortRid);
+			String outPortRid = (String)patchMap.get("out");
+			Map<String, Object> outLink = dao.getCableLinkFromOutPortRid(conn, outPortRid);
 			String outCableRid = (String)outLink.get("rid");
 			if (!alreadyProcCable.contains(outCableRid)) {
 				long newUsed = this.calcReduceCableLinkUsed(conn, outLink, band, client, ofpmToken);
@@ -1284,7 +1284,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 
 			String nowPortRid = (String)nowV.get("rid");
-			Map<String, Object> cableLink = dao.getCableLinkFromPortRid(conn, nowPortRid);
+			Map<String, Object> cableLink = dao.getCableLinkFromInPortRid(conn, nowPortRid);
 			long nowUsed = (long)(Long)cableLink.get("used");
 			long  inBand = portBandMap.get(nowV);
 			long outBand = portBandMap.get(prvV);
