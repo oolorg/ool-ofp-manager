@@ -734,7 +734,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			dao = new DaoImpl();
 			utilsJdbc = new ConnectionUtilsJdbcImpl();
 			dao.setConnectionUtilsJdbc(utilsJdbc);
-			conn = utilsJdbc.getConnection(false);
+			conn = utilsJdbc.getConnection(true);
 			deviceName = dao.getDeviceNameFromDatapathId(conn, req.getDpId());
 			rid = dao.getPortRidFromDeviceNamePortNumber(conn, deviceName, Integer.parseInt(req.getInPort()));
 			List<Map<String, Map<String, Object>>> ret = dao.getDevicePortInfoSetFlowFromPortRid(conn, rid);
