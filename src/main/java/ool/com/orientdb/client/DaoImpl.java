@@ -1222,11 +1222,12 @@ public class DaoImpl implements Dao {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ool.com.orientdb.client.Dao#getPortRidFromDeviceNamePortNumber(java.lang.String, int)
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getPortRidFromDeviceNamePortNumber(java.sql.Connection, java.lang.String, java.lang.Integer)
 	 */
 	@Override
-	public String getPortRidFromDeviceNamePortNumber(Connection conn, String deviceName, int portNumber) throws SQLException {
+	public String getPortRidFromDeviceNamePortNumber(Connection conn, String deviceName, Integer portNumber) throws SQLException {
 		final String fname = "getPortRidFromDeviceNamePortNumber";
 		if (logger.isTraceEnabled()){
 			logger.trace(String.format("%s(deviceName=%s, portNumber=%s) - start", fname, deviceName, portNumber));
@@ -2005,7 +2006,7 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#createPortInfo(java.sql.Connection, java.lang.String, int, java.lang.String)
 	 */
 	@Override
-	public int createPortInfo(Connection conn, String portName, int portNumber, String deviceName) throws SQLException {
+	public int createPortInfo(Connection conn, String portName, Integer portNumber, String deviceName) throws SQLException {
 		final String fname = "createPortInfo";
 		if (logger.isTraceEnabled()) {
 			logger.trace(String.format("%s(conn=%s, portName=%s, portNumber=%s, deviceName=%s) - start", fname, conn, portName, portNumber, deviceName));
@@ -2017,6 +2018,10 @@ public class DaoImpl implements Dao {
 			if (devMap == null) {
 				ret = DB_RESPONSE_STATUS_NOT_FOUND;
 				return ret;
+			}
+
+			if (StringUtils.equals((String)devMap.get("type"), NODE_TYPE_SERVER)) {
+				portNumber = null;
 			}
 
 			Object[] params = {portName, portNumber, deviceName};
@@ -2077,7 +2082,7 @@ public class DaoImpl implements Dao {
 	 * @see ool.com.orientdb.client.Dao#updatePortInfo(java.sql.Connection, java.lang.String, java.lang.String, java.lang.String, int)
 	 */
 	@Override
-	public int updatePortInfo(Connection conn, String keyPortName, String keyDeviceName, String portName, int portNumber) throws SQLException {
+	public int updatePortInfo(Connection conn, String keyPortName, String keyDeviceName, String portName, Integer portNumber) throws SQLException {
 		final String fname = "updatePortInfo";
 		if (logger.isTraceEnabled()) {
 			logger.trace(String.format("%s(conn=%s, keyPortName=%s, keyDeviceName=%s, portName=%s, portNumber=%s) - start", fname, conn, keyPortName, keyDeviceName, portName, portNumber));
@@ -2097,7 +2102,7 @@ public class DaoImpl implements Dao {
 			if (StringUtils.isBlank(portName)) {
 				portName = (String)current.get("name");
 			}
-			if (portNumber == 0) {
+			if (portNumber == null) {
 				portNumber = (Integer)current.get("portNumber");
 			}
 

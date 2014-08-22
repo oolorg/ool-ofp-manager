@@ -269,7 +269,7 @@ public interface Dao {
 	 * @return port Rid
 	 * @throws SQLException
 	 */
-	String getPortRidFromDeviceNamePortNumber(Connection conn, String deviceName, int portNumber) throws SQLException;
+	String getPortRidFromDeviceNamePortNumber(Connection conn, String deviceName, Integer portNumber) throws SQLException;
 
 	/**
 	 * @param portRid
@@ -573,7 +573,7 @@ public interface Dao {
 	 * @param deviceName
 	 * @return
 	 */
-	int createPortInfo(Connection conn, String portName, int portNumber, String deviceName) throws SQLException;
+	int createPortInfo(Connection conn, String portName, Integer portNumber, String deviceName) throws SQLException;
 
 	/**
 	 * Update PortInfo
@@ -585,7 +585,7 @@ public interface Dao {
 	 * @return
 	 * @throws SQLException
 	 */
-	int updatePortInfo(Connection conn, String keyPortName, String keyDeviceName, String portName, int portNumber) throws SQLException;
+	int updatePortInfo(Connection conn, String keyPortName, String keyDeviceName, String portName, Integer portNumber) throws SQLException;
 
 	/**
 	 * Delete PortInfo

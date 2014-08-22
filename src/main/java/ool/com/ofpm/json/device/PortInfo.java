@@ -1,5 +1,6 @@
 package ool.com.ofpm.json.device;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.gson.Gson;
@@ -8,7 +9,7 @@ import com.google.gson.reflect.TypeToken;
 
 public class PortInfo implements Cloneable {
 	private String portName;
-	private int portNumber;
+	private Integer portNumber;
 
 	@Override
 	public boolean equals(Object obj) {
@@ -17,14 +18,18 @@ public class PortInfo implements Cloneable {
 		if (this.getClass() != obj.getClass()) return false;
 		PortInfo other = (PortInfo)obj;
 		if (!StringUtils.equals(other.portName,  this.portName)) return false;
-		if (other.portNumber != this.portNumber) return false;
+		if (!ObjectUtils.equals(other.portNumber, this.portNumber)) return false;
+//		if (other.portNumber != this.portNumber) return false;
 		return true;
 	}
 	@Override
 	public int hashCode() {
-		int hash = this.portNumber;
+		int hash = 0;
 		if (this.portName != null) {
 			hash += this.portName.hashCode();
+		}
+		if (this.portNumber != null) {
+			hash += this.portNumber;
 		}
 		return hash;
 	}
@@ -55,10 +60,10 @@ public class PortInfo implements Cloneable {
 	public void setPortName(String portName) {
 		this.portName = portName;
 	}
-	public int getPortNumber() {
+	public Integer getPortNumber() {
 		return portNumber;
 	}
-	public void setPortNumber(int portNumber) {
+	public void setPortNumber(Integer portNumber) {
 		this.portNumber = portNumber;
 	}
 }

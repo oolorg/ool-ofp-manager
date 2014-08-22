@@ -217,10 +217,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * Make list of link for LogicalTopology from deviceName, and return it.
 	 * @param conn
 	 * @param devName
+	 * @param setPortNumber If this value is false, portNumber is every time 0.
 	 * @return list of link for LogicalTopology.
 	 * @throws SQLException
 	 */
-	private Set<LogicalLink> getLogicalLink(Connection conn, String devName) throws SQLException {
+	private Set<LogicalLink> getLogicalLink(Connection conn, String devName, boolean setPortNumber) throws SQLException {
 		Set<LogicalLink> linkSet = new HashSet<LogicalLink>();
 		List<Map<String, Object>> patchDocList = dao.getPatchWiringsFromDeviceName(conn, devName);
 		if (patchDocList == null) {
@@ -250,6 +251,19 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 		if (linkSet.isEmpty()) {
 			return null;
+		}
+		if (!setPortNumber) {
+			return linkSet;
+		}
+		/* Set port number at port data in logical link */
+		for (LogicalLink link : linkSet) {
+			for (PortData port : link.getLink()) {
+				Map<String, Object> portMap = dao.getPortInfoFromPortName(
+						conn,
+						port.getDeviceName(),
+						port.getPortName());
+				port.setPortNumber((Integer)portMap.get("number"));
+			}
 		}
 		return linkSet;
 	}
@@ -319,9 +333,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		Connection conn = null;
 		try {
 			utilsJdbc = new ConnectionUtilsJdbcImpl();
-			conn = utilsJdbc.getConnection(false);
+			conn = utilsJdbc.getConnection(true);
 			dao = new DaoImpl(utilsJdbc);
 
+			/* Make nodes and links */
 			List<OfpConDeviceInfo> nodeList = new ArrayList<OfpConDeviceInfo>();
 			List<LogicalLink>      linkList = new ArrayList<LogicalLink>();
 			Set<LogicalLink>       linkSet  = new HashSet<LogicalLink>();
@@ -332,7 +347,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 				nodeList.add(node);
 
-				Set<LogicalLink> links = this.getLogicalLink(conn, devName);
+				Set<LogicalLink> links = this.getLogicalLink(conn, devName, true);
 				if (links == null) {
 					continue;
 				}
@@ -354,7 +369,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
 		} finally {
-			utilsJdbc.rollback(conn);
+//			utilsJdbc.rollback(conn);
 			utilsJdbc.close(conn);
 		}
 
@@ -480,12 +495,19 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				/* Create current links */
 				for (OfpConDeviceInfo requestedNode : requestedNodes) {
 					String devName = requestedNode.getDeviceName();
-					Set<LogicalLink> linkSet = this.getLogicalLink(conn, devName);
+					Set<LogicalLink> linkSet = this.getLogicalLink(conn, devName, false);
 					if (linkSet != null) {
 						currentLinkList.addAll(linkSet);
 					}
 				}
 				this.normalizeLogicalLink(requestedNodes, currentLinkList);
+
+				/* Set port number 0, because when run Collection.removeAll, port number remove influence. */
+				for (LogicalLink link : requestedLinkList) {
+					for (PortData port : link.getLink()) {
+						port.setPortNumber(0);
+					}
+				}
 
 				/* get difference between current and next */
 				incLinkList.addAll(requestedLinkList);
@@ -871,7 +893,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		Connection          conn  = null;
 		try {
 			utils = new ConnectionUtilsJdbcImpl();
-			conn  = utils.getConnection(false);
+			conn  = utils.getConnection(true);
 
 			Dao dao = new DaoImpl(utils);
 			String dpid = req.getDatapathId();
@@ -943,7 +965,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
 		} finally {
-			utils.rollback(conn);
+//			utils.rollback(conn);
 			utils.close(conn);
 		}
 
