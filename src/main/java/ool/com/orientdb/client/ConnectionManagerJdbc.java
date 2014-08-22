@@ -18,7 +18,6 @@ import org.apache.commons.dbcp.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp.PoolableConnectionFactory;
 import org.apache.commons.dbcp.PoolingDataSource;
 import org.apache.commons.dbutils.DbUtils;
-import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
 public class ConnectionManagerJdbc {
@@ -40,7 +39,7 @@ public class ConnectionManagerJdbc {
      * @param config
      * @throws SQLException
      */
-    private void initializeDataSource(Config config) {
+	private void initializeDataSource(Config config) {
         String user = config.getString(CONFIG_KEY_DB_USER);
         String password = config.getString(CONFIG_KEY_DB_PASSWORD);
 
@@ -61,7 +60,14 @@ public class ConnectionManagerJdbc {
 
         // コネクションをプールするDataSource を作成する
         @SuppressWarnings("rawtypes")
-		ObjectPool pool = new GenericObjectPool();
+		GenericObjectPool pool = new GenericObjectPool();
+        // コネクションプールの設定を行う
+        int  maxActive = config.getInt(CONFIG_KEY_DB_MAX_ACTIVE_CONN, 100);
+        long maxWait   = Long.parseLong(config.getString(CONFIG_KEY_DB_WAIT, "-1"));
+        pool.setMaxActive(maxActive);
+        pool.setMaxIdle(maxActive);
+        pool.setMaxWait(maxWait);
+
         driverUrl = config.getString(CONFIG_KEY_DB_URL);
         ConnectionFactory connFactory = new DriverManagerConnectionFactory(driverUrl, params);
         new PoolableConnectionFactory(connFactory, pool, null,

@@ -28,7 +28,7 @@ public class OfpmDefinition {
 	/* Define agent manager config */
 	public static final String AGENT_PATH   = "/ofpa/ctrl";
 	public static final String AGENT_RECODE = "agent.recode";
-	
+
 	/* Define openflow controller config */
 	public static final String OFC_PATH = "/ofc/ryu/ctrl";
 
@@ -48,6 +48,8 @@ public class OfpmDefinition {
 	public static final String CONFIG_KEY_DB_DRIVER = "db.driver";
 	public static final String CONFIG_KEY_DB_PASSWORD = "db.password";
 	public static final String DB_DEFAULT = "admin";
+	public static final String CONFIG_KEY_DB_MAX_ACTIVE_CONN = "db.conn.active.max";
+	public static final String CONFIG_KEY_DB_WAIT = "db.conn.wait";
 
 	/* Define Auth System User Pass */
 	public static final String CONFIG_KEY_AUTH_USERNAME = "auth.username";
