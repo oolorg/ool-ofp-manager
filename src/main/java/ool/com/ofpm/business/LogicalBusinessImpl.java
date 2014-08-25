@@ -33,8 +33,6 @@ import ool.com.dmdb.json.nic.NicReadRequest;
 import ool.com.dmdb.json.nic.NicReadResponse;
 import ool.com.dmdb.json.port.PortReadRequest;
 import ool.com.dmdb.json.port.PortReadResponse;
-import ool.com.ofpm.business.common.OFPatchCommon;
-import ool.com.ofpm.business.common.OFPatchCommonImpl;
 import ool.com.ofpm.client.NetworkConfigSetupperClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
 import ool.com.ofpm.client.OFCClient;
@@ -85,7 +83,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 	Config conf = new ConfigImpl();
 
-	OFPatchCommon ofPatchBusiness = new OFPatchCommonImpl();
+//	OFPatchCommon ofPatchBusiness = new OFPatchCommonImpl();
 
 	Dao dao = null;
 
@@ -1012,6 +1010,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		return used;
 	}
 
+	private MultivaluedMap<String, Nic> dmdbNicCache = new MultivaluedHashMap<String, Nic>();
 	/**
 	 * Get Nic info from Device Manager DB.
 	 * @param deviceName
@@ -1023,22 +1022,30 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 */
 	private Nic getNic(String deviceName, String nicName, DMDBClient client, String ofpmToken) throws DMDBClientException {
 		Nic ret = null;
-		Nic nic = new Nic();
-		nic.setNicName(nicName);
-		NicReadRequest req = new NicReadRequest();
-		req.setDeviceName(deviceName);
-		req.setParams(nic);
-		req.setAuth(ofpmToken);
-		NicReadResponse res = client.nicRead(req);
-		if (res.getStatus() != STATUS_SUCCESS) {
-			logger.error(res.getMessage());
+		List<Nic> nics = dmdbNicCache.get(deviceName);
+		if (nics == null) {
+			NicReadRequest req = new NicReadRequest();
+			req.setDeviceName(deviceName);
+			req.setAuth(ofpmToken);
+			NicReadResponse res = client.nicRead(req);
+			if (res.getStatus() != STATUS_SUCCESS) {
+				logger.error(res.getMessage());
+			}
+			if (res.getResult() == null) {
+				return null;
+			}
+			nics = res.getResult();
+			dmdbNicCache.put(deviceName, nics);
 		}
-		if (res.getResult() != null && res.getResult().size() > 0) {
-			ret = res.getResult().get(0);
+		for (Nic nic: nics) {
+			if (StringUtils.equals(nic.getNicName(), nicName)) {
+				ret = nic;
+			}
 		}
 		return ret;
 	}
 
+	private MultivaluedMap<String, Port> dmdbPortCache = new MultivaluedHashMap<String, Port>();
 	/**
 	 * Get port info from Device Manager DB.
 	 * @param deviceName
@@ -1050,18 +1057,25 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 */
 	private Port getPort(String deviceName, String portName, DMDBClient client, String ofpmToken) throws DMDBClientException {
 		Port ret = null;
-		Port port = new Port();
-		port.setPortName(portName);
-		PortReadRequest req = new PortReadRequest();
-		req.setDeviceName(deviceName);
-		req.setParams(port);
-		req.setAuth(ofpmToken);
-		PortReadResponse res = client.portRead(req);
-		if (res.getStatus() != STATUS_SUCCESS) {
-			logger.error(res.getMessage());
+		List<Port> ports = dmdbPortCache.get(deviceName);
+		if (ports == null) {
+			PortReadRequest req = new PortReadRequest();
+			req.setDeviceName(deviceName);
+			req.setAuth(ofpmToken);
+			PortReadResponse res = client.portRead(req);
+			if (res.getStatus() != STATUS_SUCCESS) {
+				logger.error(res.getMessage());
+			}
+			if (res.getResult() == null) {
+				return null;
+			}
+			ports = res.getResult();
+			dmdbPortCache.put(deviceName, ports);
 		}
-		if (res.getResult() != null && res.getResult().size() > 0) {
-			ret = res.getResult().get(0);
+		for (Port port : ports) {
+			if (StringUtils.equals(port.getPortName(), portName)) {
+				ret = port;
+			}
 		}
 		return ret;
 	}

@@ -24,7 +24,6 @@ import org.apache.log4j.Logger;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
 //import com.orientechnologies.orient.jdbc.OrientJdbcConnection;
 
 /**
@@ -671,9 +670,11 @@ public class DaoImpl implements Dao {
 		}
 		List<Map<String, Object>> ret = null;
 		try {
-			String query = String.format(SQL_GET_DIJKSTRA_PATH_FLATTEN, ridA, ridZ);
+			String sql = SQL_GET_DIJKSTRA_PATH_FLATTEN;
+			sql = sql.replaceFirst("\\?", ridA);
+			sql = sql.replaceFirst("\\?", ridZ);
 			MapListHandler rsh = new MapListHandler("rid", "class", "name", "number", "deviceName", "type", "datapathId", "ofcIp");
-			ret = utilsJdbc.query(conn, query, rsh);
+			ret = utilsJdbc.query(conn, sql, rsh);
 		} catch (Exception e) {
 			throw new SQLException(e.getMessage());
 		} finally {
