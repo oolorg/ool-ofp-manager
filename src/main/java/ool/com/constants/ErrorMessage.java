@@ -11,6 +11,7 @@ public class ErrorMessage {
 	public static final String IS_NOT_NULL     = "%s is not null.";
 	public static final String IS_NOT_BLANK    = "%s is not blank.";
 	public static final String IS_NOT_INCLUDED = "%s is not included %s.";
+	public static final String IS_OVERLAPPED   = "%s is overlapped.";
 	public static final String THERE_IS_NULL              = "There is null in %s.";
 	public static final String THERE_IS_BLANK             = "There is blank in %s";
 	public static final String THERE_IS_INVALID_PARAMETER = "There is invalid parameter %s.";

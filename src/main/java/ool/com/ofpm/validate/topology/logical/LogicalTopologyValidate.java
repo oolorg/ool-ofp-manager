@@ -3,12 +3,9 @@ package ool.com.ofpm.validate.topology.logical;
 import static ool.com.constants.ErrorMessage.*;
 import static ool.com.constants.OfpmDefinition.*;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import ool.com.ofpm.exception.ValidateException;
-import ool.com.ofpm.json.device.Node;
 import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.topology.logical.LogicalLink;
 import ool.com.ofpm.json.topology.logical.LogicalTopology;
@@ -40,15 +37,6 @@ public class LogicalTopologyValidate extends BaseValidate {
 		}
 		if (BaseValidate.checkNull(links)) {
 			throw new ValidateException(String.format(IS_NULL, "links"));
-		}
-
-		Set<Node> noOverlapsNodes = new HashSet<Node>(nodes);
-		if (noOverlapsNodes.size() != nodes.size()) {
-			throw new ValidateException(String.format(THERE_ARE_OVERLAPPED, "node"));
-		}
-		Set<LogicalLink> noOverlapsLinks = new HashSet<LogicalLink>(links);
-		if (noOverlapsLinks.size() != links.size()) {
-			throw new ValidateException(String.format(THERE_ARE_OVERLAPPED, "link"));
 		}
 
 		for (int ni = 0; ni < nodes.size(); ni++) {
@@ -93,12 +81,58 @@ public class LogicalTopologyValidate extends BaseValidate {
 				if (StringUtils.isBlank(port.getDeviceName())) {
 					throw new ValidateException(String.format(IS_BLANK, nowParamStr + ".deviceName"));
 				}
-				if (StringUtils.isBlank(port.getPortName())) {
-					throw new ValidateException(String.format(IS_BLANK, nowParamStr + ".portName"));
-				}
+//				if (StringUtils.isBlank(port.getPortName())) {
+//					throw new ValidateException(String.format(IS_BLANK, nowParamStr + ".portName"));
+//				}
 
 				if (!OFPMUtils.nodesContainsPort(nodes, port)) {
 					throw new ValidateException(String.format(NOT_FOUND, nowParamStr + " in nodes"));
+				}
+			}
+		}
+
+		for (int ni = 0; ni < nodes.size(); ni++) {
+			OfpConDeviceInfo node = nodes.get(ni);
+			for (int pi = 0; pi < node.getPorts().size(); pi++) {
+				OfpConPortInfo port = node.getPorts().get(pi);
+				for (int tpi = pi + 1; tpi < node.getPorts().size(); tpi++) {
+					OfpConPortInfo tport = node.getPorts().get(tpi);
+					if (StringUtils.equals(port.getPortName(), tport.getPortName())) {
+						throw new ValidateException(String.format(IS_OVERLAPPED, "node: deviceName=" + node.getDeviceName() + ", portName=" + port.getPortName()));
+					}
+				}
+				for (int tni = ni + 1; tni < nodes.size(); tni++) {
+					OfpConDeviceInfo tnode = nodes.get(tni);
+					if (!StringUtils.equals(tnode.getDeviceName(), node.getDeviceName())) {
+						continue;
+					}
+					for (int tpi = 0; tpi < node.getPorts().size(); tpi++) {
+						OfpConPortInfo tport = node.getPorts().get(tpi);
+						if (StringUtils.equals(tport.getPortName(), port.getPortName())) {
+							throw new ValidateException(String.format(IS_OVERLAPPED, "node: deviceName=" + node.getDeviceName() + ", portName=" + port.getPortName()));
+						}
+					}
+				}
+			}
+		}
+
+		for (int li = 0; li < links.size(); li++) {
+			LogicalLink link = links.get(li);
+			for (PortData port: link.getLink()) {
+				for (int tli = li + 1; tli < links.size(); tli++) {
+					LogicalLink tlink = links.get(tli);
+					if (port.getPortName() == null) {
+						continue;
+					}
+					for (PortData tport: tlink.getLink()) {
+						if (!StringUtils.equals(port.getDeviceName(), tport.getDeviceName())) {
+							continue;
+						}
+						if (!StringUtils.equals(port.getPortName(), tport.getPortName())) {
+							continue;
+						}
+						throw new ValidateException(String.format(IS_OVERLAPPED, "links-port: deviceName=" + port.getDeviceName() + ", portName=" + port.getPortName()));
+					}
 				}
 			}
 		}

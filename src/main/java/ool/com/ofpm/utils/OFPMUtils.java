@@ -29,8 +29,33 @@ public class OFPMUtils {
 	public static boolean nodesContainsPort(Collection<OfpConDeviceInfo> nodes, PortData port) {
 		for (OfpConDeviceInfo device : nodes) {
 			if (device.getDeviceName().equals(port.getDeviceName())) {
+				if (StringUtils.isBlank(port.getPortName())) {
+					return true;
+				}
 				for (OfpConPortInfo ofpConPort : device.getPorts()) {
 					if (ofpConPort.getPortName().equals(port.getPortName())) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	/**
+	 * Check port contains into nodes.
+	 * @param nodes
+	 * @param deviceName port device name.
+	 * @param portName port name. If this param is null, check only device name.
+	 * @return
+	 */
+	public static boolean nodesContainsPort(Collection<OfpConDeviceInfo> nodes, String deviceName, String portName) {
+		for (OfpConDeviceInfo device : nodes) {
+			if (device.getDeviceName().equals(deviceName)) {
+				if (StringUtils.isBlank(portName)) {
+					return true;
+				}
+				for (OfpConPortInfo ofpConPort : device.getPorts()) {
+					if (ofpConPort.getPortName().equals(portName)) {
 						return true;
 					}
 				}

@@ -201,9 +201,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		List<LogicalLink> removalLinks = new ArrayList<LogicalLink>();
 		for (LogicalLink link : links) {
-			if (!OFPMUtils.nodesContainsPort(nodes, link.getLink().get(0))) {
+			List<PortData> ports = link.getLink();
+			if (!OFPMUtils.nodesContainsPort(nodes, ports.get(0).getDeviceName(), ports.get(0).getPortName())) {
 				removalLinks.add(link);
-			} else if (!OFPMUtils.nodesContainsPort(nodes, link.getLink().get(1))) {
+			} else if (!OFPMUtils.nodesContainsPort(nodes, ports.get(1).getDeviceName(), ports.get(1).getPortName())) {
 				removalLinks.add(link);
 			}
 		}
@@ -505,7 +506,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				/* Set port number 0, because when run Collection.removeAll, port number remove influence. */
 				for (LogicalLink link : requestedLinkList) {
 					for (PortData port : link.getLink()) {
-						port.setPortNumber(0);
+						port.setPortNumber(null);
 					}
 				}
 
