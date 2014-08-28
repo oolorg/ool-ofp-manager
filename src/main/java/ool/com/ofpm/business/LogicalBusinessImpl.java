@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,12 +29,16 @@ import ool.com.dmdb.client.DeviceManagerDBClientImpl;
 import ool.com.dmdb.exception.DMDBClientException;
 import ool.com.dmdb.exception.DeviceManagerDBClientException;
 import ool.com.dmdb.json.Nic;
+import ool.com.dmdb.json.PlaneType;
 import ool.com.dmdb.json.Port;
+import ool.com.dmdb.json.Switch;
 import ool.com.dmdb.json.Used;
 import ool.com.dmdb.json.nic.NicReadRequest;
 import ool.com.dmdb.json.nic.NicReadResponse;
 import ool.com.dmdb.json.port.PortReadRequest;
 import ool.com.dmdb.json.port.PortReadResponse;
+import ool.com.dmdb.json.sw.SwitchReadRequest;
+import ool.com.dmdb.json.sw.SwitchReadResponse;
 import ool.com.ofpm.client.NetworkConfigSetupperClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
 import ool.com.ofpm.client.OFCClient;
@@ -63,6 +69,7 @@ import ool.com.ofpm.validate.topology.logical.LogicalTopologyValidate;
 import ool.com.openam.client.OpenAmClient;
 import ool.com.openam.client.OpenAmClientException;
 import ool.com.openam.client.OpenAmClientImpl;
+import ool.com.openam.json.OpenAmAttributesOut;
 import ool.com.openam.json.OpenAmIdentitiesOut;
 import ool.com.openam.json.TokenIdOut;
 import ool.com.orientdb.client.ConnectionUtilsJdbc;
@@ -96,12 +103,15 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	/**
 	 * Normalize nodes for update/get LogicalTopology.
 	 * Remove node that deviceType is not SERVER or SWITCH and remove node that have no ports.
-	 * and remove node that have no ports.
 	 * @param conn
 	 * @param nodes
 	 * @throws SQLException
 	 */
 	private void normalizeLogicalNode(Connection conn, Collection<OfpConDeviceInfo> nodes) throws SQLException {
+		String fname = "normalizeLogicalNode";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(conn=%s, nodes=%s) - start", fname, conn, nodes));
+		}
 		Map<String, Boolean> devTypeMap = new HashMap<String, Boolean>();
 		List<OfpConDeviceInfo> removalNodeList = new ArrayList<OfpConDeviceInfo>();
 		for (OfpConDeviceInfo node : nodes) {
@@ -135,6 +145,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 		}
 		nodes.removeAll(removalNodeList);
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s() - end", fname));
+		}
 	}
 
 	/**
@@ -145,6 +158,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @throws SQLException
 	 */
 	private OfpConDeviceInfo getLogicalNode(Connection conn, String devName) throws SQLException {
+		String fname = "getLogicalNode";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(conn=%s, devName=%s) - start", fname, conn, devName));
+		}
 		Map<String, Object> devDoc = dao.getNodeInfoFromDeviceName(conn, devName);
 		if (devDoc == null) {
 			return null;
@@ -178,9 +195,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 			portList.add(port);
 		}
-
 		node.setPorts(portList);
-
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, node));
+		}
 		return node;
 	}
 
@@ -200,9 +218,11 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		List<LogicalLink> removalLinks = new ArrayList<LogicalLink>();
 		for (LogicalLink link : links) {
 			List<PortData> ports = link.getLink();
-			if (!OFPMUtils.nodesContainsPort(nodes, ports.get(0).getDeviceName(), ports.get(0).getPortName())) {
+//			if (!OFPMUtils.nodesContainsPort(nodes, ports.get(0).getDeviceName(), ports.get(0).getPortName())) {
+			if (!OFPMUtils.nodesContainsPort(nodes, ports.get(0).getDeviceName(), null)) {
 				removalLinks.add(link);
-			} else if (!OFPMUtils.nodesContainsPort(nodes, ports.get(1).getDeviceName(), ports.get(1).getPortName())) {
+//			} else if (!OFPMUtils.nodesContainsPort(nodes, ports.get(1).getDeviceName(), ports.get(1).getPortName())) {
+			} else if (!OFPMUtils.nodesContainsPort(nodes, ports.get(1).getDeviceName(), null)) {
 				removalLinks.add(link);
 			}
 		}
@@ -221,6 +241,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @throws SQLException
 	 */
 	private Set<LogicalLink> getLogicalLink(Connection conn, String devName, boolean setPortNumber) throws SQLException {
+		String fname = "getLogicalLink";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(conn=%s, devName=%s, setPortNumber=%s) - start", fname, conn, devName, setPortNumber));
+		}
 		Set<LogicalLink> linkSet = new HashSet<LogicalLink>();
 		List<Map<String, Object>> patchDocList = dao.getPatchWiringsFromDeviceName(conn, devName);
 		if (patchDocList == null) {
@@ -263,6 +287,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 						port.getPortName());
 				port.setPortNumber((Integer)portMap.get("number"));
 			}
+		}
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, linkSet));
 		}
 		return linkSet;
 	}
@@ -475,8 +502,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		/* PHASE 4: Update topology */
 		MultivaluedMap<String, Map<String, Object>> reducedFlows   = new MultivaluedHashMap<String, Map<String, Object>>();
 		MultivaluedMap<String, Map<String, Object>> augmentedFlows = new MultivaluedHashMap<String, Map<String, Object>>();
+		List<LogicalLink> ncsNotifyLinkList = new ArrayList<LogicalLink>();
 		ConnectionUtilsJdbc utilsJdbc = null;
-		Connection          conn      = null;
+		Connection conn = null;
 		try {
 			/* initialize db connectors */
 			utilsJdbc = new ConnectionUtilsJdbcImpl();
@@ -509,11 +537,31 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				}
 
 				/* get difference between current and next */
+				decLinkList.addAll(currentLinkList);
+				decLinkList.removeAll(requestedLinkList);
+
 				incLinkList.addAll(requestedLinkList);
 				incLinkList.removeAll(currentLinkList);
 
-				decLinkList.addAll(currentLinkList);
-				decLinkList.removeAll(requestedLinkList);
+				/* sort incliment links. 1st link have port name, final link no have port name. */
+				Collections.sort(incLinkList, new Comparator<LogicalLink>() {
+					@Override
+					public int compare(LogicalLink link1, LogicalLink link2) {
+						int score1 = 0;
+						for (PortData port1 : link1.getLink()) {
+							if (StringUtils.isBlank(port1.getPortName())) {
+								score1++;
+							}
+						}
+						int score2 = 0;
+						for (PortData port2 : link2.getLink()) {
+							if (StringUtils.isBlank(port2.getPortName())) {
+								score2++;
+							}
+						}
+						return score1 - score2;
+					}
+				});
 			}
 
 			/* update patch wiring and make patch link */
@@ -523,23 +571,10 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 			for (LogicalLink link : incLinkList) {
 				this.addInclementLogicalLink(conn, link, client, ofpmToken, augmentedFlows);
-				/* Notify NCS */
-//				List<String> deviceNames = link.getDeviceName();
-//				List<Integer> portNames = augmentedPatches.getResult().get(0).getPortName();
-//				int notifyNcsRet = notifyNcs(tokenId, deviceNames, portNames);
-//				if (notifyNcsRet != STATUS_SUCCESS) {
-//					res.setStatus(augmentedPatches.getStatus());
-//					res.setMessage(augmentedPatches.getMessage());
-//					return res.toJson();
-//				}
 			}
+			ncsNotifyLinkList = incLinkList;
 
 			utilsJdbc.commit(conn);
-//		} catch (AgentManagerException ame) {
-//			logger.error(ame);
-//			res.setStatus(STATUS_INTERNAL_ERROR);
-//			res.setMessage(UNEXPECTED_ERROR);
-//			return res.toJson();
 		} catch (Exception e) {
 			utilsJdbc.rollback(conn);
 			OFPMUtils.logErrorStackTrace(logger, e);
@@ -596,6 +631,23 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			return res.toJson();
 		}
 
+
+		/* PHASE 6: notify NCS. */
+		try {
+			String ncsEnFlg = conf.getString(CONFIG_KEY_NCS_ENABLE, "false");
+			if (StringUtils.equals(ncsEnFlg, "true")) {
+				int ncsNotifyRet = this.notifyNcs(requestedTopology.getTokenId(), ncsNotifyLinkList, ofpmToken);
+				if (ncsNotifyRet != STATUS_SUCCESS) {
+					res.setStatus(ncsNotifyRet);
+					res.setMessage("Faild plane switches vlan");
+				}
+			}
+		} catch (DMDBClientException | OpenAmClientException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+		}
+
 		String ret = res.toJson();
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
@@ -603,6 +655,120 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		return ret;
 	}
 
+	private Map<String, Switch> dmdbPlaneCache = new HashMap<String, Switch>();
+	/**
+	 * Get plane switch from DMDB. If DB no have requested device, return null.
+	 * @param deviceName
+	 * @param client
+	 * @param ofpmToken
+	 * @return
+	 * @throws DMDBClientException
+	 */
+	private Switch getPlaneSwitch(String deviceName, DMDBClient client, String ofpmToken) throws DMDBClientException {
+		Switch sw = dmdbPlaneCache.get(deviceName);
+		if (sw == null) {
+			Switch params = new Switch();
+			params.setTrafficType(DEVICE_TRAFFIC_TYPE_PLANE);
+			SwitchReadRequest req = new SwitchReadRequest();
+			req.setAuth(ofpmToken);
+			req.setParams(params);
+			SwitchReadResponse res = client.switchRead(req);
+			if (res.getStatus() != STATUS_SUCCESS) {
+				logger.error(res.getMessage());
+			}
+			if (res.getResult() == null) {
+				return null;
+			}
+			for (Switch swbuf : res.getResult()) {
+				dmdbPlaneCache.put(swbuf.getDeviceName(), swbuf);
+				if (StringUtils.equals(swbuf.getDeviceName(), deviceName)) {
+					sw = swbuf;
+				}
+			}
+		}
+		return sw;
+	}
+
+	/**
+	 * Notify patching with plane switch to NCS.
+	 * @param userToken
+	 * @param links
+	 * @param ofpmToken
+	 * @return
+	 * @throws DMDBClientException
+	 * @throws OpenAmClientException
+	 */
+	private int notifyNcs(String userToken, List<LogicalLink> links, String ofpmToken) throws DMDBClientException, OpenAmClientException {
+		if (links == null || links.isEmpty()) {
+			return STATUS_SUCCESS;
+		}
+
+		OpenAmClient amClient = new OpenAmClientImpl(conf.getString(OPEN_AM_URL));
+		DMDBClient dmdbClient = new DMDBClientImpl(conf.getString(DEVICE_MANAGER_URL));
+		NetworkConfigSetupperClient ncsClient = new NetworkConfigSetupperClientImpl(conf.getString(NETWORK_CONFIG_SETUPPER_URL));
+
+		MultivaluedMap<String, String> dPlaneDevVlanMap = new MultivaluedHashMap<String, String>();
+//		MultivaluedMap<String, String> cPlaneDevVlanMap = new MultivaluedHashMap<String, String>();
+		for (LogicalLink link: links) {
+			List<PortData> ports = link.getLink();
+			for (PortData port : ports) {
+				String deviceName = port.getDeviceName();
+				String portName   = port.getPortName();
+
+				Switch swInfo = this.getPlaneSwitch(deviceName, dmdbClient, ofpmToken);
+				if (swInfo == null) {
+					continue;
+				}
+				if (!StringUtils.equals(swInfo.getTrafficType(), DEVICE_TRAFFIC_TYPE_PLANE)) {
+					continue;
+				}
+
+				Port portInfo = this.getPort(deviceName, portName, dmdbClient, ofpmToken);
+				if (portInfo == null) {
+					logger.warn(String.format(NOT_FOUND, "port=" + deviceName + "." + portName));
+					continue;
+				}
+
+				PlaneType type = portInfo.getTrafficType();
+				if (type.equals(PlaneType.D)) {
+					dPlaneDevVlanMap.add(deviceName, portName);
+//				} else if (type.equals(PlaneType.C)) {
+//					cPlaneDevVlanMap.add(deviceName, portName);
+				}
+			}
+		}
+
+		if (dPlaneDevVlanMap.isEmpty()) {
+			return STATUS_SUCCESS;
+		}
+
+		OpenAmAttributesOut attrsRes = amClient.getAttributes(userToken);
+		Map<String, List<String>> attrs = attrsRes.getAttrMap();
+		NetworkConfigSetupperIn ncsReq = new NetworkConfigSetupperIn();
+		ncsReq.setTokenId(ofpmToken);
+		List<NetworkConfigSetupperInData> params = new ArrayList<NetworkConfigSetupperInData>();
+		/* D */
+		List<String> dPlaneVlan = attrs.get(KEY_AM_DPLANE_VLAN);
+		if (dPlaneVlan != null && !dPlaneVlan.isEmpty()) {
+			for (Entry<String, List<String>> entry : dPlaneDevVlanMap.entrySet()) {
+				NetworkConfigSetupperInData data = new NetworkConfigSetupperInData(
+						entry.getKey(),
+						dPlaneVlan.get(0),
+						entry.getValue());
+				params.add(data);
+			}
+		}
+//		for (Entry<String, List<String>> entry : cPlaneDevVlanMap.entrySet()) {
+//			NetworkConfigSetupperInData data = new NetworkConfigSetupperInData(
+//					entry.getKey(),
+//					attrs.get("").get(0),
+//					entry.getValue());
+//			params.add(data);
+//		}
+		ncsReq.setParams(params);
+		BaseResponse resNcs = ncsClient.sendPlaneSwConfigData(ncsReq);
+		return resNcs.getStatus();
+	}
 	public int notifyNcs(String tokenId, List<String> deviceNames, List<Integer> portNames) {
 		int ret = STATUS_SUCCESS;
 		String openamUrl = conf.getString(OPEN_AM_URL);
@@ -665,65 +831,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		return ret;
 	}
-//
-//	private Map<OFCClient, List<AgentUpdateFlowData>> makeAgentUpdateFlowList(List<PatchLink> updatedLinks, String type) throws AgentManagerException {
-//		String fname = "makeAgentUpdateFlowList";
-//		if (logger.isDebugEnabled()) {
-//			logger.debug(String.format("%s(updatedLinks=%s, type=%s) - start", fname, updatedLinks, type));
-//		}
-//
-//		Map<OFCClient, List<AgentUpdateFlowData>> pairAgentClient_UpdateFlowDataList = new HashMap<OFCClient, List<AgentUpdateFlowData>>();
-//		for (PatchLink link : updatedLinks) {
-//			String switchIp = agentManager.getSwitchIp(link.getDeviceName());
-//			String ofcUrl = agentManager.getOfcUrl(switchIp);
-//
-//			AgentUpdateFlowData newUpdateFlowData = agentFlowJson.new AgentUpdateFlowData();
-//			newUpdateFlowData.setIp(switchIp);
-//			newUpdateFlowData.setType(type);
-//			newUpdateFlowData.setPort(link.getPortName());
-//			newUpdateFlowData.setOfcUrl(ofcUrl);
-//
-//			OFCClient agentClient = agentManager.getAgentClient(switchIp);
-//			if (!pairAgentClient_UpdateFlowDataList.containsKey(agentClient)) {
-//				pairAgentClient_UpdateFlowDataList.put(agentClient, new ArrayList<AgentUpdateFlowData>());
-//			}
-//			List<AgentUpdateFlowData> agentClientFlowDataList = pairAgentClient_UpdateFlowDataList.get(agentClient);
-//			agentClientFlowDataList.add(newUpdateFlowData);
-//		}
-//
-//		if (logger.isDebugEnabled()) {
-//			logger.debug(String.format("%s(ret=%s) - end", fname, pairAgentClient_UpdateFlowDataList));
-//		}
-//		return pairAgentClient_UpdateFlowDataList;
-//	}
-
-//	private boolean isOverlap(List<List<String>> dataList, List<String> data) {
-//		if (logger.isDebugEnabled()) {
-//    		logger.debug(String.format("isOverlap(dataList=%s, data=%s) - start ", dataList, data));
-//    	}
-//		boolean oneWordOverlapFlg = false;
-//		for (List<String> dataSet : dataList) {
-//			oneWordOverlapFlg = false;
-//			for ( String str : data) {
-//				if (!dataSet.contains(str)) {
-//					break;
-//				} else {
-//					if (oneWordOverlapFlg) {
-//						if (logger.isDebugEnabled()) {
-//				    		logger.debug(String.format("isOverlap(ret=%s) - end ", true));
-//				    	}
-//						return true;
-//					} else {
-//						oneWordOverlapFlg = true;
-//					}
-//				}
-//			}
-//		}
-//		if (logger.isDebugEnabled()) {
-//    		logger.debug(String.format("isOverlap(ret=%s) - end ", false));
-//    	}
-//		return false;
-//	}
 
 	/* (non-Javadoc)
 	 * @see ool.com.ofpm.business.LogicalBusiness#setFlow(java.lang.String)
@@ -889,7 +996,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 
 		/* PHASE 2:Set Flows into OFPS that is designated by datapathId. */
 		ConnectionUtilsJdbc utils = null;
-		Connection          conn  = null;
+		Connection conn = null;
 		try {
 			utils = new ConnectionUtilsJdbcImpl();
 			conn  = utils.getConnection(true);
@@ -1214,8 +1321,14 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 		/* make flow internal switch */
 		{
-			List<String> txInterMacList = dao.getInternalMacListFromDeviceNameInPort(conn, (String)txOfpsMap.get("name"), ((Integer)txInPortMap.get("number")).toString());
-			List<String> rxInterMacList = dao.getInternalMacListFromDeviceNameInPort(conn, (String)rxOfpsMap.get("name"), ((Integer)rxOutPortMap.get("number")).toString());
+			List<String> txInterMacList = dao.getInternalMacListFromDeviceNameInPort(
+					conn,
+					(String)txOfpsMap.get("name"),
+					((Integer)txInPortMap.get("number")).toString());
+			List<String> rxInterMacList = dao.getInternalMacListFromDeviceNameInPort(
+					conn,
+					(String)rxOfpsMap.get("name"),
+					((Integer)rxOutPortMap.get("number")).toString());
 			for (int i = 1; i < patchMapList.size() - 1; i++) {
 				String rid = (String)patchMapList.get(i).get("parent");
 

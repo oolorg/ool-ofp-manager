@@ -11,7 +11,6 @@ import java.util.IllegalFormatException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConDeviceInfo;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConPortInfo;
 
@@ -20,27 +19,27 @@ import org.apache.log4j.Logger;
 
 public class OFPMUtils {
 
-	/**
-	 * Check port contains in nodes.
-	 * @param nodes
-	 * @param port
-	 * @return
-	 */
-	public static boolean nodesContainsPort(Collection<OfpConDeviceInfo> nodes, PortData port) {
-		for (OfpConDeviceInfo device : nodes) {
-			if (device.getDeviceName().equals(port.getDeviceName())) {
-				if (StringUtils.isBlank(port.getPortName())) {
-					return true;
-				}
-				for (OfpConPortInfo ofpConPort : device.getPorts()) {
-					if (ofpConPort.getPortName().equals(port.getPortName())) {
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
+//	/**
+//	 * Check port contains in nodes.
+//	 * @param nodes
+//	 * @param port
+//	 * @return
+//	 */
+//	public static boolean nodesContainsPort(Collection<OfpConDeviceInfo> nodes, PortData port) {
+//		for (OfpConDeviceInfo device : nodes) {
+//			if (device.getDeviceName().equals(port.getDeviceName())) {
+//				if (StringUtils.isBlank(port.getPortName())) {
+//					return true;
+//				}
+//				for (OfpConPortInfo ofpConPort : device.getPorts()) {
+//					if (ofpConPort.getPortName().equals(port.getPortName())) {
+//						return true;
+//					}
+//				}
+//			}
+//		}
+//		return false;
+//	}
 	/**
 	 * Check port contains into nodes.
 	 * @param nodes

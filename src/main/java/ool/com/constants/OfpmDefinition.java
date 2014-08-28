@@ -41,6 +41,7 @@ public class OfpmDefinition {
 	/* Define Network Config Setupper url */
 	public static final String NETWORK_CONFIG_SETUPPER_URL         = "networkconfigsetupper.url";
 	public static final String NCS_PLANE_SW_CONFIG                 = "/plane_sw_config";
+	public static final String CONFIG_KEY_NCS_ENABLE = "networkconfigsetupper.enable";
 
 	/* Define Database url */
 	public static final String CONFIG_KEY_DB_URL = "db.url";
@@ -63,6 +64,13 @@ public class OfpmDefinition {
 	public static final String D_PLANE_SW_HOST_NAME                = "D-Plane_SW01";
 	public static final String OFP_SW_HOST_NAME                    = "OFP_SW01";
 
+	/* Define DMDB node traffic type */
+	public static final String DEVICE_TRAFFIC_TYPE_CLIENT  = "001";
+	public static final String DEVICE_TRAFFIC_TYPE_SERVER  = "002";
+	public static final String DEVICE_TRAFFIC_TYPE_MEASURE = "003";
+	public static final String DEVICE_TRAFFIC_TYPE_PLANE   = "004";
+	public static final String DEVICE_TRAFFIC_TYPE_SWITCH  = "005";
+
 	/* Define validation parameters */
 	public static final int COLLECT_NUMBER_OF_DEVICE_NAMES_IN_LINK = 2;
 	public static final String[] ENABLE_OFP_FLAGS    = {"true", "false"};
@@ -77,4 +85,7 @@ public class OfpmDefinition {
 
 	/* Define max link ratio */
 	public static final long LINK_MAXIMUM_USED_RATIO = 10000L;
+
+	/* Define open am attribute key */
+	public static final String KEY_AM_DPLANE_VLAN = "d-vlan";
 }
