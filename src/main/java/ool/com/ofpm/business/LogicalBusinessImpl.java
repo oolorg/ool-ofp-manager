@@ -375,7 +375,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 			linkList.addAll(linkSet);
 			this.normalizeLogicalNode(conn,     nodeList);
-			this.normalizeLogicalLink(nodeList, linkList);
+//			this.normalizeLogicalLink(nodeList, linkList);
 
 			LogicalTopology topology = new LogicalTopology();
 			topology.setNodes(nodeList);
