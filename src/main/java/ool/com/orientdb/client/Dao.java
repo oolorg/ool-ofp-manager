@@ -278,6 +278,14 @@ public interface Dao {
 	Map<String, Object> getNodeInfoFromDeviceRid(Connection conn, String ofpRid) throws SQLException;
 
 	/**
+	 * Get DeviceInfo list in db.
+	 * @param conn
+	 * @return
+	 * @throws SQLException
+	 */
+	List<Map<String, Object>> getNodeInfoList(Connection conn) throws SQLException;
+
+	/**
 	 * Get node rid from device name.
 	 * @param conn
 	 * @param deviceName
@@ -285,6 +293,7 @@ public interface Dao {
 	 * @throws SQLException
 	 */
 	String getNodeRidFromDeviceName(Connection conn, String deviceName) throws SQLException;
+
 
 	/**
 	 * Create DeviceInfo.

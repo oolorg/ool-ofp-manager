@@ -70,7 +70,7 @@ public class DeviceServiceImpl implements DeviceService {
 	public Response updateDevice(String deviceName, String updateDeviceInfoJson) {
 		final String fname = "updateDevice";
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(deviceInfoJson=%s) - start", fname, updateDeviceInfoJson));
+			logger.debug(String.format("%s(deviceName=%s, deviceInfoJson=%s) - start", fname, deviceName, updateDeviceInfoJson));
 		}
 
 		this.injector = Guice.createInjector(new AbstractModule() {
@@ -82,6 +82,54 @@ public class DeviceServiceImpl implements DeviceService {
 		DeviceServiceImpl main = injector.getInstance(DeviceServiceImpl.class);
 		String resDeviceBiz = main.deviceBiz.updateDevice(deviceName, updateDeviceInfoJson);
 
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
+		}
+		return Response.ok(resDeviceBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.service.DeviceService#readDevice(java.lang.String)
+	 */
+	@Override
+	public Response readDevice(String deviceName) {
+		final String fname = "readDevice";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
+		}
+		this.injector = Guice.createInjector(new AbstractModule() {
+			@Override
+			protected void configure() {
+				bind(DeviceBusiness.class).to(DeviceBusinessImpl.class);
+			}
+		});
+		DeviceServiceImpl main = injector.getInstance(DeviceServiceImpl.class);
+		String resDeviceBiz = main.deviceBiz.readDevice(deviceName);
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
+		}
+		return Response.ok(resDeviceBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see ool.com.ofpm.service.DeviceService#readDeviceList()
+	 */
+	@Override
+	public Response readDeviceList() {
+		final String fname = "readDeviceList";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s() - start", fname));
+		}
+		this.injector = Guice.createInjector(new AbstractModule() {
+			@Override
+			protected void configure() {
+				bind(DeviceBusiness.class).to(DeviceBusinessImpl.class);
+			}
+		});
+		DeviceServiceImpl main = injector.getInstance(DeviceServiceImpl.class);
+		String resDeviceBiz = main.deviceBiz.readDeviceList();
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(ret=%s) - end", fname, resDeviceBiz));
 		}

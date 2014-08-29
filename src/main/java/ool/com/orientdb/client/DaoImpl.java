@@ -741,6 +741,29 @@ public class DaoImpl implements Dao {
 
 	/*
 	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#getNodeInfoList(java.sql.Connection)
+	 */
+	@Override
+	public List<Map<String, Object>> getNodeInfoList(Connection conn) throws SQLException {
+		final String fname = "getNodeInfoList";
+		if (logger.isTraceEnabled()){
+			logger.trace(String.format("%s(conn=%s) - start", fname, conn));
+		}
+		List<Map<String, Object>> maps = null;
+		try {
+			maps = utilsJdbc.query(conn, SQL_GET_NODE_INFO_LIST, new MapListHandler());
+			return maps;
+		} catch (Exception e){
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (logger.isTraceEnabled()){
+				logger.trace(String.format("%s(ret=%s) - end", fname, maps));
+			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see ool.com.orientdb.client.Dao#getDeviceInfoFromDeviceRid(java.sql.Connection, java.lang.String)
 	 */
 	@Override

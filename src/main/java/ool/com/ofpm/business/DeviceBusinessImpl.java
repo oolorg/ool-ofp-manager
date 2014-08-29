@@ -13,7 +13,10 @@ import java.util.Map;
 
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
+import ool.com.ofpm.json.device.DeviceInfo;
 import ool.com.ofpm.json.device.DeviceInfoCreateJsonIn;
+import ool.com.ofpm.json.device.DeviceInfoListReadJsonOut;
+import ool.com.ofpm.json.device.DeviceInfoReadJsonOut;
 import ool.com.ofpm.json.device.DeviceInfoUpdateJsonIn;
 import ool.com.ofpm.json.device.DeviceManagerGetConnectedPortInfoJsonOut;
 import ool.com.ofpm.json.device.DeviceManagerGetConnectedPortInfoJsonOut.ResultData;
@@ -275,6 +278,107 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 			String ret = res.toJson();
 			if (logger.isDebugEnabled()) {
 				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+		}
+	}
+
+	public String readDevice(String deviceName) {
+		String fname = "readDevice";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s(deviceName=%s) - start", fname, deviceName));
+		}
+		DeviceInfoReadJsonOut res = new DeviceInfoReadJsonOut();
+
+		/* PHASE 1: check validation */
+		try {
+			BaseValidate.checkStringBlank(deviceName);
+		} catch (ValidateException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_BAD_REQUEST);
+			res.setMessage(e.getMessage());
+
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
+
+		/* PHASE 2: Read node from ofp db */
+		ConnectionUtilsJdbc utils = null;
+		Connection conn = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn  = utils.getConnection(true);
+
+			Dao dao = new DaoImpl(utils);
+			Map<String, Object> infoMap = dao.getNodeInfoFromDeviceName(conn, deviceName);
+			if (infoMap == null || infoMap.isEmpty()) {
+				res.setStatus(DB_RESPONSE_STATUS_NOT_FOUND);
+				res.setMessage(String.format(NOT_FOUND, deviceName));
+				return res.toJson();
+			}
+
+			DeviceInfo dev = new DeviceInfo();
+			dev.setDeviceName((String) infoMap.get("name"));
+			dev.setDeviceType((String) infoMap.get("type"));
+			dev.setDatapathId((String) infoMap.get("datapathId"));
+			dev.setOfcIp((String) infoMap.get("ofcIp"));
+
+			res.setResult(dev);
+			res.setStatus(STATUS_SUCCESS);
+			return res.toJson();
+		} catch (SQLException | RuntimeException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+    		res.setStatus(STATUS_INTERNAL_ERROR);
+    		res.setMessage(e.getMessage());
+    		return res.toJson();
+		} finally {
+			utils.close(conn);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			}
+		}
+	}
+
+	public String readDeviceList() {
+		String fname = "readDeviceList";
+		if (logger.isDebugEnabled()) {
+			logger.debug(String.format("%s() - start", fname));
+		}
+		DeviceInfoListReadJsonOut res = new DeviceInfoListReadJsonOut();
+		res.setStatus(STATUS_SUCCESS);
+
+		ConnectionUtilsJdbc utils = null;
+		Connection conn = null;
+		try {
+			utils = new ConnectionUtilsJdbcImpl();
+			conn  = utils.getConnection(true);
+
+			Dao dao = new DaoImpl(utils);
+			List<Map<String, Object>> infoMapList = dao.getNodeInfoList(conn);
+
+			List<DeviceInfo> result = new ArrayList<DeviceInfo>();
+			for (Map<String, Object> infoMap : infoMapList) {
+				DeviceInfo dev = new DeviceInfo();
+				dev.setDeviceName((String) infoMap.get("name"));
+				dev.setDeviceType((String) infoMap.get("type"));
+				dev.setDatapathId((String) infoMap.get("datapathId"));
+				dev.setOfcIp((String) infoMap.get("ofcIp"));
+				result.add(dev);
+			}
+
+			res.setResult(result);
+			return res.toJson();
+		} catch (SQLException | RuntimeException e) {
+			OFPMUtils.logErrorStackTrace(logger, e);
+    		res.setStatus(STATUS_INTERNAL_ERROR);
+    		res.setMessage(e.getMessage());
+    		return res.toJson();
+		} finally {
+			utils.close(conn);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
 			}
 		}
 	}

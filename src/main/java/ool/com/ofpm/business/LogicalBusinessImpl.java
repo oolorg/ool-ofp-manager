@@ -85,13 +85,7 @@ import com.google.gson.JsonSyntaxException;
 public class LogicalBusinessImpl implements LogicalBusiness {
 	private static final Logger logger = Logger.getLogger(LogicalBusinessImpl.class);
 
-//	private AgentManager agentManager;
-//	private AgentClientUpdateFlowReq agentFlowJson = new AgentClientUpdateFlowReq();
-
 	Config conf = new ConfigImpl();
-
-//	OFPatchCommon ofPatchBusiness = new OFPatchCommonImpl();
-
 	Dao dao = null;
 
 	public LogicalBusinessImpl() {

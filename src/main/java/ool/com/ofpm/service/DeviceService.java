@@ -50,6 +50,24 @@ public interface DeviceService {
 	@Produces({ MediaType.APPLICATION_JSON })
 	public Response updateDevice(@PathParam("deviceName") String deviceName, @RequestBody String updateDeviceInfoJson);
 
+	/**
+	 * Read Device
+	 * @param deviceName
+	 * @return
+	 */
+	@GET
+	@Path("/{deviceName}")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public Response readDevice(@PathParam("deviceName") String deviceName);
+
+	/**
+	 * Read Devices list.
+	 * @return
+	 */
+	@GET
+	@Produces({ MediaType.APPLICATION_JSON })
+	public Response readDeviceList();
+
 	// port service
 	/**
 	 * Create Port

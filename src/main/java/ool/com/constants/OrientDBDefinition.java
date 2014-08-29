@@ -32,6 +32,7 @@ public class OrientDBDefinition {
 	public static final String SQL_NODE_KEY_FLAG = "ofpFlag";
 
 	/* select */
+	public static final String SQL_GET_NODE_INFO_LIST = "select @rid.asString(), name, type, datapathId, ofcIp from node";
 	public static final String SQL_GET_NODE_INFO_FROM_DEVICE_NAME = "select @rid.asString(), name, type, datapathId, ofcIp from node where name=?";
 	public static final String SQL_GET_NODE_INFO_FROM_DEVICE_RID  = "select @rid.asString(), name, type, datapathId, ofcIp from node where @rid=?";
 	public static final String SQL_GET_NODE_RID_FROM_DEVICENAME   = "select @rid.asString() from node where name=?";

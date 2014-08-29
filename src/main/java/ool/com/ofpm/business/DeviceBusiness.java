@@ -24,6 +24,19 @@ public interface DeviceBusiness {
 	 */
 	public String updateDevice(String deviceName, String updateDeviceInfoJson);
 
+	/**
+	 * Read Device from db.
+	 * @param deviceName
+	 * @return
+	 */
+	public String readDevice(String deviceName);
+
+	/**
+	 * Read Devices list from db.
+	 * @return
+	 */
+	public String readDeviceList();
+
 	/* Port */
 	/**
 	 * Create Port business Logic
