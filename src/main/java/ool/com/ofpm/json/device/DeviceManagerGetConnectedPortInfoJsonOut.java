@@ -65,7 +65,7 @@ public class DeviceManagerGetConnectedPortInfoJsonOut extends BaseResponse {
 
 		public class LinkData extends Node {
 			private String portName;
-			private int portNumber;
+			private Integer portNumber;
 			private String ofpFlag;
 
 			public String getPortName() {
@@ -74,10 +74,10 @@ public class DeviceManagerGetConnectedPortInfoJsonOut extends BaseResponse {
 			public void setPortName(final String portName) {
 				this.portName = portName;
 			}
-			public int getPortNumber() {
+			public Integer getPortNumber() {
 				return portNumber;
 			}
-			public void setPortNumber(final int portNumber) {
+			public void setPortNumber(final Integer portNumber) {
 				this.portNumber = portNumber;
 			}
 			public String getOfpFlag() {
