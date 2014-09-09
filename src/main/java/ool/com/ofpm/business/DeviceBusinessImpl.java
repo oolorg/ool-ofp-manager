@@ -721,7 +721,7 @@ public class DeviceBusinessImpl implements DeviceBusiness {
 	private void addLinkDataToResultData(ResultData resultData, Map<String, Object> nodeInfoMap, Map<String, Object> portInfoMap) {
 		String  nodeName = (String)  nodeInfoMap.get("name");
 		String  nodeType = (String)  nodeInfoMap.get("type");
-		String  portName = (String)  portInfoMap.get("port");
+		String  portName = (String)  portInfoMap.get("name");
 		Integer number   = (Integer) portInfoMap.get("number");
 		LinkData linkData = resultData.new LinkData();
 		linkData.setDeviceName(nodeName);

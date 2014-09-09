@@ -556,6 +556,24 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 						return score1 - score2;
 					}
 				});
+
+				List<LogicalLink> trushIncLinkList = new ArrayList<LogicalLink>();
+				for (LogicalLink incLink : incLinkList) {
+					List<PortData> incPorts = incLink.getLink();
+					for (LogicalLink decLink: decLinkList) {
+						List<PortData> decPorts = decLink.getLink();
+						if (OFPMUtils.PortDataNonStrictEquals(decPorts.get(0), incPorts.get(0)) && OFPMUtils.PortDataNonStrictEquals(decPorts.get(1), incPorts.get(1))) {
+							decLinkList.remove(decLink);
+							trushIncLinkList.add(incLink);
+							break;
+						} else if (OFPMUtils.PortDataNonStrictEquals(decPorts.get(0), incPorts.get(1)) && OFPMUtils.PortDataNonStrictEquals(decPorts.get(1), incPorts.get(0))) {
+							decLinkList.remove(decLink);
+							trushIncLinkList.add(incLink);
+							break;
+						}
+					}
+				}
+				incLinkList.removeAll(trushIncLinkList);
 			}
 
 			/* update patch wiring and make patch link */

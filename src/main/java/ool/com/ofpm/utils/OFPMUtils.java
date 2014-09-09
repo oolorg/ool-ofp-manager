@@ -11,6 +11,7 @@ import java.util.IllegalFormatException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ool.com.ofpm.json.device.PortData;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConDeviceInfo;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConPortInfo;
 
@@ -150,5 +151,21 @@ public class OFPMUtils {
 
 	public static boolean isNodeTypeOfpSwitch(String nodeType) {
 		return (StringUtils.equals(nodeType, NODE_TYPE_LEAF) || StringUtils.equals(nodeType, NODE_TYPE_SPINE));
+	}
+
+	/**
+	 * Compare PortData. If one-sided portName is blank, compare only deviceName.
+	 * @param port1
+	 * @param port2
+	 * @return
+	 */
+	public static boolean PortDataNonStrictEquals(PortData port1, PortData port2) {
+		boolean ret = false;
+		if (StringUtils.isBlank(port1.getPortName()) || StringUtils.isBlank(port2.getPortName())) {
+			ret = StringUtils.equals(port1.getDeviceName(), port2.getDeviceName());
+		} else {
+			ret = port1.equals(port2);
+		}
+		return ret;
 	}
 }
