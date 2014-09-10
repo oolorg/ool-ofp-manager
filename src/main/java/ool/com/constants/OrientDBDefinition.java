@@ -10,7 +10,7 @@ public class OrientDBDefinition {
 	/* Routing */
 	public static final int DIJKSTRA_WEIGHT_NO_ROUTE = 100;
 	public static final int DIJKSTRA_WEIGHT_AVAILABLE_ROUTE = 1;
-	public static final long USED_BLOCKING_VALUE = 9999999999999999L;
+	public static final long USED_BLOCKING_VALUE = 1000000000000L;
 
 	/* Node Type */
 	public static final String NODE_TYPE_SERVER = "Server";
