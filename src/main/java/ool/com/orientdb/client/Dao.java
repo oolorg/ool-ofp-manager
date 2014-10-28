@@ -58,7 +58,7 @@ public interface Dao {
 	 * @return internalmac String
 	 * @throws SQLException
 	 */
-	String getInternalMacFromDeviceNameInPortSrcMacDstMac(Connection conn, String deviceName, String inPort, String srcMac, String dstMac) throws SQLException;
+	//static synchronized String getInternalMacFromDeviceNameInPortSrcMacDstMac(ConnectionUtilsJdbc utilsJdbc, Connection conn, String deviceName, String inPort, String srcMac, String dstMac) throws SQLException;
 
 	/**
 	 * get internal-mac-address list. if not exist, return empty list.

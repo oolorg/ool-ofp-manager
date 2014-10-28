@@ -883,7 +883,8 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			Iterator<Map<String, Map<String, Object>>> it = ret.iterator();
 			//String srcMac = req.getSrcMac();
 			//String dstMac = req.getDstMac();
-			String internalMac = dao.getInternalMacFromDeviceNameInPortSrcMacDstMac(conn, deviceName, req.getInPort(), req.getSrcMac(), req.getDstMac());
+			//String internalMac = dao.getInternalMacFromDeviceNameInPortSrcMacDstMac(conn, deviceName, req.getInPort(), req.getSrcMac(), req.getDstMac());
+			String internalMac = DaoImpl.getInternalMacFromDeviceNameInPortSrcMacDstMac(utilsJdbc, conn, deviceName, req.getInPort(), req.getSrcMac(), req.getDstMac());
 			Long tmp = ~(OFPMUtils.macAddressToLong(internalMac));
 			String internalDstMac = OFPMUtils.longToMacAddress(tmp);
 

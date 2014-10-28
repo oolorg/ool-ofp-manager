@@ -1289,8 +1289,8 @@ public class DaoImpl implements Dao {
 	/* (non-Javadoc)
 	 * @see ool.com.orientdb.client.Dao#getInternalMacFromDeviceNameInPortSrcMacDstMac(java.lang.String, java.lang.String, java.lang.String, java.lang.String)
 	 */
-	@Override
-	public String getInternalMacFromDeviceNameInPortSrcMacDstMac(Connection conn, String deviceName, String inPort, String srcMac, String dstMac) throws SQLException {
+	//@Override
+	static synchronized public String getInternalMacFromDeviceNameInPortSrcMacDstMac(ConnectionUtilsJdbc utilsJdbc, Connection conn, String deviceName, String inPort, String srcMac, String dstMac) throws SQLException {
 		final String fname = "getInternalMacFromDeviceNameInPortSrcMacDstMac";
 		if (logger.isTraceEnabled()){
 			logger.trace(String.format("%s(conn=%s, deviceName=%s, inPort=%s, srcMac=%s, dstMac=%s) - start", fname, conn, deviceName, inPort, srcMac, dstMac));
