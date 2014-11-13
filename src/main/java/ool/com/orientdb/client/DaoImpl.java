@@ -1297,6 +1297,8 @@ public class DaoImpl implements Dao {
 		}
 		String ret = null;
 		try {
+			DbAccessFlag.lock();
+
 			List<Map<String, Object>> records = utilsJdbc.query(conn, SQL_GET_INTERNALMAC_FROM_SRCMAC_DSTMAC_INPORT_DEVICENAME,
                     new MapListHandler(), deviceName, inPort, srcMac, dstMac);
 			if (records.size() > 0) {
@@ -1321,6 +1323,7 @@ public class DaoImpl implements Dao {
 			if (logger.isTraceEnabled()) {
 				logger.trace(String.format("%s(ret=%s) - end", ret));
 			}
+			DbAccessFlag.unlock();
 		}
 	}
 
