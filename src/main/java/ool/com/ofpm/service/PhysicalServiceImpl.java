@@ -22,49 +22,6 @@ public class PhysicalServiceImpl implements PhysicalService {
 	PhysicalBusiness physBiz;
 	Injector injector;
 
-	@Override
-	public Response getPhysicalTopology(String deviceNamesCSV, String tokenId) {
-		String fname = "getPhysicalTopology";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(deviceNamesCSV=%s, tokenId=%s) - start", fname, deviceNamesCSV, tokenId));
-		}
-
-		this.injector = Guice.createInjector(new AbstractModule() {
-			@Override
-			protected void configure() {
-				bind(PhysicalBusiness.class).to(PhysicalBusinessImpl.class);
-			}
-		});
-//		PhysicalServiceImpl main = this.injector.getInstance(PhysicalServiceImpl.class);
-		String resPhysBiz = null;//main.physBiz.getPhysicalTopology(deviceNamesCSV, tokenId);
-
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, resPhysBiz));
-		}
-		return Response.ok(resPhysBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
-	}
-
-	@Override
-	public Response updatePhysicalTopology(String requestedTopologyJson) {
-		String fname = "updatePhysicalTopology";
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(requestedTopologyJson=%s) - start", fname, requestedTopologyJson));
-		}
-
-		this.injector = Guice.createInjector(new AbstractModule() {
-			@Override
-			protected void configure() {
-				bind(PhysicalBusiness.class).to(PhysicalBusinessImpl.class);
-			}
-		});
-//		PhysicalServiceImpl main = this.injector.getInstance(PhysicalServiceImpl.class);
-		String resPhysBiz = null;//main.physBiz.updatePhysicalTopology(requestedTopologyJson);
-
-		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - end", fname, resPhysBiz));
-		}
-		return Response.ok(resPhysBiz).type(MediaType.APPLICATION_JSON_TYPE).build();
-	}
 
 	@Override
 	public Response connectPhysicalLink(String physicalLinkJson) {
