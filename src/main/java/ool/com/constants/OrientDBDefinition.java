@@ -108,6 +108,7 @@ public class OrientDBDefinition {
 	public static final String SQL_DELETE_BUS_FROM_ONE_PORTRID = "delete edge bus where out = ? or in = ?";
 	public static final String SQL_DELETE_CABLE_FROM_ONE_PORTRID = "delete edge cable where out = ? and in = ?";
 	public static final String SQL_DELETE_PATCH_WIRING_FROM_DEVICE_NAME_PORT_NAME = "delete from patchWiring where (inDeviceName=? and inPortName=?) or (outDeviceName=? and outPortName=?)";
+	public static final String SQL_DELETE_INTERNALMAC_FROM_DEVICE_NAME_PORT_NAME = "delete from internalMacMap where deviceName=? and inPort=?";
 
 	/* update */
 	public static final String SQL_UPDATE_NODE_INFO_FROM_RID = "update node set name = ?, datapathId = ? , ofcIp = ? where @RID = ?";

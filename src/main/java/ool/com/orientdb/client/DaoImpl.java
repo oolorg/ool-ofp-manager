@@ -1358,6 +1358,30 @@ public class DaoImpl implements Dao {
 
 	/*
 	 * (non-Javadoc)
+	 * @see ool.com.orientdb.client.Dao#deleteInternalMac(java.sql.Connection, java.lang.String, java.lang.String)
+	 */
+	@Override
+	public int deleteInternalMac(Connection conn, String deviceName, int inPort) throws SQLException {
+		final String fname = "deleteInternalMac";
+		if (logger.isTraceEnabled()) {
+			logger.trace(String.format("%s(conn=%s, devicename=%s, portName=%d) - start", fname, conn, deviceName, inPort));
+		}
+		int ret = 0;
+		try {
+			Object[] params = {deviceName, inPort};
+			ret = utilsJdbc.update(conn, SQL_DELETE_INTERNALMAC_FROM_DEVICE_NAME_PORT_NAME, params);
+		} catch (Exception e) {
+			throw new SQLException(e.getMessage());
+		} finally {
+			if (logger.isTraceEnabled()) {
+				logger.trace(String.format("%s(ret=%s) - end", fname, ret));
+			}
+		}
+		return ret;
+	}
+
+	/*
+	 * (non-Javadoc)
 	 * @see ool.com.orientdb.client.Dao#getInternalMacInfoListFromDeviceNameInPort(java.sql.Connection, java.lang.String, java.lang.Integer)
 	 */
 	@Override

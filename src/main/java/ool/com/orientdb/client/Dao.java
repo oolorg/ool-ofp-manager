@@ -80,6 +80,16 @@ public interface Dao {
 	 */
 	List<Map<String, Object>> getInternalMacInfoListFromDeviceNameInPort(Connection conn, String deviceName, Integer PortNumber) throws SQLException;
 
+	/**
+	 * Delete internal-mac-address.
+	 * @param conn
+	 * @param deviceName
+	 * @param portName
+	 * @return
+	 * @throws SQLException
+	 */
+	int deleteInternalMac(Connection conn, String deviceName, int inPort) throws SQLException;
+
 	/*********************************************************************************
 	 * ----------------------------------------------------------------------------- *
 	 *                               JDBC

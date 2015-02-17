@@ -1251,6 +1251,20 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			throw new RuntimeException(String.format(COULD_NOT_DELETE, "patchWiring=" + link));
 		}
 
+		/* delete internal mac address */
+		for (PortData portData : link.getLink()) {
+			Map<String, Object> portMap = dao.getPortInfoFromPortName(
+					conn,
+					portData.getDeviceName(),
+					portData.getPortName());
+			Map<String, Object> nghbrPortMap = dao.getNeighborPortFromPortRid(conn, (String)portMap.get("rid"));
+			if (nghbrPortMap != null) {
+				dao.deleteInternalMac(conn,
+									(String) nghbrPortMap.get("deviceName"),
+									(int) nghbrPortMap.get("number"));
+			}
+		}
+
 		Map<String, Object> txPatchMap = patchMapList.get(0);
 		Map<String, Object> rxPatchMap = patchMapList.get(patchMapList.size() - 1);
 		/* calc patch band width */
