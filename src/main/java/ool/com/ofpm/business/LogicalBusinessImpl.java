@@ -43,6 +43,7 @@ import ool.com.ofpm.client.NetworkConfigSetupperClient;
 import ool.com.ofpm.client.NetworkConfigSetupperClientImpl;
 import ool.com.ofpm.client.OFCClient;
 import ool.com.ofpm.client.OFCClientImpl;
+import ool.com.ofpm.exception.NoRouteException;
 import ool.com.ofpm.exception.OFCClientException;
 import ool.com.ofpm.exception.ValidateException;
 import ool.com.ofpm.json.common.BaseResponse;
@@ -59,6 +60,7 @@ import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConDeviceInfo;
 import ool.com.ofpm.json.topology.logical.LogicalTopology.OfpConPortInfo;
 import ool.com.ofpm.json.topology.logical.LogicalTopologyGetJsonOut;
 import ool.com.ofpm.json.topology.logical.LogicalTopologyUpdateJsonIn;
+import ool.com.ofpm.json.topology.logical.LogicalTopologyUpdateJsonOut;
 import ool.com.ofpm.utils.Config;
 import ool.com.ofpm.utils.ConfigImpl;
 import ool.com.ofpm.utils.GraphDBUtil;
@@ -72,6 +74,7 @@ import ool.com.openam.client.OpenAmClientImpl;
 import ool.com.openam.json.OpenAmAttributesOut;
 import ool.com.openam.json.OpenAmIdentitiesOut;
 import ool.com.openam.json.TokenIdOut;
+import ool.com.openam.json.TokenValidChkOut;
 import ool.com.orientdb.client.ConnectionUtilsJdbc;
 import ool.com.orientdb.client.ConnectionUtilsJdbcImpl;
 import ool.com.orientdb.client.Dao;
@@ -300,34 +303,34 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		LogicalTopologyGetJsonOut res = new LogicalTopologyGetJsonOut();
 
 		/* PHASE 1: Authentication */
-//		try {
-//			String openamUrl = conf.getString(OPEN_AM_URL);
-//			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
-//			boolean isTokenValid = false;
-//			if (!StringUtils.isBlank(tokenId) && openAmClient != null) {
-//				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
-//				isTokenValid = tokenValidchkOut.getIsTokenValid();
-//			}
-//			if (isTokenValid != true) {
-//				logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
-//				res.setStatus(STATUS_UNAUTHORIZED);
-//				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
-//				String ret = res.toJson();
-//				if (logger.isDebugEnabled()) {
-//					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-//				}
-//				return ret;
-//			}
-//		} catch (OpenAmClientException e) {
-//			logger.error(e);
-//			res.setStatus(STATUS_INTERNAL_ERROR);
-//			res.setMessage(e.getMessage());
-//			String ret = res.toJson();
-//			if (logger.isDebugEnabled()) {
-//				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-//			}
-//			return ret;
-//		}
+		try {
+			String openamUrl = conf.getString(OPEN_AM_URL);
+			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
+			boolean isTokenValid = false;
+			if (!StringUtils.isBlank(tokenId) && openAmClient != null) {
+				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
+				isTokenValid = tokenValidchkOut.getIsTokenValid();
+			}
+			if (isTokenValid != true) {
+				logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				res.setStatus(STATUS_UNAUTHORIZED);
+				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				String ret = res.toJson();
+				if (logger.isDebugEnabled()) {
+					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				}
+				return ret;
+			}
+		} catch (OpenAmClientException e) {
+			logger.error(e);
+			res.setStatus(STATUS_INTERNAL_ERROR);
+			res.setMessage(e.getMessage());
+			String ret = res.toJson();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
 
 		/* PHASE 2: Validation */
 		List<String> deviceNames = null;
@@ -409,8 +412,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		if (logger.isDebugEnabled()) {
 			logger.debug(String.format("%s(requestedTopology=%s) - start", fname, requestedTopologyJson));
 		}
-		BaseResponse res = new BaseResponse();
+		LogicalTopologyUpdateJsonOut res = new LogicalTopologyUpdateJsonOut();
 		res.setStatus(STATUS_SUCCESS);
+		res.setResult(null);
 
 		LogicalTopologyUpdateJsonIn requestedTopology = null;
 		try {
@@ -427,37 +431,37 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 
 		/* PHASE 1: Authenticate */
-//		try {
-//			String openamUrl = conf.getString(OPEN_AM_URL);
-//			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
-//			String tokenId = requestedTopology.getTokenId();
-//			boolean isTokenValid = false;
-//			if (openAmClient != null) {
-//				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
-//				isTokenValid = tokenValidchkOut.getIsTokenValid();
-//			}
-//			if (isTokenValid != true) {
-//				if (logger.isDebugEnabled()) {
-//					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
-//				}
-//				res.setStatus(STATUS_BAD_REQUEST);
-//				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
-//				String ret = res.toJson();
-//				if (logger.isDebugEnabled()) {
-//					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-//				}
-//				return ret;
-//			}
-//		} catch (OpenAmClientException e) {
-//			logger.error(e);
-//			res.setStatus(STATUS_UNAUTHORIZED);
-//			res.setMessage(e.getMessage());
-//			String ret = res.toString();
-//			if (logger.isDebugEnabled()) {
-//				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
-//			}
-//			return ret;
-//		}
+		try {
+			String openamUrl = conf.getString(OPEN_AM_URL);
+			OpenAmClient openAmClient = new OpenAmClientImpl(openamUrl);
+			String tokenId = requestedTopology.getTokenId();
+			boolean isTokenValid = false;
+			if (openAmClient != null) {
+				TokenValidChkOut tokenValidchkOut = openAmClient.tokenValidateCheck(tokenId);
+				isTokenValid = tokenValidchkOut.getIsTokenValid();
+			}
+			if (isTokenValid != true) {
+				if (logger.isDebugEnabled()) {
+					logger.error(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				}
+				res.setStatus(STATUS_BAD_REQUEST);
+				res.setMessage(String.format("Invalid tokenId. tokenId=%s", tokenId));
+				String ret = res.toJson();
+				if (logger.isDebugEnabled()) {
+					logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+				}
+				return ret;
+			}
+		} catch (OpenAmClientException e) {
+			logger.error(e);
+			res.setStatus(STATUS_UNAUTHORIZED);
+			res.setMessage(e.getMessage());
+			String ret = res.toString();
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, ret));
+			}
+			return ret;
+		}
 
 		/* PHASE 2: Validation */
 		try {
@@ -586,18 +590,45 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 			ncsNotifyLinkList = incLinkList;
 
+			/* Make nodes and links */
+			List<LogicalLink>      linkList = new ArrayList<LogicalLink>();
+			Set<LogicalLink>       linkSet  = new HashSet<LogicalLink>();
+			List<OfpConDeviceInfo> nodeList    = requestedTopology.getNodes();
+			for (OfpConDeviceInfo node : nodeList) {
+				String devName = node.getDeviceName();
+				Set<LogicalLink> links = this.getLogicalLink(conn, devName, false);
+				if (links == null) {
+					continue;
+				}
+				linkSet.addAll(links);
+			}
+			linkList.addAll(linkSet);
+
+			LogicalTopology topology = new LogicalTopology();
+			topology.setNodes(nodeList);
+			topology.setLinks(linkList);
+
+			// create response data
+			res.setResult(topology);
+
 			utilsJdbc.commit(conn);
+		} catch (NoRouteException e) {
+			utilsJdbc.rollback(conn);
+			OFPMUtils.logErrorStackTrace(logger, e);
+			res.setStatus(STATUS_NOTFOUND);
+			res.setMessage(e.getMessage());
+			return res.toJson();
 		} catch (Exception e) {
 			utilsJdbc.rollback(conn);
 			OFPMUtils.logErrorStackTrace(logger, e);
 			res.setStatus(STATUS_INTERNAL_ERROR);
 			res.setMessage(e.getMessage());
-			if (logger.isDebugEnabled()) {
-				logger.debug(String.format("%s(ret=%s) - end", fname, res));
-			}
 			return res.toJson();
 		} finally {
 			utilsJdbc.close(conn);
+			if (logger.isDebugEnabled()) {
+				logger.debug(String.format("%s(ret=%s) - end", fname, res));
+			}
 		}
 
 
@@ -1391,8 +1422,9 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 	 * @param augmentedFlows
 	 * @throws SQLException
 	 * @throws DMDBClientException
+	 * @throws NoRouteException
 	 */
-	private void addInclementLogicalLink(Connection conn, LogicalLink link, DMDBClient client, String ofpmToken, MultivaluedMap<String, Map<String, Object>> augmentedFlows) throws SQLException, DMDBClientException {
+	private void addInclementLogicalLink(Connection conn, LogicalLink link, DMDBClient client, String ofpmToken, MultivaluedMap<String, Map<String, Object>> augmentedFlows) throws SQLException, DMDBClientException, NoRouteException {
 		PortData tx = link.getLink().get(0);
 		PortData rx = link.getLink().get(1);
 		/* get rid of txPort/rxPort */
@@ -1425,7 +1457,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			boolean isTxPatch = dao.isContainsPatchWiringFromDeviceNamePortName(conn, (String)txPort.get("deviceName"), (String)txPort.get("name"));
 			boolean isRxPatch = dao.isContainsPatchWiringFromDeviceNamePortName(conn, (String)rxPort.get("deviceName"), (String)rxPort.get("name"));
 			if (isTxPatch || isRxPatch) {
-				throw new RuntimeException(String.format(ALREADY_EXIST, "patchWiring-" + link));
+				throw new NoRouteException(String.format(IS_NO_ROUTE, (String)txPort.get("deviceName") + " " + (String)txPort.get("name"), (String)rxPort.get("deviceName") + " " + (String)rxPort.get("name")));
 			}
 		}
 
@@ -1468,7 +1500,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			long maxBand = (inBand < outBand)? inBand: outBand;
 			long newUsed = nowUsed + needBand;
 			if (newUsed > maxBand) {
-				throw new RuntimeException(String.format(NOT_FOUND, "Path"));
+				throw new NoRouteException(String.format(NOT_FOUND, "Path"));
 			}
 			else if (newUsed == maxBand) {
 				newUsed = maxBand * LINK_MAXIMUM_USED_RATIO;
