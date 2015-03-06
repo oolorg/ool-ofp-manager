@@ -15,6 +15,7 @@ public class OrientDBDefinition {
 	/* Node Type */
 	public static final String NODE_TYPE_SERVER = "Server";
 	public static final String NODE_TYPE_SWITCH = "Switch";
+	public static final String NODE_TYPE_EX_SWITCH = "ExSwitch";
 	public static final String NODE_TYPE_LEAF = "Leaf";
 	public static final String NODE_TYPE_SPINE = "Spine";
 

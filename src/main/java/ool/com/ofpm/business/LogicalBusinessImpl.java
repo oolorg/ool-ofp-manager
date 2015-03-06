@@ -113,7 +113,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		List<OfpConDeviceInfo> removalNodeList = new ArrayList<OfpConDeviceInfo>();
 		for (OfpConDeviceInfo node : nodes) {
 			String devType = node.getDeviceType();
-			if (!devType.equals(NODE_TYPE_SERVER) && !devType.equals(NODE_TYPE_SWITCH)) {
+			if (!devType.equals(NODE_TYPE_SERVER) && !devType.equals(NODE_TYPE_SWITCH) && !devType.equals(NODE_TYPE_EX_SWITCH)) {
 				removalNodeList.add(node);
 				continue;
 			}
@@ -631,7 +631,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 			}
 		}
 
-
 		/* PHASE 5: Set flow to OFPS via OFC */
 		try {
 			for (Entry<String, List<Map<String, Object>>> entry : reducedFlows.entrySet()) {
@@ -672,23 +671,6 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 				logger.debug(String.format("%s(ret=%s) - end", fname, res));
 			}
 			return res.toJson();
-		}
-
-
-		/* PHASE 6: notify NCS. */
-		try {
-			String ncsEnFlg = conf.getString(CONFIG_KEY_NCS_ENABLE, "false");
-			if (StringUtils.equals(ncsEnFlg, "true")) {
-				int ncsNotifyRet = this.notifyNcs(requestedTopology.getTokenId(), ncsNotifyLinkList, ofpmToken);
-				if (ncsNotifyRet != STATUS_SUCCESS) {
-					res.setStatus(ncsNotifyRet);
-					res.setMessage("Faild plane switches vlan");
-				}
-			}
-		} catch (DMDBClientException | OpenAmClientException e) {
-			OFPMUtils.logErrorStackTrace(logger, e);
-			res.setStatus(STATUS_INTERNAL_ERROR);
-			res.setMessage(e.getMessage());
 		}
 
 		String ret = res.toJson();
