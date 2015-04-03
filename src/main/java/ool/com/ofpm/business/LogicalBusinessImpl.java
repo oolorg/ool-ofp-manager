@@ -976,7 +976,7 @@ public class LogicalBusinessImpl implements LogicalBusiness {
 		}
 		String ret = res.toJson();
 		if (logger.isDebugEnabled()) {
-			logger.debug(String.format("%s(ret=%s) - start", fname, ret));
+			logger.debug(String.format("%s(ret=%s) - end", fname, ret));
 		}
 		return ret;
 	}

@@ -985,10 +985,10 @@ public class DaoImpl implements Dao {
 			}
 
 			/* Here, decide Used default value of bus of Node. */
-			/* Might you think 'why is it implemented in here', might you think 'this process is have to implement with top-side Method'. */
-			/* If we use gremlin or cypher, not need set high value to Used-value. */
 			Long used = USED_BLOCKING_VALUE;
-			if (OFPMUtils.isNodeTypeOfpSwitch(devType)) {
+			if (StringUtils.equals(devType, NODE_TYPE_SPINE)) {
+				used = SPINE_BUS_USED_VALUE;
+			} else if (StringUtils.equals(devType, NODE_TYPE_LEAF)) {
 				used = 0L;
 			}
 

@@ -11,6 +11,7 @@ public class OrientDBDefinition {
 	public static final int DIJKSTRA_WEIGHT_NO_ROUTE = 100;
 	public static final int DIJKSTRA_WEIGHT_AVAILABLE_ROUTE = 1;
 	public static final long USED_BLOCKING_VALUE = 1000000000000L;
+	public static final long SPINE_BUS_USED_VALUE = 10240000L;
 
 	/* Node Type */
 	public static final String NODE_TYPE_SERVER = "Server";
